@@ -33,6 +33,7 @@ export class Scanner {
                     throw "Unknown token at: " + c;
             }
         }
+        this.addToken('EOF', '');
         return this.tokens;
     }
 
@@ -41,12 +42,11 @@ export class Scanner {
     }
 
     private advance(): string {
-        if (this.isAtEnd()) throw new Error('Already reach source end!');
         return this.source.charAt(this.index++);
     }
 
-    private current() {
-        return this.source.charAt(this.index)
+    private previous() {
+        return this.source.charAt(this.index - 1)
     }
 
     private addToken(type: TokenType, lexeme: string, literal: number | null = null) {
@@ -54,7 +54,7 @@ export class Scanner {
     }
 
     private addNumber() {
-        let c = this.current();
+        let c = this.previous();
         let numberStr = c;
         while (!this.isAtEnd()) {
             c = this.advance();

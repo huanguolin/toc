@@ -1,0 +1,17 @@
+{
+  "name": "calculator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.13"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node ./output/index.js"
+  },
+  "author": "alvin.huang",
+  "license": "ISC"
+}

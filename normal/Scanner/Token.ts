@@ -1,4 +1,4 @@
-export type TokenType = 'number' | '(' | ')' | '+' | '-' | '/' | '*';
+export type TokenType = 'number' | '(' | ')' | '+' | '-' | '/' | '*' | 'EOF';
 
 export class Token {
     type: TokenType;

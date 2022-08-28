@@ -1,11 +1,32 @@
+import { Interpreter } from './Interpreter';
 import { Parser } from './Parser';
 import { Scanner } from './Scanner';
 
-calculator('4 + 5 * (10 - 2) / 2');
+const readline = require('readline');
+
+main();
+
+function main() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: false
+    });
+
+    process.stdout.write('> ');
+    rl.on('line', function (line) {
+        try {
+            console.log('= ' + calculator(line));
+        } catch (e) {
+            console.log('Error: ', e);
+        }
+        process.stdout.write('> ');
+    });
+}
 
 function calculator(source: string) {
     const scanner = new Scanner(source);
     const parser = new Parser(scanner.scan());
-    const result = parser.parse();
-    console.log(result);
+    const interpreter = new Interpreter(parser.parse());
+    return interpreter.interpret();
 }
