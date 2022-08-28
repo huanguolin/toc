@@ -13,5 +13,5 @@
     "start": "tsc && node ./output/index.js"
   },
   "author": "alvin.huang",
-  "license": "ISC"
+  "license": "MIT"
 }
