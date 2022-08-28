@@ -1,0 +1,5 @@
+# build
+`$ tsc`
+
+# run
+`$ node ./output/index.js`
