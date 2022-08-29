@@ -1,0 +1,15 @@
+{
+  "name": "type-calculator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.d.ts",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^4.8.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "alvin.huang",
+  "license": "MIT"
+}

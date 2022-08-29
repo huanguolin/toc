@@ -1,0 +1,1 @@
+type a = '9' extends `${infer T extends number}` ? T : never;
