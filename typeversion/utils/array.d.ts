@@ -8,7 +8,7 @@ export type Pop<A extends any[]> = A extends [...infer P, infer E] ? E : never;
 type tPop = Pop<[]>;
 
 export type Drop<A extends any[], N extends number = 1> =
-    A extends [...Init<N>, ...(infer R extends any[])]
+    A extends [...(infer R extends any[]), ...Init<N>]
         ? R
         : [];
 

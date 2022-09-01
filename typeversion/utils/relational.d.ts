@@ -40,7 +40,7 @@ type StrNumLT<
             ? true
             : StrNumLT<DropChar<S1>, DropChar<S2>>
     : never;
-type tStrNumLT = StrNumLT<'199999', '999799'>;
+type tStrNumLT = StrNumLT<'799', '999'>;
 
 
 export type LT<
