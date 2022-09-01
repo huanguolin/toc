@@ -8,11 +8,11 @@ export type Pop<A extends any[]> = A extends [...infer P, infer E] ? E : never;
 type tPop = Pop<[]>;
 
 export type Drop<A extends any[], N extends number = 1> =
-    A extends [...(infer R extends any[]), ...Init<N>]
+    A extends [...Init<N>, ...(infer R extends any[])]
         ? R
         : [];
 
-type t = Drop<[1, 2, 3], 4>;
+type t = Drop<[1, 2, 3], 2>;
 
 export type Slice<A extends any[], I extends number> =
     A extends [...Init<I>, ...(infer R extends any[])]

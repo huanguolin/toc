@@ -1,6 +1,4 @@
-import { NewLineKind } from "typescript";
 import { Contains, Slice } from "./array";
-import { Add } from "./math";
 import { DropChar, ShiftChar, Str2Num, StrLength } from "./string";
 
 export type EQ<A, B> =
