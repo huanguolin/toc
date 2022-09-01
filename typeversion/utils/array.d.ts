@@ -1,11 +1,11 @@
-export type Length<T extends any[]> = T['length'];
+import { EQ } from "./common";
 
-type tLen = Length<[1, 23]>;
+export type Length<T extends any[]> = T['length'];
+// type tLen = Length<[1, 23]>;
 
 export type Push<A extends any[], E> = [...A, E];
-export type Pop<A extends any[]> = A extends [...infer P, infer E] ? E : never;
-
-type tPop = Pop<[]>;
+export type Pop<A extends any[]> = A extends [...infer R, infer E] ? { array: R, element: E } : never;
+// type tPop = Pop<[5]>;
 
 export type Drop<A extends any[], N extends number = 1> =
     A extends [...(infer R extends any[]), ...Init<N>]
@@ -27,12 +27,13 @@ export type Init<L extends number, E extends any = any, A extends any[] = []> =
         ? A
         : Init<L, E, Push<A, E>>;
 
-export type Contains<A extends any[], E extends any, > =
+export type Contains<A extends any[], E extends any, T = A[number]> =
     Length<A> extends 0
         ? false
-        : E extends Pop<A>
+        : EQ<E, Pop<A>['element']> extends true
             ? true
             : Contains<Drop<A>, E>;
 
 type tContains1 = Contains<[1, 2, 3], 3>;
-type tContains2 = Contains<[1, 2, 3], 4>;
+type tContains2 = Contains<[never, number, 3], never>;
+
