@@ -1,5 +1,5 @@
-import { EQ } from "../utils/common";
-import { Str2Num } from "../utils/string";
+import { EQ, Safe } from "../utils/common";
+import { NumStr, Str2Num } from "../utils/string";
 
 export type TokenType = 'number' | '(' | ')' | '+' | '-' | '/' | '*' | 'EOF';
 
@@ -15,7 +15,7 @@ export type BuildToken<
 > = {
     type: Type,
     lexeme: Lexeme,
-    value: EQ<Type, 'number'> extends true ? Str2Num<Lexeme> : null,
+    value: EQ<Type, 'number'> extends true ? Str2Num<Safe<Lexeme, NumStr>> : null,
 };
 
 export type EOF = BuildToken<'EOF', ''>;
