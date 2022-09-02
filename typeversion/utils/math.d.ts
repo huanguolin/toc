@@ -4,6 +4,7 @@
  * ref: https://itnext.io/implementing-arithmetic-within-typescripts-type-system-a1ef140a6f6f
  */
 
+import { ErrorResult } from "../Result";
 import { Concat, Drop, Init, Length, Push } from "./array";
 import { Safe } from "./common";
 import { NumChars, NumStr, StrLength, ShiftChar } from "./string";
@@ -40,7 +41,7 @@ export type Div<
     A2 extends any[] = []
 > =
     N2 extends 0
-        ? never
+        ? ErrorResult<'The divisor cannot be 0'>
         : N1 extends 0
             ? 0
             : LT<Length<A1>, N2> extends true
@@ -56,7 +57,7 @@ export type Mod<
     A2 extends any[] = []
 > =
     N2 extends 0
-        ? never
+        ? N2
         : N1 extends 0
             ? 0
             : LT<Length<A1>, N2> extends true

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.ts",
   "dependencies": {
+    "typescript": "^4.8.2"
   },
   "devDependencies": {
     "@types/node": "^18.7.13"
