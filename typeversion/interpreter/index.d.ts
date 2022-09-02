@@ -39,4 +39,4 @@ type EvalMath<Op extends TokenType, Left extends number, Right extends number> =
                 ? Mul<Left, Right>
                 : Op extends '/'
                     ? Div<Left, Right>
-                    : RuntimeError<`Unknown binary operator: ${Safe<Op, string>}`>;
+                    : RuntimeError<`Unknown binary operator: ${Op}`>;

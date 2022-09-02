@@ -12,12 +12,12 @@ type SkipSpace<S extends string> =
         : S;
 
 type ScanOperator<S extends string> =
-    S extends `${infer C extends Operators}${infer R extends string}`
+    SkipSpace<S> extends `${infer C extends Operators}${infer R extends string}`
         ? ScanSuccess<BuildToken<Safe<C, Operators>, C>, SkipSpace<R>>
         : ScanError<'Not match an operator.'>;
 
 type ScanNumber<S extends string, N extends NumStr | '' = ''> =
-    S extends `${infer C extends NumChars}${infer R extends string}`
+    SkipSpace<S> extends `${infer C extends NumChars}${infer R extends string}`
         ? ScanNumber<R, Safe<PushChar<N, C>, NumStr>>
         : N extends ''
             ? ScanError<'Not match a number.'>
