@@ -2,7 +2,7 @@ import { BinaryExpr, Expr, GroupExpr, LiteralExpr } from "../parser/Expr";
 import { ErrorResult } from "../Result";
 import { Token, TokenType } from "../scanner/Token";
 import { Safe } from "../utils/common";
-import { Add, Div, Mul, Sub } from "../utils/math";
+import { Add, Div, Mod, Mul, Sub } from "../utils/math";
 import { RuntimeError } from './RuntimeError';
 
 
@@ -39,4 +39,6 @@ type EvalMath<Op extends TokenType, Left extends number, Right extends number> =
                 ? Mul<Left, Right>
                 : Op extends '/'
                     ? Div<Left, Right>
-                    : RuntimeError<`Unknown binary operator: ${Op}`>;
+                    : Op extends '%'
+                        ? Mod<Left, Right>
+                        : RuntimeError<`Unknown binary operator: ${Op}`>;

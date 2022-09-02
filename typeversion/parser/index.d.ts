@@ -15,7 +15,7 @@ export type Parse<Tokens extends Token[], Temp = ParseTerm<Tokens>> =
 // * /
 // number ()
 type TermOpToken = Token & { type: '+' | '-' };
-type FactorOpToken = Token & { type: '*' | '/' };
+type FactorOpToken = Token & { type: '*' | '/' | '%' };
 
 type ParseExpr<Tokens extends Token[]> = ParseTerm<Tokens>;
 

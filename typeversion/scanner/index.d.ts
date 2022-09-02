@@ -32,4 +32,4 @@ export type Scan<S extends string, A extends any[] = []> =
                 ? Scan<R, Push<A, T>>
                 : ScanError<`Unknown next token: ${ShiftChar<S>['char']}`>;
 
-type tScan = Scan<'123 + 15 - 3 / 9 / ( 5 -3)'>;
+type tScan = Scan<'123 % 100 + 15 - 3 / 9 / ( 5 -3)'>;
