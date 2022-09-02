@@ -6,7 +6,7 @@
 
 import { Concat, Drop, Init, Length, Push } from "./array";
 import { Safe } from "./common";
-import { NumChars, NumStr, StrLength, ShiftChar, DropChar } from "./string";
+import { NumChars, NumStr, StrLength, ShiftChar } from "./string";
 
 
 export type Add<N1 extends number, N2 extends number> = Length<Concat<Init<N1>, Init<N2>>>;
