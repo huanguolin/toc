@@ -3,6 +3,7 @@ import { BinaryExpr } from "./BinaryExpr";
 import { GroupExpr } from "./GroupExpr";
 import { IExpr } from "./IExpr";
 import { LiteralExpr } from "./LiteralExpr";
+import { UnaryExpr } from "./UnaryExpr";
 
 export class Parser {
     private tokens: Token[];
@@ -20,6 +21,11 @@ export class Parser {
         return this.expression();
     }
 
+    // 表达式分类并按照由低到高：
+    // term:    + -         左结合
+    // factor:  * /         左结合
+    // unary:   !           右结合
+    // primary: number ()
     private expression(): IExpr {
         return this.term();
     }
@@ -35,18 +41,29 @@ export class Parser {
     }
 
     private factor(): IExpr {
-        let expr: IExpr = this.primary();
+        let expr: IExpr = this.unary();
         while (this.match('*', '/')) {
             const operator = this.previous();
-            const right = this.primary();
+            const right = this.unary();
             expr = new BinaryExpr(expr, operator, right);
         }
         return expr;
     }
 
+    private unary(): IExpr {
+        if (this.match('!')) {
+            const operator = this.previous();
+            const expr = this.unary(); // 右结合
+            return new UnaryExpr(operator, expr);
+        }
+        return this.primary();
+    }
+
     private primary(): IExpr {
         if (this.match('number')) {
-            return new LiteralExpr(this.previous().literal);
+            return new LiteralExpr(this.previous().literal as number);
+        } else if (this.match('true', 'false')) {
+            return new LiteralExpr(this.previous().type === 'true');
         } else if (this.match('(')) {
             const expr = this.expression();
             this.consume(')', 'Expect ")" after expression.');

@@ -1,6 +1,12 @@
+import { ScanError } from "./ScanError";
 import { Token, TokenType } from "./Token";
 
 export class Scanner {
+    private static readonly keywords = new Set([
+        'true',
+        'false',
+    ]);
+
     private source: string;
     private index: number;
     private tokens: Token[];
@@ -21,6 +27,7 @@ export class Scanner {
                 case '/':
                 case '+':
                 case '-':
+                case '!':
                     this.addToken(c, c);
                     break;
                 case '\u0020':
@@ -29,8 +36,11 @@ export class Scanner {
                     if (this.isNumberChar(c)) {
                         this.addNumber();
                         break;
+                    } else if (this.isAlphaChar(c)) {
+                        this.addIdentifier();
+                        break;
                     }
-                    throw "Unknown token at: " + c;
+                    throw new ScanError("Unknown token at: " + c);
             }
         }
         this.addToken('EOF', '');
@@ -67,7 +77,33 @@ export class Scanner {
         this.addToken('number', numberStr, Number(numberStr));
     }
 
+    private addIdentifier() {
+        let c = this.previous();
+        let name = c;
+        while (!this.isAtEnd()) {
+            c = this.advance();
+            if (!this.isAlphaNumberChar(c)) {
+                --this.index;
+                break;
+            }
+            name += c;
+        }
+        const tokenType = Scanner.keywords.has(name) ? name : 'identifier';
+        this.addToken(tokenType as TokenType, name, null);
+    }
+
+    private isAlphaNumberChar(c: string) {
+        return this.isAlphaChar(c) || this.isNumberChar(c);
+    }
+
     private isNumberChar(c: string) {
         return c.length === 1 && c >= '0' && c <= '9';
+    }
+
+    private isAlphaChar(c: string) {
+        return c.length === 1
+            && ((c >= 'a' && c <= 'z')
+                || (c >= 'A' && c <= 'Z')
+                || c === '_');
     }
 }

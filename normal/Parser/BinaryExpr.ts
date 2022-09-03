@@ -14,7 +14,7 @@ export class BinaryExpr implements IExpr {
         this.right = right;
     }
 
-    accept(visitor: IVisitor): number {
+    accept<R>(visitor: IVisitor<R>): R {
         return visitor.visitBinaryExpr(this);
     }
 }

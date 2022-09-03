@@ -1,4 +1,16 @@
-export type TokenType = 'number' | '(' | ')' | '+' | '-' | '/' | '*' | 'EOF';
+export type TokenType =
+    | 'identifier'
+    | 'number'
+    | 'true'
+    | 'false'
+    | '('
+    | ')'
+    | '+'
+    | '-'
+    | '/'
+    | '*'
+    | '!'
+    | 'EOF';
 
 export class Token {
     type: TokenType;

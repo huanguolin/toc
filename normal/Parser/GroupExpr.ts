@@ -9,7 +9,7 @@ export class GroupExpr implements IExpr {
         this.expression = expr;
     }
 
-    accept(visitor: IVisitor): number {
+    accept<R>(visitor: IVisitor<R>): R {
         return visitor.visitGroupExpr(this);
     }
 }
