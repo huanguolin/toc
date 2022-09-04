@@ -1,8 +1,8 @@
 import { Push } from "../utils/array";
 import { Safe } from "../utils/common";
-import { NumChars, NumStr, PushChar, ShiftChar, TrimStart } from "../utils/string";
+import { AlphaChars, NumChars, NumStr, PushChar, ShiftChar, TrimStart } from "../utils/string";
 import { ScanError, ScanSuccess } from "./ScanResult";
-import { BuildToken, EOF } from "./Token";
+import { BuildToken, EOF, TokenType } from "./Token";
 
 type Operators =
     | '('
@@ -13,6 +13,13 @@ type Operators =
     | '*'
     | '%'
     | '!';
+
+type Keywords = {
+    true: true,
+    false: true,
+};
+
+type IsKeywords<T extends string> = T extends keyof Keywords ? true : false;
 
 type ScanOperator<S extends string> =
     TrimStart<S> extends `${infer C extends Operators}${infer R extends string}`
@@ -26,6 +33,18 @@ type ScanNumber<S extends string, N extends NumStr | '' = ''> =
             ? ScanError<'Not match a number.'>
             : ScanSuccess<BuildToken<'number', N>, TrimStart<S>>;
 
+type AlphaNumChars = NumChars | AlphaChars;
+type ScanIdentifier<S extends string> =
+    TrimStart<S> extends `${infer C extends AlphaChars}${infer R extends string}`
+        ? ScanIdentifierBody<R, C>
+        : ScanError<'Not match a identifier.'>;
+type ScanIdentifierBody<S extends string, I extends string> =
+    TrimStart<S> extends `${infer C extends AlphaNumChars}${infer R extends string}`
+        ? ScanIdentifierBody<R, PushChar<I, C>>
+        : IsKeywords<I> extends true
+            ? ScanSuccess<BuildToken<Safe<I, TokenType>, I>, S>
+            : ScanSuccess<BuildToken<'identifier', I>, S>;
+
 export type Scan<S extends string, A extends any[] = []> =
     S extends ''
         ? Push<A, EOF>
@@ -33,6 +52,8 @@ export type Scan<S extends string, A extends any[] = []> =
             ? Scan<R, Push<A, T>>
             : ScanOperator<S> extends ScanSuccess<infer T, infer R>
                 ? Scan<R, Push<A, T>>
-                : ScanError<`Unknown next token: ${ShiftChar<S>['char']}`>;
+                : ScanIdentifier<S> extends ScanSuccess<infer T, infer R>
+                    ? Scan<R, Push<A, T>>
+                    : ScanError<`Unknown next token: ${ShiftChar<S>['char']}`>;
 
-type tScan = Scan<' !(1-3)'>;
+type tScan = Scan<' !true'>;

@@ -59,11 +59,13 @@ type ParsePrimary<Tokens extends Token[]> =
     Tokens extends [infer E extends Token, ...infer R extends Token[]]
         ? E extends { type: 'number', value: infer V extends number }
             ? ParseSuccess<BuildLiteral<V>, R>
-            : E extends { type: '(' }
-                ? ParseExpr<R> extends ParseSuccess<infer G, infer RG>
-                    ? RG extends [infer EP extends { type: ')' }, ...infer Rest extends Token[]]
-                        ? ParseSuccess<BuildGroup<G>, Rest>
-                        : ParseError<`Group not match ')'.`>
-                    : ParseError<`Parse Group expression fail.`>
+            : E extends { type: infer B extends 'true' | 'false' }
+                ? ParseSuccess<BuildLiteral<B extends 'true' ? true : false>, R>
+                : E extends { type: '(' }
+                    ? ParseExpr<R> extends ParseSuccess<infer G, infer RG>
+                        ? RG extends [infer EP extends { type: ')' }, ...infer Rest extends Token[]]
+                            ? ParseSuccess<BuildGroup<G>, Rest>
+                            : ParseError<`Group not match ')'.`>
+                        : ParseError<`Parse Group expression fail.`>
             : ParseError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
         : ParseError<`ParsePrimary fail`>;
