@@ -1,27 +1,30 @@
 import { Push } from "../utils/array";
 import { Safe } from "../utils/common";
-import { NumChars, NumStr, PushChar, SpaceChars, ShiftChar } from "../utils/string";
+import { NumChars, NumStr, PushChar, ShiftChar, TrimStart } from "../utils/string";
 import { ScanError, ScanSuccess } from "./ScanResult";
-import { BuildToken, EOF, TokenType } from "./Token";
+import { BuildToken, EOF } from "./Token";
 
-type Operators = Exclude<TokenType, 'number' | 'EOF'>;
-
-type SkipSpace<S extends string> =
-    S extends `${infer C extends SpaceChars}${infer R extends string}`
-        ? SkipSpace<R>
-        : S;
+type Operators =
+    | '('
+    | ')'
+    | '+'
+    | '-'
+    | '/'
+    | '*'
+    | '%'
+    | '!';
 
 type ScanOperator<S extends string> =
-    SkipSpace<S> extends `${infer C extends Operators}${infer R extends string}`
-        ? ScanSuccess<BuildToken<Safe<C, Operators>, C>, SkipSpace<R>>
+    TrimStart<S> extends `${infer C extends Operators}${infer R extends string}`
+        ? ScanSuccess<BuildToken<Safe<C, Operators>, C>, TrimStart<R>>
         : ScanError<'Not match an operator.'>;
 
 type ScanNumber<S extends string, N extends NumStr | '' = ''> =
-    SkipSpace<S> extends `${infer C extends NumChars}${infer R extends string}`
+    TrimStart<S> extends `${infer C extends NumChars}${infer R extends string}`
         ? ScanNumber<R, Safe<PushChar<N, C>, NumStr>>
         : N extends ''
             ? ScanError<'Not match a number.'>
-            : ScanSuccess<BuildToken<'number', N>, SkipSpace<S>>;
+            : ScanSuccess<BuildToken<'number', N>, TrimStart<S>>;
 
 export type Scan<S extends string, A extends any[] = []> =
     S extends ''
@@ -32,4 +35,4 @@ export type Scan<S extends string, A extends any[] = []> =
                 ? Scan<R, Push<A, T>>
                 : ScanError<`Unknown next token: ${ShiftChar<S>['char']}`>;
 
-type tScan = Scan<'123 % 100 + 15 - 3 / 9 / ( 5 -3)'>;
+type tScan = Scan<' !(1-3)'>;

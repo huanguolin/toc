@@ -1,19 +1,33 @@
-import { BinaryExpr, Expr, GroupExpr, LiteralExpr } from "../parser/Expr";
+import { BinaryExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr } from "../parser/Expr";
 import { ErrorResult } from "../Result";
 import { Token, TokenType } from "../scanner/Token";
 import { Safe } from "../utils/common";
+import { Inverse } from "../utils/logic";
 import { Add, Div, Mod, Mul, Sub } from "../utils/math";
 import { RuntimeError } from './RuntimeError';
 
 
 export type Interpret<E extends Expr> =
-    E extends GroupExpr
-        ? Interpret<E['expr']>
-        : E extends LiteralExpr
-            ? E['value']
-            : E extends BinaryExpr
-                ? EvalBinaryExpr<E>
-                : RuntimeError<`Unknown expression type: ${E['type']}`>;
+    E extends LiteralExpr
+        ? E['value']
+        : E extends GroupExpr
+            ? Interpret<E['expression']>
+            : E extends UnaryExpr
+                ? EvalUnaryExpr<E>
+                : E extends BinaryExpr
+                    ? EvalBinaryExpr<E>
+                    : RuntimeError<`Unknown expression type: ${E['type']}`>;
+
+// type tInterPret = Interpret<B>;
+
+type EvalUnaryExpr<
+    E extends UnaryExpr,
+    Op extends TokenType = E['operator']['type'],
+    V = Interpret<E['expression']>
+> = Op extends '!'
+    ? Inverse<V>
+    : RuntimeError<`Unknown unary operator: ${Op}`>;
+
 
 type EvalBinaryExpr<
     E extends BinaryExpr,
