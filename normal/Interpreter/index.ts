@@ -17,7 +17,7 @@ export class Interpreter implements IVisitor<unknown> {
         return this.expr.accept(this);
     }
 
-    visitBinaryExpr(expr: BinaryExpr): number {
+    visitBinaryExpr(expr: BinaryExpr): number | boolean {
         const operator = expr.operator;
         const left = expr.left.accept(this);
         const right = expr.right.accept(this);
@@ -27,6 +27,8 @@ export class Interpreter implements IVisitor<unknown> {
                 case '-': return left - right;
                 case '*': return left * right;
                 case '/': return left / right;
+                case '<': return left < right;
+                case '>': return left > right;
                 default: throw new RuntimeError('Unknown operator: ' + operator.lexeme);
             }
         } else {

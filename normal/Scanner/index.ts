@@ -27,6 +27,8 @@ export class Scanner {
                 case '/':
                 case '+':
                 case '-':
+                case '<':
+                case '>':
                 case '!':
                     this.addToken(c, c);
                     break;

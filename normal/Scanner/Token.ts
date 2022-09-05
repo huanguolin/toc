@@ -9,6 +9,8 @@ export type TokenType =
     | '-'
     | '/'
     | '*'
+    | '<'
+    | '>'
     | '!'
     | 'EOF';
 
