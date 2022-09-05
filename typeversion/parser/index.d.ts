@@ -16,7 +16,7 @@ export type Parse<Tokens extends Token[], Temp = ParseExpr<Tokens>> =
 // factor:      * /         左结合
 // unary:       !           右结合
 // primary:     number ()
-type RelationOpToken = Token & { type: '<' | '>' };
+type RelationOpToken = Token & { type: '<' | '>' | '<=' | '>=' };
 type TermOpToken = Token & { type: '+' | '-' };
 type FactorOpToken = Token & { type: '*' | '/' | '%' };
 type UnaryOpToken = Token & { type: '!' };

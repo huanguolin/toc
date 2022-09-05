@@ -15,6 +15,8 @@ export type TokenType =
     | '%'
     | '<'
     | '>'
+    | '<='
+    | '>='
     | '!'
     | 'EOF';
 

@@ -23,10 +23,12 @@ type Keywords = {
 
 type IsKeywords<T extends string> = T extends keyof Keywords ? true : false;
 
-type ScanOperator<S extends string> =
-    TrimStart<S> extends `${infer C extends Operators}${infer R extends string}`
-        ? ScanSuccess<BuildToken<Safe<C, Operators>, C>, TrimStart<R>>
-        : ScanError<'Not match an operator.'>;
+type ScanOperator<S extends string, TS extends string = TrimStart<S>> =
+    TS extends `${infer C1 extends '>' | '<'}${infer C2 extends '='}${infer R extends string}`
+        ? ScanSuccess<BuildToken<`${C1}${C2}`, `${C1}${C2}`>, TrimStart<R>>
+        : TS extends `${infer C extends Operators}${infer R extends string}`
+            ? ScanSuccess<BuildToken<Safe<C, Operators>, C>, TrimStart<R>>
+            : ScanError<'Not match an operator.'>;
 
 type ScanNumber<S extends string, N extends NumStr | '' = ''> =
     TrimStart<S> extends `${infer C extends NumChars}${infer R extends string}`
@@ -58,4 +60,4 @@ export type Scan<S extends string, A extends any[] = []> =
                     ? Scan<R, Push<A, T>>
                     : ScanError<`Unknown next token: ${ShiftChar<S>['char']}`>;
 
-type tScan = Scan<' !true'>;
+type tScan = Scan<' 7 <= 9'>;
