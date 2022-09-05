@@ -21,14 +21,19 @@ export class Scanner {
         while (!this.isAtEnd()) {
             let c = this.advance();
             switch (c) {
+                case '<':
+                case '>':
+                    if (this.match('=')) {
+                        const r = (c + '=') as TokenType;
+                        this.addToken(r, r);
+                        break;
+                    }
                 case '(':
                 case ')':
                 case '*':
                 case '/':
                 case '+':
                 case '-':
-                case '<':
-                case '>':
                 case '!':
                     this.addToken(c, c);
                     break;
@@ -59,6 +64,20 @@ export class Scanner {
 
     private previous() {
         return this.source.charAt(this.index - 1)
+    }
+
+    private current() {
+        return this.source.charAt(this.index);
+    }
+
+    private match(char: string) {
+        if (this.isAtEnd()) {
+            return false;
+        } else if (this.current() === char) {
+            this.advance();
+            return true;
+        }
+        return false;
     }
 
     private addToken(type: TokenType, lexeme: string, literal: number | null = null) {

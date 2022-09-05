@@ -29,6 +29,8 @@ export class Interpreter implements IVisitor<unknown> {
                 case '/': return left / right;
                 case '<': return left < right;
                 case '>': return left > right;
+                case '<=': return left <= right;
+                case '>=': return left >= right;
                 default: throw new RuntimeError('Unknown operator: ' + operator.lexeme);
             }
         } else {

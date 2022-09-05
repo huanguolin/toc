@@ -22,7 +22,7 @@ export class Parser {
     }
 
     // 表达式分类并按照由低到高：
-    // relation:    < >         左结合
+    // relation:    < > <= >=   左结合
     // term:        + -         左结合
     // factor:      * /         左结合
     // unary:       !           右结合
@@ -33,7 +33,7 @@ export class Parser {
 
     private relation(): IExpr {
         let expr: IExpr = this.term();
-        while (this.match('<', '>')) {
+        while (this.match('<', '>', '<=', '>=')) {
             const operator = this.previous();
             const right = this.term();
             expr = new BinaryExpr(expr, operator, right);
