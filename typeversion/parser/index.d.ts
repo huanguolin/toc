@@ -11,15 +11,29 @@ export type Parse<Tokens extends Token[], Temp = ParseExpr<Tokens>> =
             : Temp;
 
 // 表达式分类并按照由低到高：
-// term:    + -         左结合
-// factor:  * /         左结合
-// unary:   !           右结合
-// primary: number ()
+// relation:    < > <= >=   左结合
+// term:        + -         左结合
+// factor:      * /         左结合
+// unary:       !           右结合
+// primary:     number ()
+type RelationOpToken = Token & { type: '<' | '>' };
 type TermOpToken = Token & { type: '+' | '-' };
 type FactorOpToken = Token & { type: '*' | '/' | '%' };
 type UnaryOpToken = Token & { type: '!' };
 
-type ParseExpr<Tokens extends Token[]> = ParseTerm<Tokens>;
+type ParseExpr<Tokens extends Token[]> = ParseRelation<Tokens>;
+
+// relation part
+type ParseRelation<Tokens extends Token[], R = ParseTerm<Tokens>> =
+    R extends ParseSuccess<infer Left, infer Rest>
+        ? ParseRelationBody<Left, Rest>
+        : ParseError<'Parse relation fail.'>;
+type ParseRelationBody<Left extends Expr, Tokens extends Token[]> =
+    Tokens extends [infer Op extends RelationOpToken, ...infer Rest1 extends Token[]]
+        ? ParseTerm<Rest1> extends ParseSuccess<infer Right, infer Rest2>
+            ? ParseRelationBody<BuildBinary<Left, Op, Right>, Rest2>
+            : ParseError<`Parse relation of right fail: ${Rest1[0]['lexeme']}`>
+        : ParseSuccess<Left, Tokens>;
 
 // term part
 type ParseTerm<Tokens extends Token[], R = ParseFactor<Tokens>> =

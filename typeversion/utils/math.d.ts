@@ -6,7 +6,8 @@
 
 import { ErrorResult } from "../Result";
 import { Concat, Drop, Init, Length, Push } from "./array";
-import { Safe } from "./common";
+import { EQ, Safe } from "./common";
+import { Inverse } from "./logic";
 import { NumChars, NumStr, StrLength, ShiftChar } from "./string";
 
 
@@ -122,3 +123,22 @@ export type LT<
     ? StrNumLT<`${N1}`, `${N2}`> // 位数相等比较原数字
     : StrNumLT<`${L1}`, `${L2}`>; // 位数不想等比较位数数字
 type tLT = LT<12345, 67891>;
+
+
+export type GT<N1 extends number, N2 extends number> =
+    EQ<N1, N2> extends true
+        ? false
+        : Inverse<LT<N1, N2>>;
+type tGT = GT<10, 10>;
+
+export type LTE<N1 extends number, N2 extends number> =
+    EQ<N1, N2> extends true
+        ? true
+        : LT<N1, N2>;
+type tLTE = LTE<67891, 67891>;
+
+export type GTE<N1 extends number, N2 extends number> =
+    EQ<N1, N2> extends true
+        ? true
+        : Inverse<LT<N1, N2>>;
+type tGTE = GTE<101, 10>;

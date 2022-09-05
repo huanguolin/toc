@@ -12,6 +12,8 @@ type Operators =
     | '/'
     | '*'
     | '%'
+    | '<'
+    | '>'
     | '!';
 
 type Keywords = {
