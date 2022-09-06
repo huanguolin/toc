@@ -22,6 +22,8 @@ export class Parser {
     }
 
     // 表达式分类并按照由低到高：
+    // logic or:    ||          左结合
+    // logic and:   &&          左结合
     // equality:    == !=       左结合
     // relation:    < > <= >=   左结合
     // term:        + -         左结合
@@ -29,7 +31,27 @@ export class Parser {
     // unary:       !           右结合
     // primary:     number ()
     private expression(): IExpr {
-        return this.equality();
+        return this.logicOr();
+    }
+
+    private logicOr() {
+        let expr: IExpr = this.logicAnd();
+        while (this.match('||')) {
+            const operator = this.previous();
+            const right = this.logicAnd();
+            expr = new BinaryExpr(expr, operator, right);
+        }
+        return expr;
+    }
+
+    private logicAnd() {
+        let expr: IExpr = this.equality();
+        while (this.match('&&')) {
+            const operator = this.previous();
+            const right = this.equality();
+            expr = new BinaryExpr(expr, operator, right);
+        }
+        return expr;
     }
 
     private equality(): IExpr {

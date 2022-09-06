@@ -17,6 +17,8 @@ const BinaryEvalMapping = {
     '>=': [isNumber, (a: number, b: number) => a >= b],
     '==': [isAny, (a: unknown, b: unknown) => a === b],
     '!=': [isAny, (a: unknown, b: unknown) => a !== b],
+    '&&': [isAny, (a: unknown, b: unknown) => a && b],
+    '||': [isAny, (a: unknown, b: unknown) => a || b],
 } as const;
 
 function isNumber(x: unknown): x is number {

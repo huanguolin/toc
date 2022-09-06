@@ -48,6 +48,18 @@ export class Scanner {
                         this.addToken(r, r);
                         break;
                     }
+                case '&':
+                    if (this.match('&')) {
+                        const r = '&&';
+                        this.addToken(r, r);
+                        break;
+                    }
+                case '|':
+                    if (this.match('|')) {
+                        const r = '||';
+                        this.addToken(r, r);
+                        break;
+                    }
                     throw new ScanError("Unknown support token at: " + c);
                 case '\u0020':
                     break;
