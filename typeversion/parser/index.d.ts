@@ -11,17 +11,59 @@ export type Parse<Tokens extends Token[], Temp = ParseExpr<Tokens>> =
             : Temp;
 
 // 表达式分类并按照由低到高：
+// logic or:    ||          左结合
+// logic and:   &&          左结合
+// equality:    == !=       左结合
 // relation:    < > <= >=   左结合
 // term:        + -         左结合
 // factor:      * /         左结合
 // unary:       !           右结合
 // primary:     number ()
+type LogicOrOpToken = Token & { type: '||' };
+type LogicAndOpToken = Token & { type: '&&' };
+type EqualityOpToken = Token & { type: '==' | '!=' };
 type RelationOpToken = Token & { type: '<' | '>' | '<=' | '>=' };
 type TermOpToken = Token & { type: '+' | '-' };
 type FactorOpToken = Token & { type: '*' | '/' | '%' };
 type UnaryOpToken = Token & { type: '!' };
 
-type ParseExpr<Tokens extends Token[]> = ParseRelation<Tokens>;
+type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
+
+// logic or part
+type ParseLogicOr<Tokens extends Token[], R = ParseLogicAnd<Tokens>> =
+    R extends ParseSuccess<infer Left, infer Rest>
+        ? ParseLogicOrBody<Left, Rest>
+        : ParseError<'Parse logic *or* fail.'>;
+type ParseLogicOrBody<Left extends Expr, Tokens extends Token[]> =
+    Tokens extends [infer Op extends LogicOrOpToken, ...infer Rest1 extends Token[]]
+        ? ParseLogicAnd<Rest1> extends ParseSuccess<infer Right, infer Rest2>
+            ? ParseLogicOrBody<BuildBinary<Left, Op, Right>, Rest2>
+            : ParseError<`Parse logic *or* of right fail: ${Rest1[0]['lexeme']}`>
+        : ParseSuccess<Left, Tokens>;
+
+// logic and part
+type ParseLogicAnd<Tokens extends Token[], R = ParseEquality<Tokens>> =
+    R extends ParseSuccess<infer Left, infer Rest>
+        ? ParseLogicAndBody<Left, Rest>
+        : ParseError<'Parse logic *and* fail.'>;
+type ParseLogicAndBody<Left extends Expr, Tokens extends Token[]> =
+    Tokens extends [infer Op extends LogicAndOpToken, ...infer Rest1 extends Token[]]
+        ? ParseEquality<Rest1> extends ParseSuccess<infer Right, infer Rest2>
+            ? ParseLogicAndBody<BuildBinary<Left, Op, Right>, Rest2>
+            : ParseError<`Parse logic *and* of right fail: ${Rest1[0]['lexeme']}`>
+        : ParseSuccess<Left, Tokens>;
+
+// equality part
+type ParseEquality<Tokens extends Token[], R = ParseRelation<Tokens>> =
+    R extends ParseSuccess<infer Left, infer Rest>
+        ? ParseEqualityBody<Left, Rest>
+        : ParseError<'Parse equality fail.'>;
+type ParseEqualityBody<Left extends Expr, Tokens extends Token[]> =
+    Tokens extends [infer Op extends EqualityOpToken, ...infer Rest1 extends Token[]]
+        ? ParseRelation<Rest1> extends ParseSuccess<infer Right, infer Rest2>
+            ? ParseEqualityBody<BuildBinary<Left, Op, Right>, Rest2>
+            : ParseError<`Parse equality of right fail: ${Rest1[0]['lexeme']}`>
+        : ParseSuccess<Left, Tokens>;
 
 // relation part
 type ParseRelation<Tokens extends Token[], R = ParseTerm<Tokens>> =

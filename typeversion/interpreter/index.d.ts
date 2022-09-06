@@ -1,6 +1,7 @@
 import { BinaryExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr } from "../parser/Expr";
 import { TokenType } from "../scanner/Token";
-import { Inverse } from "../utils/logic";
+import { EQ } from "../utils/common";
+import { Inverse, IsTrue } from "../utils/logic";
 import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math";
 import { RuntimeError } from './RuntimeError';
 
@@ -30,35 +31,62 @@ type EvalUnaryExpr<
 type EvalBinaryExpr<
     E extends BinaryExpr,
     Op extends TokenType = E['operator']['type'],
-    Left = Interpret<E['left']>,
-    Right = Interpret<E['right']>
+    Left = Interpret<E['left']>
+    // 不能直接求值 Right, 因为 && || 有短路的效果。
 > =
-    Left extends number
-        ? Right extends number
-            ? EvalMath<Op, Left, Right>
-            : RuntimeError<`Right is not a number: ${ExtractError<Left>}`>
-        : RuntimeError<`Left is not a number: ${ExtractError<Right>}`>;
+    Op extends '==' | '!='
+        ? EvalEquality<Op, Left, Interpret<E['right']>>
+        : Op extends '&&' | '||'
+            ? EvalLogicAndOr<Op, E['left'], E['right'], Left>
+            : EvalMath<Op, Left, Interpret<E['right']>>;
 
 
 type ExtractError<E> = E extends { error: infer M extends string } ? M : 'Extract error fail.';
 
-type EvalMath<Op extends TokenType, Left extends number, Right extends number> =
-    Op extends '+'
-        ? Add<Left, Right>
+type EvalLogicAndOr<
+    Op extends '&&' | '||',
+    Left extends Expr,
+    Right extends Expr,
+    LeftVal = Interpret<Left>
+> =
+    Op extends '&&'
+        ? IsTrue<LeftVal> extends true
+            ? LeftVal
+            : Interpret<Right>
+        : Op extends '||'
+            ? IsTrue<LeftVal> extends true
+                ? LeftVal
+                : Interpret<Right>
+            : RuntimeError<`EvalLogicAndOr fail when meet: ${Op}`>
+
+type EvalEquality<Op extends '==' | '!=', Left, Right> =
+    Op extends '=='
+        ? EQ<Left, Right>
+        : Op extends '!='
+            ? Inverse<EQ<Left, Right>>
+            : RuntimeError<`EvalEquality fail when meet: ${Op}`>
+
+type IsNumbers<N1 extends number, N2 extends number> = [N1, N2];
+// type t = [1, 2] extends IsNumbers<infer A, infer B> ? A : never;
+type EvalMath<Op extends TokenType, Left, Right> =
+[Left, Right] extends IsNumbers<infer N1, infer N2>
+    ? Op extends '+'
+        ? Add<N1, N2>
         : Op extends '-'
-            ? Sub<Left, Right>
+            ? Sub<N1, N2>
             : Op extends '*'
-                ? Mul<Left, Right>
+                ? Mul<N1, N2>
                 : Op extends '/'
-                    ? Div<Left, Right>
+                    ? Div<N1, N2>
                     : Op extends '%'
-                        ? Mod<Left, Right>
+                        ? Mod<N1, N2>
                         : Op extends '<'
-                            ? LT<Left, Right>
+                            ? LT<N1, N2>
                             : Op extends '>'
-                                ? GT<Left, Right>
+                                ? GT<N1, N2>
                                 : Op extends '<='
-                                    ? LTE<Left, Right>
+                                    ? LTE<N1, N2>
                                     : Op extends '>='
-                                        ? GTE<Left, Right>
-                                        : RuntimeError<`Unknown binary operator: ${Op}`>;
+                                        ? GTE<N1, N2>
+                                        : RuntimeError<`Unknown binary operator: ${Op}`>
+    : RuntimeError<`EvalMath fail, Left or Right is not a number: left:${ExtractError<Left>}, right:${ExtractError<Right>}`>;

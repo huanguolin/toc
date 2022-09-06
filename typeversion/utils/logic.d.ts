@@ -17,3 +17,6 @@ type tIsFalse6 = IsFalse<' 0 '>;
 type tIsFalse7 = IsFalse<false>;
 
 export type Inverse<T> = IsFalse<T>;
+
+export type IsTrue<T> = IsFalse<T> extends true ? false : true;
+type tIsTrue = IsTrue<0>;
