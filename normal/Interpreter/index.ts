@@ -6,6 +6,27 @@ import { LiteralExpr } from "../Parser/LiteralExpr";
 import { UnaryExpr } from "../Parser/UnaryExpr";
 import { RuntimeError } from "./RuntimeError";
 
+const BinaryEvalMapping = {
+    '+': [isNumber, (a: number, b: number) => a + b],
+    '-': [isNumber, (a: number, b: number) => a - b],
+    '*': [isNumber, (a: number, b: number) => a * b],
+    '/': [isNumber, (a: number, b: number) => a / b],
+    '<': [isNumber, (a: number, b: number) => a < b],
+    '>': [isNumber, (a: number, b: number) => a > b],
+    '<=': [isNumber, (a: number, b: number) => a <= b],
+    '>=': [isNumber, (a: number, b: number) => a >= b],
+    '==': [isAny, (a: unknown, b: unknown) => a === b],
+    '!=': [isAny, (a: unknown, b: unknown) => a !== b],
+} as const;
+
+function isNumber(x: unknown): x is number {
+    return typeof x === 'number';
+}
+
+function isAny(x: unknown): x is any {
+    return true;
+}
+
 export class Interpreter implements IVisitor<unknown> {
     private expr: IExpr;
 
@@ -21,20 +42,17 @@ export class Interpreter implements IVisitor<unknown> {
         const operator = expr.operator;
         const left = expr.left.accept(this);
         const right = expr.right.accept(this);
-        if (this.isNumber(left) && this.isNumber(right)) {
-            switch (operator.type) {
-                case '+': return left + right;
-                case '-': return left - right;
-                case '*': return left * right;
-                case '/': return left / right;
-                case '<': return left < right;
-                case '>': return left > right;
-                case '<=': return left <= right;
-                case '>=': return left >= right;
-                default: throw new RuntimeError('Unknown operator: ' + operator.lexeme);
-            }
+
+        const mapping = BinaryEvalMapping[operator.type];
+        if (!mapping) {
+            throw new RuntimeError('Unknown operator: ' + operator.lexeme);
+        }
+
+        const [check, evalFn] = mapping;
+        if (check(left) && check(right)) {
+            return evalFn(left, right);
         } else {
-            throw new RuntimeError(`Require two numbers, but get: left=${left}, right=${right}`);
+            throw new RuntimeError(`Check data type failed for operator ${operator.type}: left=${left}, right=${right}`);
         }
     }
 
@@ -52,9 +70,5 @@ export class Interpreter implements IVisitor<unknown> {
 
     visitLiteralExpr(expr: LiteralExpr): number | boolean {
         return expr.value;
-    }
-
-    isNumber(x: unknown): x is number {
-        return typeof x === 'number';
     }
 }

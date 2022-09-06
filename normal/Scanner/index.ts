@@ -21,22 +21,34 @@ export class Scanner {
         while (!this.isAtEnd()) {
             let c = this.advance();
             switch (c) {
-                case '<':
-                case '>':
-                    if (this.match('=')) {
-                        const r = (c + '=') as TokenType;
-                        this.addToken(r, r);
-                        break;
-                    }
                 case '(':
                 case ')':
                 case '*':
                 case '/':
                 case '+':
                 case '-':
-                case '!':
                     this.addToken(c, c);
                     break;
+                case '<':
+                case '>':
+                    if (this.match('=')) {
+                        c += '=';
+                    }
+                    this.addToken(c as TokenType, c);
+                    break;
+                case '!':
+                    if (this.match('=')) {
+                        c += '=';
+                    }
+                    this.addToken(c as TokenType, c);
+                    break;
+                case '=':
+                    if (this.match('=')) {
+                        const r = '==';
+                        this.addToken(r, r);
+                        break;
+                    }
+                    throw new ScanError("Unknown support token at: " + c);
                 case '\u0020':
                     break;
                 default:

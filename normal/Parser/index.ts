@@ -22,13 +22,24 @@ export class Parser {
     }
 
     // 表达式分类并按照由低到高：
+    // equality:    == !=       左结合
     // relation:    < > <= >=   左结合
     // term:        + -         左结合
     // factor:      * /         左结合
     // unary:       !           右结合
     // primary:     number ()
     private expression(): IExpr {
-        return this.relation();
+        return this.equality();
+    }
+
+    private equality(): IExpr {
+        let expr: IExpr = this.relation();
+        while (this.match('==', '!=')) {
+            const operator = this.previous();
+            const right = this.relation();
+            expr = new BinaryExpr(expr, operator, right);
+        }
+        return expr;
     }
 
     private relation(): IExpr {
