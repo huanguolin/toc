@@ -4,7 +4,8 @@ import { AlphaChars, NumChars, NumStr, PushChar, ShiftChar, TrimStart } from "..
 import { ScanError, ScanSuccess } from "./ScanResult";
 import { BuildToken, EOF, TokenType } from "./Token";
 
-type Operators =
+type SingleOperators =
+    | ';'
     | '('
     | ')'
     | '+'
@@ -37,8 +38,8 @@ type ScanOperator<S extends string, TS extends string = TrimStart<S>> =
                 ? ScanSuccess<BuildToken<`${C1}${C2}`, `${C1}${C2}`>, TrimStart<R>>
                 : TS extends OpOr<infer C1, infer C2, infer R>
                     ? ScanSuccess<BuildToken<`${C1}${C2}`, `${C1}${C2}`>, TrimStart<R>>
-                    : TS extends `${infer C extends Operators}${infer R extends string}`
-                        ? ScanSuccess<BuildToken<Safe<C, Operators>, C>, TrimStart<R>>
+                    : TS extends `${infer C extends SingleOperators}${infer R extends string}`
+                        ? ScanSuccess<BuildToken<Safe<C, SingleOperators>, C>, TrimStart<R>>
                         : ScanError<'Not match an operator.'>;
 
 type ScanNumber<S extends string, N extends NumStr | '' = ''> =

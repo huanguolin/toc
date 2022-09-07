@@ -1,127 +1,14 @@
 import { Token } from "../scanner/Token";
-import { BuildBinary, BuildGroup, BuildLiteral, BuildUnary, Expr, GroupExpr } from "./Expr";
-import { ParseError, ParseSuccess } from "./ParseResult";
 import { EOF } from "../scanner/Token";
+import { ParseStmt, ParseStmtError, ParseStmtSuccess } from "./ParseStmtHelper";
+import { Stmt } from "./Stmt";
+import { Push } from "../utils/array";
 
-export type Parse<Tokens extends Token[], Temp = ParseExpr<Tokens>> =
+export type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
     Tokens extends [infer E extends EOF]
-        ? BuildLiteral<0>
-        : Temp extends ParseSuccess<infer Result, infer Rest extends [EOF]>
-            ? Result
-            : Temp;
-
-// 表达式分类并按照由低到高：
-// logic or:    ||          左结合
-// logic and:   &&          左结合
-// equality:    == !=       左结合
-// relation:    < > <= >=   左结合
-// term:        + -         左结合
-// factor:      * /         左结合
-// unary:       !           右结合
-// primary:     number ()
-type LogicOrOpToken = Token & { type: '||' };
-type LogicAndOpToken = Token & { type: '&&' };
-type EqualityOpToken = Token & { type: '==' | '!=' };
-type RelationOpToken = Token & { type: '<' | '>' | '<=' | '>=' };
-type TermOpToken = Token & { type: '+' | '-' };
-type FactorOpToken = Token & { type: '*' | '/' | '%' };
-type UnaryOpToken = Token & { type: '!' };
-
-type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
-
-// logic or part
-type ParseLogicOr<Tokens extends Token[], R = ParseLogicAnd<Tokens>> =
-    R extends ParseSuccess<infer Left, infer Rest>
-        ? ParseLogicOrBody<Left, Rest>
-        : ParseError<'Parse logic *or* fail.'>;
-type ParseLogicOrBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends [infer Op extends LogicOrOpToken, ...infer Rest1 extends Token[]]
-        ? ParseLogicAnd<Rest1> extends ParseSuccess<infer Right, infer Rest2>
-            ? ParseLogicOrBody<BuildBinary<Left, Op, Right>, Rest2>
-            : ParseError<`Parse logic *or* of right fail: ${Rest1[0]['lexeme']}`>
-        : ParseSuccess<Left, Tokens>;
-
-// logic and part
-type ParseLogicAnd<Tokens extends Token[], R = ParseEquality<Tokens>> =
-    R extends ParseSuccess<infer Left, infer Rest>
-        ? ParseLogicAndBody<Left, Rest>
-        : ParseError<'Parse logic *and* fail.'>;
-type ParseLogicAndBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends [infer Op extends LogicAndOpToken, ...infer Rest1 extends Token[]]
-        ? ParseEquality<Rest1> extends ParseSuccess<infer Right, infer Rest2>
-            ? ParseLogicAndBody<BuildBinary<Left, Op, Right>, Rest2>
-            : ParseError<`Parse logic *and* of right fail: ${Rest1[0]['lexeme']}`>
-        : ParseSuccess<Left, Tokens>;
-
-// equality part
-type ParseEquality<Tokens extends Token[], R = ParseRelation<Tokens>> =
-    R extends ParseSuccess<infer Left, infer Rest>
-        ? ParseEqualityBody<Left, Rest>
-        : ParseError<'Parse equality fail.'>;
-type ParseEqualityBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends [infer Op extends EqualityOpToken, ...infer Rest1 extends Token[]]
-        ? ParseRelation<Rest1> extends ParseSuccess<infer Right, infer Rest2>
-            ? ParseEqualityBody<BuildBinary<Left, Op, Right>, Rest2>
-            : ParseError<`Parse equality of right fail: ${Rest1[0]['lexeme']}`>
-        : ParseSuccess<Left, Tokens>;
-
-// relation part
-type ParseRelation<Tokens extends Token[], R = ParseTerm<Tokens>> =
-    R extends ParseSuccess<infer Left, infer Rest>
-        ? ParseRelationBody<Left, Rest>
-        : ParseError<'Parse relation fail.'>;
-type ParseRelationBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends [infer Op extends RelationOpToken, ...infer Rest1 extends Token[]]
-        ? ParseTerm<Rest1> extends ParseSuccess<infer Right, infer Rest2>
-            ? ParseRelationBody<BuildBinary<Left, Op, Right>, Rest2>
-            : ParseError<`Parse relation of right fail: ${Rest1[0]['lexeme']}`>
-        : ParseSuccess<Left, Tokens>;
-
-// term part
-type ParseTerm<Tokens extends Token[], R = ParseFactor<Tokens>> =
-    R extends ParseSuccess<infer Left, infer Rest>
-        ? ParseTermBody<Left, Rest>
-        : ParseError<'Parse term fail.'>;
-type ParseTermBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends [infer Op extends TermOpToken, ...infer Rest1 extends Token[]]
-        ? ParseFactor<Rest1> extends ParseSuccess<infer Right, infer Rest2>
-            ? ParseTermBody<BuildBinary<Left, Op, Right>, Rest2>
-            : ParseError<`Parse term of right fail: ${Rest1[0]['lexeme']}`>
-        : ParseSuccess<Left, Tokens>;
-
-// factor part
-type ParseFactor<Tokens extends Token[], R = ParseUnary<Tokens>> =
-    R extends ParseSuccess<infer Left, infer Rest>
-        ? ParseFactorBody<Left, Rest>
-        : ParseError<'Parse factor fail.'>;
-type ParseFactorBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends [infer Op extends FactorOpToken, ...infer Rest1 extends Token[]]
-        ? ParseUnary<Rest1> extends ParseSuccess<infer Right, infer Rest2>
-            ? ParseFactorBody<BuildBinary<Left, Op, Right>, Rest2>
-            : ParseError<`Parse factor of right fail: ${Rest1[0]['lexeme']}`>
-        : ParseSuccess<Left, Tokens>;
-
-
-// unary part
-type ParseUnary<Tokens extends Token[]> =
-    Tokens extends [infer Op extends UnaryOpToken, ...infer Rest1 extends Token[]]
-        ? ParseUnary<Rest1> extends ParseSuccess<infer Expr, infer Rest2>
-            ? ParseSuccess<BuildUnary<Op, Expr>, Rest2>
-            : ParseError<`ParseUnary error after ${Op["lexeme"]}`>
-        : ParsePrimary<Tokens>;
-
-// primary part
-type ParsePrimary<Tokens extends Token[]> =
-    Tokens extends [infer E extends Token, ...infer R extends Token[]]
-        ? E extends { type: 'number', value: infer V extends number }
-            ? ParseSuccess<BuildLiteral<V>, R>
-            : E extends { type: infer B extends 'true' | 'false' }
-                ? ParseSuccess<BuildLiteral<B extends 'true' ? true : false>, R>
-                : E extends { type: '(' }
-                    ? ParseExpr<R> extends ParseSuccess<infer G, infer RG>
-                        ? RG extends [infer EP extends { type: ')' }, ...infer Rest extends Token[]]
-                            ? ParseSuccess<BuildGroup<G>, Rest>
-                            : ParseError<`Group not match ')'.`>
-                        : ParseError<`Parse Group expression fail.`>
-            : ParseError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
-        : ParseError<`ParsePrimary fail`>;
+        ? Stmts
+        : ParseStmt<Tokens> extends infer Result
+            ? Result extends ParseStmtSuccess<infer R, infer Rest extends Token[]>
+                ? Parse<Rest, Push<Stmts, R>>
+                : Result // error
+            : ParseStmtError<'Impossible here.'>;
