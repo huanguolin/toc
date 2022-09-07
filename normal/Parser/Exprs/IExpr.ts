@@ -1,12 +1,12 @@
-import { IVisitor } from "./IVisitor";
+import { IExprVisitor } from "./IExprVisitor";
 
 export type ExprType =
-    |'group'
+    | 'group'
     | 'binary'
     | 'unary'
     | 'literal';
 
 export interface IExpr {
     type: ExprType;
-    accept: <R>(visitor: IVisitor<R>) => R;
+    accept: <R>(visitor: IExprVisitor<R>) => R;
 }

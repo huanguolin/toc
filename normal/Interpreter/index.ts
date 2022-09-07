@@ -1,9 +1,12 @@
-import { BinaryExpr } from "../Parser/BinaryExpr";
-import { GroupExpr } from "../Parser/GroupExpr";
-import { IExpr } from "../Parser/IExpr";
-import { IVisitor } from "../Parser/IVisitor";
-import { LiteralExpr } from "../Parser/LiteralExpr";
-import { UnaryExpr } from "../Parser/UnaryExpr";
+import { BinaryExpr } from "../Parser/Exprs/BinaryExpr";
+import { GroupExpr } from "../Parser/Exprs/GroupExpr";
+import { IExpr } from "../Parser/Exprs/IExpr";
+import { IExprVisitor } from "../Parser/Exprs/IExprVisitor";
+import { LiteralExpr } from "../Parser/Exprs/LiteralExpr";
+import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
+import { ExprStmt } from "../Parser/Stmts/ExprStmt";
+import { IStmt } from "../Parser/Stmts/IStmt";
+import { IStmtVisitor } from "../Parser/Stmts/IStmtVisitor";
 import { RuntimeError } from "./RuntimeError";
 
 const BinaryEvalMapping = {
@@ -29,15 +32,23 @@ function isAny(x: unknown): x is any {
     return true;
 }
 
-export class Interpreter implements IVisitor<unknown> {
-    private expr: IExpr;
+export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<void> {
+    private stmts: IStmt[];
 
-    constructor(expr: IExpr) {
-        this.expr = expr;
+    constructor(stmts: IStmt[]) {
+        this.stmts = stmts;
     }
 
     interpret() {
-        return this.expr.accept(this);
+        for (let i = 0; i < this.stmts.length; i++) {
+            const stmt = this.stmts[i];
+            stmt.accept(this);
+        }
+    }
+
+    visitExprStmt(stmt: ExprStmt): void {
+        const value = stmt.expression.accept(this);
+        console.log(value);
     }
 
     visitBinaryExpr(expr: BinaryExpr): number | boolean {

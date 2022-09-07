@@ -1,6 +1,6 @@
-import { Token } from "../Scanner/Token";
+import { Token } from "../../Scanner/Token";
 import { ExprType, IExpr } from "./IExpr";
-import { IVisitor } from "./IVisitor";
+import { IExprVisitor } from "./IExprVisitor";
 
 export class UnaryExpr implements IExpr {
     type: ExprType = 'unary';
@@ -12,7 +12,7 @@ export class UnaryExpr implements IExpr {
         this.expression = expr;
     }
 
-    accept<R>(visitor: IVisitor<R>): R {
+    accept<R>(visitor: IExprVisitor<R>): R {
         return visitor.visitUnaryExpr(this);
     }
 }

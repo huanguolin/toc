@@ -3,7 +3,7 @@ import { GroupExpr } from "./GroupExpr";
 import { LiteralExpr } from "./LiteralExpr";
 import { UnaryExpr } from "./UnaryExpr";
 
-export interface IVisitor<T> {
+export interface IExprVisitor<T> {
     visitBinaryExpr: (expr: BinaryExpr) => T;
     visitGroupExpr: (expr: GroupExpr) => T;
     visitUnaryExpr: (expr: UnaryExpr) => T;

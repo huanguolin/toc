@@ -16,7 +16,7 @@ function main() {
     process.stdout.write('> ');
     rl.on('line', function (line) {
         try {
-            console.log('= ' + calculator(line));
+            run(line);
         } catch (e) {
             console.log('Error: ', e);
         }
@@ -24,7 +24,7 @@ function main() {
     });
 }
 
-function calculator(source: string) {
+function run(source: string) {
     const scanner = new Scanner(source);
     const parser = new Parser(scanner.scan());
     const interpreter = new Interpreter(parser.parse());

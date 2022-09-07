@@ -3,6 +3,7 @@ export type TokenType =
     | 'number'
     | 'true'
     | 'false'
+    | ';'
     | '('
     | ')'
     | '+'

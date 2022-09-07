@@ -1,6 +1,6 @@
-import { Token } from "../Scanner/Token";
+import { Token } from "../../Scanner/Token";
 import { ExprType, IExpr } from "./IExpr";
-import { IVisitor } from "./IVisitor";
+import { IExprVisitor } from "./IExprVisitor";
 
 export class BinaryExpr implements IExpr {
     type: ExprType = 'binary';
@@ -14,7 +14,7 @@ export class BinaryExpr implements IExpr {
         this.right = right;
     }
 
-    accept<R>(visitor: IVisitor<R>): R {
+    accept<R>(visitor: IExprVisitor<R>): R {
         return visitor.visitBinaryExpr(this);
     }
 }

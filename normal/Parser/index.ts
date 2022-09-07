@@ -1,9 +1,11 @@
 import { Token, TokenType } from "../Scanner/Token";
-import { BinaryExpr } from "./BinaryExpr";
-import { GroupExpr } from "./GroupExpr";
-import { IExpr } from "./IExpr";
-import { LiteralExpr } from "./LiteralExpr";
-import { UnaryExpr } from "./UnaryExpr";
+import { BinaryExpr } from "./Exprs/BinaryExpr";
+import { GroupExpr } from "./Exprs/GroupExpr";
+import { IExpr } from "./Exprs/IExpr";
+import { LiteralExpr } from "./Exprs/LiteralExpr";
+import { UnaryExpr } from "./Exprs/UnaryExpr";
+import { ExprStmt } from "./Stmts/ExprStmt";
+import { IStmt } from "./Stmts/IStmt";
 
 export class Parser {
     private tokens: Token[];
@@ -14,11 +16,22 @@ export class Parser {
         this.index = 0;
     }
 
-    parse(): IExpr {
-        if (this.isAtEnd()) {
-            return new LiteralExpr(0);
+    parse(): IStmt[] {
+        const stmts: IStmt[] = [];
+        while (!this.isAtEnd()) {
+            stmts.push(this.statement());
         }
-        return this.expression();
+        return stmts;
+    }
+
+    statement(): IStmt {
+        return this.expressionStatement();
+    }
+
+    expressionStatement(): IStmt {
+        const expr = this.expression();
+        this.consume(';', 'Expect ";" after expression.');
+        return new ExprStmt(expr);
     }
 
     // 表达式分类并按照由低到高：

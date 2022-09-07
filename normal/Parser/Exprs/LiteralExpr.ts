@@ -1,5 +1,5 @@
 import { ExprType, IExpr } from "./IExpr";
-import { IVisitor } from "./IVisitor";
+import { IExprVisitor } from "./IExprVisitor";
 
 export class LiteralExpr implements IExpr {
     type: ExprType = 'literal';
@@ -9,7 +9,7 @@ export class LiteralExpr implements IExpr {
         this.value = value;
     }
 
-    accept<R>(visitor: IVisitor<R>): R {
+    accept<R>(visitor: IExprVisitor<R>): R {
         return visitor.visitLiteralExpr(this);
     }
 }
