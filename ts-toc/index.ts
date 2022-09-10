@@ -16,9 +16,14 @@ function main() {
     process.stdout.write('> ');
     rl.on('line', function (line) {
         try {
-            run(line);
+            const result = run(line);
+            console.log('=', result);
         } catch (e) {
-            console.log('Error: ', e);
+            let errMsg = e;
+            if (e instanceof Error) {
+                errMsg = e.message;
+            }
+            console.error('Error: ', errMsg);
         }
         process.stdout.write('> ');
     });

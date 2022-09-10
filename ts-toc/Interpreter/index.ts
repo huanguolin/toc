@@ -32,7 +32,7 @@ function isAny(x: unknown): x is any {
     return true;
 }
 
-export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<void> {
+export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     private stmts: IStmt[];
 
     constructor(stmts: IStmt[]) {
@@ -40,15 +40,16 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<void> {
     }
 
     interpret() {
+        let lastResult: unknown = null;
         for (let i = 0; i < this.stmts.length; i++) {
             const stmt = this.stmts[i];
-            stmt.accept(this);
+            lastResult = stmt.accept(this);
         }
+        return lastResult;
     }
 
-    visitExprStmt(stmt: ExprStmt): void {
-        const value = stmt.expression.accept(this);
-        console.log(value);
+    visitExprStmt(stmt: ExprStmt): number | boolean {
+        return stmt.expression.accept(this);
     }
 
     visitBinaryExpr(expr: BinaryExpr): number | boolean {
