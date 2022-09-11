@@ -1,10 +1,12 @@
 import { IExprVisitor } from "./IExprVisitor";
 
 export type ExprType =
+    | 'assign'
     | 'group'
     | 'binary'
     | 'unary'
-    | 'literal';
+    | 'literal'
+    | 'variable';
 
 export interface IExpr {
     type: ExprType;

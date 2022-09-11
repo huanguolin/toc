@@ -1,11 +1,9 @@
 import { ScanError } from "./ScanError";
-import { Token, TokenType } from "./Token";
+import { Token } from "./Token";
+import { keywords as keywordList, TokenType } from '../type';
 
 export class Scanner {
-    private static readonly keywords = new Set([
-        'true',
-        'false',
-    ]);
+    private static readonly keywords = new Set(keywordList);
 
     private source: string;
     private index: number;
@@ -47,8 +45,10 @@ export class Scanner {
                     if (this.match('=')) {
                         const r = '==';
                         this.addToken(r, r);
-                        break;
+                    } else {
+                        this.addToken(c, c);
                     }
+                    break;
                 case '&':
                     if (this.match('&')) {
                         const r = '&&';

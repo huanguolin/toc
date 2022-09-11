@@ -1,7 +1,8 @@
 import { IStmtVisitor } from "./IStmtVisitor";
 
 export type StmtType =
-    | 'expression';
+    | 'expression'
+    | 'varDeclaration';
 
 export interface IStmt {
     type: StmtType;

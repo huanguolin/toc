@@ -3,6 +3,7 @@ import { Parser } from './Parser';
 import { Scanner } from './Scanner';
 
 const readline = require('readline');
+const interpreter = new Interpreter();
 
 main();
 
@@ -32,6 +33,5 @@ function main() {
 function run(source: string) {
     const scanner = new Scanner(source);
     const parser = new Parser(scanner.scan());
-    const interpreter = new Interpreter(parser.parse());
-    return interpreter.interpret();
+    return interpreter.interpret(parser.parse());
 }

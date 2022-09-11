@@ -1,11 +1,16 @@
-import { Token, TokenType } from "../Scanner/Token";
+import { Token } from "../Scanner/Token";
+import { TokenType } from "../type";
+import { AssignExpr } from "./Exprs/AssignExpr";
 import { BinaryExpr } from "./Exprs/BinaryExpr";
 import { GroupExpr } from "./Exprs/GroupExpr";
 import { IExpr } from "./Exprs/IExpr";
 import { LiteralExpr } from "./Exprs/LiteralExpr";
 import { UnaryExpr } from "./Exprs/UnaryExpr";
+import { VariableExpr } from "./Exprs/VariableExpr";
+import { ParseError } from "./ParseError";
 import { ExprStmt } from "./Stmts/ExprStmt";
 import { IStmt } from "./Stmts/IStmt";
+import { VarStmt } from "./Stmts/varStmt";
 
 export class Parser {
     private tokens: Token[];
@@ -24,17 +29,32 @@ export class Parser {
         return stmts;
     }
 
-    statement(): IStmt {
+    private statement(): IStmt {
+        if (this.match('var')) {
+            return this.varDeclaration();
+        }
         return this.expressionStatement();
     }
 
-    expressionStatement(): IStmt {
+    private varDeclaration(): IStmt {
+        this.consume('identifier', `Expect var name.`);
+        const name = this.previous();
+        let initializer = null;
+        if (this.match('=')) {
+            initializer = this.expression();
+        }
+        this.consume(';', `Expect ';' after var declaration.`);
+        return new VarStmt(name, initializer);
+    }
+
+    private expressionStatement(): IStmt {
         const expr = this.expression();
         this.consume(';', 'Expect ";" after expression.');
         return new ExprStmt(expr);
     }
 
     // 表达式分类并按照由低到高：
+    // assign:      =           右结合
     // logic or:    ||          左结合
     // logic and:   &&          左结合
     // equality:    == !=       左结合
@@ -44,7 +64,22 @@ export class Parser {
     // unary:       !           右结合
     // primary:     number ()
     private expression(): IExpr {
-        return this.logicOr();
+        return this.assign();
+    }
+
+
+    private assign(): IExpr {
+        const left = this.logicOr();
+        if (this.match('=')) {
+            const right = this.assign();
+
+            if (left instanceof VariableExpr) {
+                return new AssignExpr(left.name, right);
+            }
+
+            throw new ParseError('Invalid assignment target.');
+        }
+        return left;
     }
 
     private logicOr() {
@@ -119,14 +154,20 @@ export class Parser {
     private primary(): IExpr {
         if (this.match('number')) {
             return new LiteralExpr(this.previous().literal as number);
-        } else if (this.match('true', 'false')) {
-            return new LiteralExpr(this.previous().type === 'true');
+        } else if (this.match('true', 'false', 'null')) {
+            const type = this.previous().type;
+            if (type === 'null') {
+                return new LiteralExpr(null);
+            }
+            return new LiteralExpr(type === 'true');
+        } else if (this.match('identifier')) {
+            return new VariableExpr(this.previous());
         } else if (this.match('(')) {
             const expr = this.expression();
             this.consume(')', 'Expect ")" after expression.');
             return new GroupExpr(expr);
         }
-        throw new Error('Expect expression.');
+        throw new ParseError(`Expect expression, but got token: ${this.current().lexeme}.`);
     }
 
     private isAtEnd() {
@@ -169,6 +210,6 @@ export class Parser {
             this.advance();
             return;
         }
-        throw new Error(message);
+        throw new ParseError(message);
     }
 }

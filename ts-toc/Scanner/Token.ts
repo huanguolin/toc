@@ -1,25 +1,4 @@
-export type TokenType =
-    | 'identifier'
-    | 'number'
-    | 'true'
-    | 'false'
-    | ';'
-    | '('
-    | ')'
-    | '+'
-    | '-'
-    | '/'
-    | '*'
-    | '<'
-    | '>'
-    | '<='
-    | '>='
-    | '=='
-    | '!='
-    | '&&'
-    | '||'
-    | '!'
-    | 'EOF';
+import { TokenType } from "../type";
 
 export class Token {
     type: TokenType;

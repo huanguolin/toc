@@ -1,1 +1,5 @@
-export class ScanError extends Error {}
+export class ScanError extends Error {
+    constructor(message: string) {
+        super('[ScanError]: ' + message);
+    }
+}

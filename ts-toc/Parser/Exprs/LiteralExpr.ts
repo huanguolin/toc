@@ -1,11 +1,12 @@
+import { ValueType } from "../../type";
 import { ExprType, IExpr } from "./IExpr";
 import { IExprVisitor } from "./IExprVisitor";
 
 export class LiteralExpr implements IExpr {
     type: ExprType = 'literal';
-    value: number | boolean;
+    value: ValueType;
 
-    constructor(value: number | boolean) {
+    constructor(value: ValueType) {
         this.value = value;
     }
 

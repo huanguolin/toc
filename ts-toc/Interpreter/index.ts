@@ -1,12 +1,16 @@
+import { AssignExpr } from "../Parser/Exprs/AssignExpr";
 import { BinaryExpr } from "../Parser/Exprs/BinaryExpr";
 import { GroupExpr } from "../Parser/Exprs/GroupExpr";
-import { IExpr } from "../Parser/Exprs/IExpr";
 import { IExprVisitor } from "../Parser/Exprs/IExprVisitor";
 import { LiteralExpr } from "../Parser/Exprs/LiteralExpr";
 import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
+import { VariableExpr } from "../Parser/Exprs/VariableExpr";
 import { ExprStmt } from "../Parser/Stmts/ExprStmt";
 import { IStmt } from "../Parser/Stmts/IStmt";
 import { IStmtVisitor } from "../Parser/Stmts/IStmtVisitor";
+import { VarStmt } from "../Parser/Stmts/varStmt";
+import { ValueType } from "../type";
+import { Environment } from "./Environment";
 import { RuntimeError } from "./RuntimeError";
 
 const BinaryEvalMapping = {
@@ -33,13 +37,16 @@ function isAny(x: unknown): x is any {
 }
 
 export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    private global: Environment;
     private stmts: IStmt[];
 
-    constructor(stmts: IStmt[]) {
-        this.stmts = stmts;
+    constructor() {
+        this.global = new Environment(null);
     }
 
-    interpret() {
+    interpret(stmts: IStmt[]) {
+        this.stmts = stmts;
+
         let lastResult: unknown = null;
         for (let i = 0; i < this.stmts.length; i++) {
             const stmt = this.stmts[i];
@@ -48,8 +55,27 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         return lastResult;
     }
 
+    visitVarStmt(stmt: VarStmt): ValueType {
+        let initializer = null;
+        if (stmt.initializer) {
+            initializer = stmt.initializer.accept(this);
+        }
+        this.global.define(stmt.name, initializer);
+        return initializer;
+    }
+
     visitExprStmt(stmt: ExprStmt): number | boolean {
         return stmt.expression.accept(this);
+    }
+
+    visitAssignExpr(expr: AssignExpr): ValueType {
+        const v = expr.right.accept(this);
+        this.global.assign(expr.varName, v);
+        return v;
+    }
+
+    visitVariableExpr(expr: VariableExpr): ValueType {
+        return this.global.get(expr.name);
     }
 
     visitBinaryExpr(expr: BinaryExpr): number | boolean {
