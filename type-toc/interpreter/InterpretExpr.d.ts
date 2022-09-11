@@ -1,5 +1,5 @@
 import { BinaryExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr } from "../parser/Expr";
-import { TokenType } from "../scanner/Token";
+import { TokenType } from "../type";
 import { EQ, Safe } from "../utils/common";
 import { Inverse, IsTrue } from "../utils/logic";
 import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math";

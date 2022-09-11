@@ -1,4 +1,5 @@
 import { Token } from "../scanner/Token";
+import { ValueType } from "../type";
 
 export type ExprType =
     | 'group'
@@ -12,7 +13,7 @@ export interface Expr {
 
 export interface LiteralExpr extends Expr {
     type: 'literal';
-    value: number | boolean;
+    value: ValueType;
 }
 
 export interface GroupExpr extends Expr {
@@ -33,7 +34,7 @@ export interface UnaryExpr extends Expr {
     expression: Expr;
 }
 
-export type BuildLiteralExpr<V extends number | boolean> = { type: 'literal', value: V };
+export type BuildLiteralExpr<V extends ValueType> = { type: 'literal', value: V };
 export type BuildGroupExpr<E extends Expr> = { type: 'group', expression: E };
 export type BuildBinaryExpr<L extends Expr, Op extends Token, R extends Expr> = { type: 'binary', left: L, operator: Op, right: R };
 export type BuildUnaryExpr<Op extends Token, E extends Expr> = { type: 'unary', operator: Op, expression: E };

@@ -1,5 +1,6 @@
 import { ErrorResult, SuccessResult } from '../Result';
 import { Token } from '../scanner/Token';
+import { Keywords } from '../type';
 import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr } from "./Expr";
 
 export type ParseExprError<M extends string> = ErrorResult<`[ParseExprError]: ${M}`>;
@@ -110,8 +111,8 @@ type ParsePrimary<Tokens extends Token[]> =
     Tokens extends [infer E extends Token, ...infer R extends Token[]]
         ? E extends { type: 'number', value: infer V extends number }
             ? ParseExprSuccess<BuildLiteralExpr<V>, R>
-            : E extends { type: infer B extends 'true' | 'false' }
-                ? ParseExprSuccess<BuildLiteralExpr<B extends 'true' ? true : false>, R>
+            : E extends { type: infer B extends keyof Keywords }
+                ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
                 : E extends { type: '(' }
                     ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
                         ? RG extends [infer EP extends { type: ')' }, ...infer Rest extends Token[]]
@@ -120,3 +121,11 @@ type ParsePrimary<Tokens extends Token[]> =
                         : ParseExprError<`Parse Group expression fail.`>
             : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
         : ParseExprError<`ParsePrimary fail`>;
+
+type ToValue<K extends keyof KeywordValueMapping> = KeywordValueMapping[K];
+
+type KeywordValueMapping = {
+    true: true;
+    false: false;
+    null: null;
+};

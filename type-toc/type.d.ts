@@ -4,6 +4,7 @@ export type TokenType =
     | 'number'
     | 'true'
     | 'false'
+    | 'null'
     | ';'
     | '('
     | ')'
@@ -26,6 +27,7 @@ export type TokenType =
 export type Keywords = {
     true: true,
     false: true,
+    null: true,
 };
 
 export type ValueType = number | boolean | null;
