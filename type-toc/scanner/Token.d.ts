@@ -1,29 +1,6 @@
+import { TokenType } from "../type";
 import { EQ, Safe } from "../utils/common";
 import { NumStr, Str2Num } from "../utils/string";
-
-export type TokenType =
-    | 'identifier'
-    | 'number'
-    | 'true'
-    | 'false'
-    | ';'
-    | '('
-    | ')'
-    | '+'
-    | '-'
-    | '/'
-    | '*'
-    | '%'
-    | '<'
-    | '>'
-    | '<='
-    | '>='
-    | '=='
-    | '!='
-    | '&&'
-    | '||'
-    | '!'
-    | 'EOF';
 
 export type Token = {
     type: TokenType,

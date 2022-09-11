@@ -2,7 +2,8 @@ import { Push } from "../utils/array";
 import { Safe } from "../utils/common";
 import { AlphaChars, NumChars, NumStr, PushChar, ShiftChar, TrimStart } from "../utils/string";
 import { ScanError, ScanSuccess } from "./ScanResult";
-import { BuildToken, EOF, TokenType } from "./Token";
+import { BuildToken, EOF } from "./Token";
+import { Keywords, TokenType } from '../type';
 
 type SingleOperators =
     | ';'
@@ -17,10 +18,6 @@ type SingleOperators =
     | '>'
     | '!';
 
-type Keywords = {
-    true: true,
-    false: true,
-};
 
 type IsKeywords<T extends string> = T extends keyof Keywords ? true : false;
 
