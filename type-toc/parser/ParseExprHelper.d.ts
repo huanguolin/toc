@@ -1,14 +1,16 @@
 import { ErrorResult, SuccessResult } from '../Result';
 import { Token } from '../scanner/Token';
-import { Keywords } from '../type';
-import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr } from "./Expr";
+import { Keywords, ValueType } from '../type';
+import { Safe } from '../utils/common';
+import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr, BuildVariableExpr, VariableExpr, BuildAssignExpr } from "./Expr";
 
 export type ParseExprError<M extends string> = ErrorResult<`[ParseExprError]: ${M}`>;
 export type ParseExprSuccess<R extends Expr, T extends Token[]> = SuccessResult<{ expr: R, rest: T }>;
 
-export type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
+export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 
 // 表达式分类并按照由低到高：
+// assign:      =           右结合
 // logic or:    ||          左结合
 // logic and:   &&          左结合
 // equality:    == !=       左结合
@@ -17,6 +19,7 @@ export type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
 // factor:      * /         左结合
 // unary:       !           右结合
 // primary:     number ()
+type AssignOpToken = Token & { type: '=' };
 type LogicOrOpToken = Token & { type: '||' };
 type LogicAndOpToken = Token & { type: '&&' };
 type EqualityOpToken = Token & { type: '==' | '!=' };
@@ -24,6 +27,20 @@ type RelationOpToken = Token & { type: '<' | '>' | '<=' | '>=' };
 type TermOpToken = Token & { type: '+' | '-' };
 type FactorOpToken = Token & { type: '*' | '/' | '%' };
 type UnaryOpToken = Token & { type: '!' };
+
+// assign part
+type ParseAssign<Tokens extends Token[], R = ParseLogicOr<Tokens>> =
+    R extends ParseExprSuccess<infer Left, infer Rest>
+        ? ParseAssignBody<Left, Rest>
+        : R; // error
+type ParseAssignBody<Left extends Expr, Tokens extends Token[]> =
+Tokens extends [infer Op extends AssignOpToken, ...infer Rest1 extends Token[]]
+    ? ParseAssign<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
+        ? Left extends VariableExpr
+            ? ParseExprSuccess<BuildAssignExpr<Left['name'], Right>, Rest2>
+            : ParseExprError<`Invalid assignment target: ${Left['type']}}`>
+        : ParseExprError<`Parse right of assign variable fail: ${Rest1[0]['lexeme']}`>
+    : ParseExprSuccess<Left, Tokens>;
 
 // logic or part
 type ParseLogicOr<Tokens extends Token[], R = ParseLogicAnd<Tokens>> =
@@ -113,16 +130,18 @@ type ParsePrimary<Tokens extends Token[]> =
             ? ParseExprSuccess<BuildLiteralExpr<V>, R>
             : E extends { type: infer B extends keyof Keywords }
                 ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
-                : E extends { type: '(' }
-                    ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
-                        ? RG extends [infer EP extends { type: ')' }, ...infer Rest extends Token[]]
-                            ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
-                            : ParseExprError<`Group not match ')'.`>
-                        : ParseExprError<`Parse Group expression fail.`>
-            : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
+                : E extends Token & { type: 'identifier' }
+                    ? ParseExprSuccess<BuildVariableExpr<E>, R>
+                    : E extends { type: '(' }
+                        ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
+                            ? RG extends [infer EP extends { type: ')' }, ...infer Rest extends Token[]]
+                                ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
+                                : ParseExprError<`Group not match ')'.`>
+                            : ParseExprError<`Parse Group expression fail.`>
+                        : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
         : ParseExprError<`ParsePrimary fail`>;
 
-type ToValue<K extends keyof KeywordValueMapping> = KeywordValueMapping[K];
+type ToValue<K extends keyof Keywords> = Safe<KeywordValueMapping[Safe<K, keyof KeywordValueMapping>], ValueType>;
 
 type KeywordValueMapping = {
     true: true;

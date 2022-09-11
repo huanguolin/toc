@@ -8,7 +8,7 @@ export type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
     Tokens extends [infer E extends EOF]
         ? Stmts
         : ParseStmt<Tokens> extends infer Result
-            ? Result extends ParseStmtSuccess<infer R, infer Rest extends Token[]>
+            ? Result extends ParseStmtSuccess<infer R, infer Rest>
                 ? Parse<Rest, Push<Stmts, R>>
                 : Result // error
             : ParseStmtError<'Impossible here.'>;
