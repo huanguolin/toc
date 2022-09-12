@@ -9,3 +9,5 @@ export type TokenLike<T extends OpOrKeywordTokenType | Partial<Token>> =
         : T extends Partial<Token>
             ? Token & T
             : never;
+
+export type Match<T extends Token, R extends Token[]> = [T, ...R];
