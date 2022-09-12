@@ -1,7 +1,8 @@
 import { ErrorResult, SuccessResult } from "../Result";
 import { BuildToken, EOF, Token, TokenLike } from "../scanner/Token";
+import { Push } from "../utils/array";
 import { ParseExpr, ParseExprSuccess } from "./ParseExprHelper";
-import { BuildExprStmt, BuildVarStmt, ExprStmt, Stmt } from "./Stmt";
+import { BuildBlockStmt, BuildExprStmt, BuildVarStmt, ExprStmt, Stmt } from "./Stmt";
 
 export type ParseStmtError<M extends string> = ErrorResult<`[ParseStmtError]: ${M}`>;
 export type ParseStmtSuccess<R extends Stmt, T extends Token[]> = SuccessResult<{ stmt: R, rest: T }>;
@@ -10,7 +11,22 @@ type VarKeyWord = TokenLike<{ type: 'var' }>;
 export type ParseStmt<Tokens extends Token[]> =
     Tokens extends [infer Var extends VarKeyWord, ...infer Rest extends Token[]]
         ? ParseVarStmt<Rest>
-        : ParseExprStmt<Tokens>;
+        : Tokens extends [BuildToken<'{', '{'>, ...infer Rest extends Token[]]
+            ? ParseBlockStmt<Rest>
+            : ParseExprStmt<Tokens>;
+
+type ParseBlockStmt<
+    Tokens extends Token[],
+    Stmts extends Stmt[] = [],
+> = Tokens extends [EOF]
+    ? ParseStmtError<'Expect "}" end the block.'>
+    : Tokens extends [infer End extends TokenLike<{ type: '}'}>, ...infer Rest extends Token[]]
+        ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Rest>
+        : ParseBlockStmtBody<ParseStmt<Tokens>, Stmts>;
+type ParseBlockStmtBody<SR, Stmts extends Stmt[]> =
+    SR extends ParseStmtSuccess<infer S, infer R>
+        ? ParseBlockStmt<R, Push<Stmts, S>>
+        : SR; // error
 
 type ParseVarStmt<Tokens extends Token[]> =
     Tokens extends [infer VarName extends TokenLike<{ type: 'identifier' }>, ...infer Rest extends Token[]]

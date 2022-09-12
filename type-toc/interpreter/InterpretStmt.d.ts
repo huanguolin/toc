@@ -1,10 +1,9 @@
 import { Expr } from "../parser/Expr";
-import { ExprStmt, Stmt, VarStmt } from "../parser/Stmt";
+import { BlockStmt, ExprStmt, Stmt, VarStmt } from "../parser/Stmt";
 import { ErrorResult, SuccessResult } from "../Result"
 import { ValueType } from "../type";
-import { EnvDefine, Environment } from "./Environment";
+import { BuildEnv, EnvDefine, Environment } from "./Environment";
 import { InterpretExpr, InterpretExprSuccess } from "./InterpretExpr";
-import { RuntimeError } from "./RuntimeError";
 
 export type InterpretStmtError<M extends string> = ErrorResult<`[InterpretStmtError]: ${M}`>;
 export type InterpretStmtSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
@@ -14,7 +13,26 @@ export type InterpretStmt<S extends Stmt, Env extends Environment> =
         ? InterpretVarStmt<S, Env>
         : S extends ExprStmt
             ? InterpretExprStmt<S, Env>
-            : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+            : S extends BlockStmt
+                ? InterpretBlockStmt<S['stmts'], Env>
+                : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretBlockStmt<
+    Stmts extends Stmt[],
+    Env extends Environment,
+    NewEnv extends Environment = BuildEnv<{}, Env>,
+    LastResult extends ValueType = null
+> = Stmts extends [infer S1 extends Stmt, ...infer Rest extends Stmt[]]
+    ? InterpretBlockStmtBody<InterpretStmt<S1, NewEnv>, Rest, Env>
+    : InterpretStmtSuccess<LastResult, Env>;
+type InterpretBlockStmtBody<
+    RV,
+    Rest extends Stmt[],
+    Env extends Environment
+> = 
+    RV extends InterpretStmtSuccess<infer V, infer NewEnv>
+        ? InterpretBlockStmt<Rest, Env, NewEnv, V>
+        : RV; // error
 
 type InterpretVarStmt<
     S extends VarStmt,

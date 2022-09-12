@@ -25,6 +25,8 @@ type tScan = Scan<'a = b = 8;'>;
 
 
 type SingleOperators =
+    | '{'
+    | '}'
     | ';'
     | '('
     | ')'

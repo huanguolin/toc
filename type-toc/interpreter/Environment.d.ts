@@ -1,7 +1,12 @@
 import { ValueType } from "../type";
 import { RuntimeError } from "./RuntimeError";
 
-export type Environment<
+export type Environment = {
+    store: { [Key: string]: ValueType };
+    outer: Environment | null;
+};
+
+export type BuildEnv<
     Initializer extends EnvMap = {},
     Outer extends Environment | null = null,
 > = {
@@ -16,7 +21,7 @@ export type EnvDefine<
     Store extends EnvMap = Env['store']
 > = Has<Store, Key> extends true
     ? RuntimeError<`Variable '${Key}' already defined.`>
-    : Environment<Set<Store, Key, Value>, Env['outer']>;
+    : BuildEnv<Set<Store, Key, Value>, Env['outer']>;
 
 export type EnvGet<
     Env extends Environment,
@@ -36,7 +41,7 @@ export type EnvAssign<
     Store extends EnvMap = Env['store'],
     Outer extends Environment | null = Env['outer'],
 > = Has<Store, Key> extends true
-    ? Environment<Set<Store, Key, Value>, Outer>
+    ? BuildEnv<Set<Store, Key, Value>, Outer>
     : Outer extends Environment
         ? EnvAssign<Outer, Key, Value>
         : RuntimeError<`Undefined variable '${Key}'.`>;
