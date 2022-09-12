@@ -10,6 +10,7 @@ import { VariableExpr } from "./Exprs/VariableExpr";
 import { ParseError } from "./ParseError";
 import { BlockStmt } from "./Stmts/BlockStmt";
 import { ExprStmt } from "./Stmts/ExprStmt";
+import { IfStmt } from "./Stmts/IfStmt";
 import { IStmt } from "./Stmts/IStmt";
 import { VarStmt } from "./Stmts/varStmt";
 
@@ -35,8 +36,22 @@ export class Parser {
             return this.varDeclaration();
         } else if (this.match('{')) {
             return this.blockStatement();
+        } else if (this.match('if')) {
+            return this.ifStatement();
         }
         return this.expressionStatement();
+    }
+
+    private ifStatement(): IStmt {
+        this.consume('(', 'Expect "(" before if condition.');
+        const condition = this.expression();
+        this.consume(')', 'Expect ")" after if condition.');
+        const ifClause = this.statement();
+        let elseClause = null;
+        if (this.match('else')) {
+            elseClause = this.statement();
+        }
+        return new IfStmt(condition, ifClause, elseClause);
     }
 
     private blockStatement(): IStmt {

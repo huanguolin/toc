@@ -3,7 +3,8 @@ import { IStmtVisitor } from "./IStmtVisitor";
 export type StmtType =
     | 'expression'
     | 'varDeclaration'
-    | 'block';
+    | 'block'
+    | 'if';
 
 export interface IStmt {
     type: StmtType;

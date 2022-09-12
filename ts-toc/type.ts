@@ -1,7 +1,9 @@
 export type TokenType =
     | 'identifier'
-    | 'var'
     | 'number'
+    | 'var'
+    | 'if'
+    | 'else'
     | 'true'
     | 'false'
     | 'null'
@@ -27,6 +29,8 @@ export type TokenType =
     | 'EOF';
 
 export const keywords = [
+    'if',
+    'else',
     'var',
     'true',
     'false',

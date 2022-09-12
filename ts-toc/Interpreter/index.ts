@@ -7,6 +7,7 @@ import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
 import { VariableExpr } from "../Parser/Exprs/VariableExpr";
 import { BlockStmt } from "../Parser/Stmts/BlockStmt";
 import { ExprStmt } from "../Parser/Stmts/ExprStmt";
+import { IfStmt } from "../Parser/Stmts/IfStmt";
 import { IStmt } from "../Parser/Stmts/IStmt";
 import { IStmtVisitor } from "../Parser/Stmts/IStmtVisitor";
 import { VarStmt } from "../Parser/Stmts/varStmt";
@@ -53,6 +54,16 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
             lastResult = stmt.accept(this);
         }
         return lastResult;
+    }
+
+    visitIfStmt(stmt: IfStmt): ValueType {
+        const cond = stmt.condition.accept(this);
+        if (cond) {
+            return stmt.ifClause.accept(this);
+        } else if (stmt.elseClause) {
+            return stmt.elseClause.accept(this);
+        }
+        return null;
     }
 
     visitBlockStmt(blockStmt: BlockStmt): ValueType {
