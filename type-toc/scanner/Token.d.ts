@@ -8,8 +8,6 @@ export type Token = {
     value: number | null,
 };
 
-export type TokenLike<T extends Partial<Token>> = Token & T;
-
 export type BuildToken<
     Type extends TokenType,
     Lexeme extends string,
