@@ -141,4 +141,4 @@ export type GTE<N1 extends number, N2 extends number> =
     EQ<N1, N2> extends true
         ? true
         : Inverse<LT<N1, N2>>;
-type tGTE = GTE<101, 10>;
+type tGTE = GTE<10, 10>;

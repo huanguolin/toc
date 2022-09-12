@@ -80,7 +80,7 @@ type EvalLogicAndOr<
 > = Op extends '&&'
     ? IsTrue<LV> extends true
         ? InterpretExpr<Right, Env>
-        : InterpretExprSuccess<false, Env>
+        : InterpretExprSuccess<LV, Env>
     : Op extends '||'
         ? IsTrue<LV> extends true
             ? InterpretExprSuccess<LV, Env>
