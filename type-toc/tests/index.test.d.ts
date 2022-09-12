@@ -1,5 +1,7 @@
-import type { Equal, Expect } from '@type-challenges/utils';
+import type { Equal, Expect } from './utils';
 import { Toc } from '..';
+
+// expect error can use @ts-expect-error
 
 type cases = [
     // +, -
