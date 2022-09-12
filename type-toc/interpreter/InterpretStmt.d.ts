@@ -1,7 +1,9 @@
 import { Expr } from "../parser/Expr";
-import { BlockStmt, ExprStmt, Stmt, VarStmt } from "../parser/Stmt";
-import { ErrorResult, SuccessResult } from "../Result"
+import { ParseExpr } from "../parser/ParseExprHelper";
+import { BlockStmt, ExprStmt, IfStmt, Stmt, VarStmt } from "../parser/Stmt";
+import { ErrorResult, NoWay, SuccessResult } from "../Result"
 import { ValueType } from "../type";
+import { IsFalse, IsTrue } from "../utils/logic";
 import { BuildEnv, EnvDefine, Environment } from "./Environment";
 import { InterpretExpr, InterpretExprSuccess } from "./InterpretExpr";
 
@@ -15,7 +17,22 @@ export type InterpretStmt<S extends Stmt, Env extends Environment> =
             ? InterpretExprStmt<S, Env>
             : S extends BlockStmt
                 ? InterpretBlockStmt<S['stmts'], Env>
-                : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+                : S extends IfStmt
+                    ? InterpretIfStmt<S, Env>
+                    : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretIfStmt<
+    S extends IfStmt,
+    Env extends Environment,
+> = InterpretExpr<S['condition'], Env> extends infer CR
+    ? CR extends InterpretExprSuccess<infer C, infer Env>
+        ? IsTrue<C> extends true
+            ? InterpretStmt<S['ifClause'], Env>
+            : S['elseClause'] extends Stmt
+                ? InterpretStmt<S['elseClause'], Env>
+                : InterpretStmtSuccess<null, Env>
+        : CR // error
+    : NoWay<'InterpretIfStmt'>;
 
 type InterpretBlockStmt<
     Stmts extends Stmt[],
@@ -43,7 +60,7 @@ type InterpretVarStmt<
         ? EV extends InterpretExprSuccess<infer V, infer Env>
             ? WrapVarStmtResult<V, EnvDefine<Env, S['name']['lexeme'], V>>
             : EV // error
-        : '[InterpretVarStmt] impossible here!'
+        : NoWay<'InterpretVarStmt'>
     : WrapVarStmtResult<null, EnvDefine<Env, S['name']['lexeme'], null>>;
 type WrapVarStmtResult<V extends ValueType, Env> = Env extends Environment
     ? InterpretStmtSuccess<V, Env>

@@ -1,4 +1,5 @@
 import { Stmt } from "../parser/Stmt";
+import { NoWay } from "../Result";
 import { ValueType } from "../type";
 import { BuildEnv, Environment } from "./Environment";
 import { InterpretStmt, InterpretStmtSuccess } from "./InterpretStmt";
@@ -12,5 +13,5 @@ export type Interpret<
             ? R extends InterpretStmtSuccess<infer Result, infer Env>
                 ? Interpret<Rest, Env, Result>
                 : R // error
-            : '[Interpret] impossible here!'
+            : NoWay<'Interpret'>
         : LastResult;

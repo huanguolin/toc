@@ -1,8 +1,10 @@
 
 export type TokenType =
     | 'identifier'
-    | 'var'
     | 'number'
+    | 'if'
+    | 'else'
+    | 'var'
     | 'true'
     | 'false'
     | 'null'
@@ -33,6 +35,8 @@ export type Keywords = {
     false: true,
     null: true,
     var: true,
+    if: true,
+    else: true,
 };
 
 export type ValueType = number | boolean | null;

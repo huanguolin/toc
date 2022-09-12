@@ -121,4 +121,29 @@ type cases = [
         }
         var c = b + 12;
     `>, 16>>,
+
+    // if statement
+    Expect<Equal<Toc<`
+        var b = 4;
+        if (b > 3) b = 1995;
+    `>, 1995>>,
+    Expect<Equal<Toc<`
+        var b = 0;
+        if (b > 3) b = 1995;
+    `>, null>>,
+    Expect<Equal<Toc<`
+        var b = 0;
+        if (b > 3) b = 1995;
+        else b = false;
+    `>, false>>,
+    Expect<Equal<Toc<`
+        if (true) var b = 1;
+        else var b = false;
+    `>, 1>>,
+    Expect<Equal<Toc<`
+        var a = 0;
+        if (true) { var a = null; }
+        else { var a = false; }
+        a;
+    `>, 0>>,
 ];

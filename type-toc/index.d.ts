@@ -1,10 +1,9 @@
 import { Interpret } from "./interpreter";
 import { Parse } from "./parser";
 import { Stmt } from "./parser/Stmt";
+import { NoWay } from "./Result";
 import { Scan } from "./scanner";
 import { Token } from "./scanner/Token";
-
-type NoWay = '[Toc] impossible here!';
 
 export type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
@@ -13,9 +12,9 @@ export type Toc<Source extends string> =
                 ? Stmts extends Stmt[]
                     ? Interpret<Stmts>
                     : Stmts // error
-                : NoWay
+                : NoWay<'Toc'>
             : Tokens // error
-        : NoWay;
+        : NoWay<'Toc'>;
 
 type Result = Toc<'var a = 8; !(10 + a / 3 - 999);'>;
 

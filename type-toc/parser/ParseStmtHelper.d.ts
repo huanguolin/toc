@@ -1,8 +1,8 @@
-import { ErrorResult, SuccessResult } from "../Result";
+import { ErrorResult, NoWay, SuccessResult } from "../Result";
 import { EOF, Token } from "../scanner/Token";
 import { Push } from "../utils/array";
 import { ParseExpr, ParseExprSuccess } from "./ParseExprHelper";
-import { BuildBlockStmt, BuildExprStmt, BuildVarStmt, Stmt } from "./Stmt";
+import { BuildBlockStmt, BuildExprStmt, BuildIfStmt, BuildVarStmt, Stmt } from "./Stmt";
 import { Match, TokenLike } from "./utils";
 
 export type ParseStmtError<M extends string> = ErrorResult<`[ParseStmtError]: ${M}`>;
@@ -13,7 +13,31 @@ export type ParseStmt<Tokens extends Token[]> =
         ? ParseVarStmt<Rest>
         : Tokens extends Match<TokenLike<'{'>, infer Rest>
             ? ParseBlockStmt<Rest>
-            : ParseExprStmt<Tokens>;
+            : Tokens extends Match<TokenLike<'if'>, infer Rest>
+                ? ParseIfStmt<Rest>
+                : ParseExprStmt<Tokens>;
+
+type ParseIfStmt<
+    Tokens extends Token[],
+> = Tokens extends Match<TokenLike<'('>, infer Rest>
+    ? ParseExpr<Rest> extends infer ER
+        ? ER extends ParseExprSuccess<infer Condition, infer Rest>
+            ? Rest extends Match<TokenLike<')'>, infer Rest>
+                ? ParseStmt<Rest> extends infer IfSR
+                    ? IfSR extends ParseStmtSuccess<infer IfClause, infer Rest>
+                        ? Rest extends Match<TokenLike<'else'>, infer Rest>
+                            ? ParseStmt<Rest> extends infer ElseSR
+                                ? ElseSR extends ParseStmtSuccess<infer ElseClause, infer Rest>
+                                    ? ParseStmtSuccess<BuildIfStmt<Condition, IfClause, ElseClause>, Rest>
+                                    : ElseSR // error
+                                : NoWay<'ParseIfStmt-ParseStmt-else'>
+                            : ParseStmtSuccess<BuildIfStmt<Condition, IfClause, null>, Rest>
+                        : IfSR // error
+                    : NoWay<'ParseIfStmt-ParseStmt-if'>
+                : ParseStmtError<'Expect ")" after if condition.'>
+            : ER // error
+        : NoWay<'ParseIfStmt-ParseExpr'>
+    : ParseStmtError<'Expect "(" before if condition.'>;
 
 type ParseBlockStmt<
     Tokens extends Token[],
