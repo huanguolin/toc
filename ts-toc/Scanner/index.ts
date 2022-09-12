@@ -19,6 +19,8 @@ export class Scanner {
         while (!this.isAtEnd()) {
             let c = this.advance();
             switch (c) {
+                case '{':
+                case '}':
                 case ';':
                 case '(':
                 case ')':

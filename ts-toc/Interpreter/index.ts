@@ -5,6 +5,7 @@ import { IExprVisitor } from "../Parser/Exprs/IExprVisitor";
 import { LiteralExpr } from "../Parser/Exprs/LiteralExpr";
 import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
 import { VariableExpr } from "../Parser/Exprs/VariableExpr";
+import { BlockStmt } from "../Parser/Stmts/BlockStmt";
 import { ExprStmt } from "../Parser/Stmts/ExprStmt";
 import { IStmt } from "../Parser/Stmts/IStmt";
 import { IStmtVisitor } from "../Parser/Stmts/IStmtVisitor";
@@ -37,21 +38,34 @@ function isAny(x: unknown): x is any {
 }
 
 export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
-    private global: Environment;
+    private environment: Environment;
     private stmts: IStmt[];
 
     constructor() {
-        this.global = new Environment(null);
+        this.environment = new Environment(null);
     }
 
     interpret(stmts: IStmt[]) {
         this.stmts = stmts;
 
         let lastResult: unknown = null;
-        for (let i = 0; i < this.stmts.length; i++) {
-            const stmt = this.stmts[i];
+        for (const stmt of stmts) {
             lastResult = stmt.accept(this);
         }
+        return lastResult;
+    }
+
+    visitBlockStmt(blockStmt: BlockStmt): ValueType {
+        const previousEnv = this.environment;
+        this.environment = new Environment(this.environment);
+        
+        let lastResult: ValueType = null;
+        for (const stmt of blockStmt.stmts) {
+            lastResult = stmt.accept(this);
+        }
+
+        this.environment = previousEnv;
+
         return lastResult;
     }
 
@@ -60,7 +74,7 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         if (stmt.initializer) {
             initializer = stmt.initializer.accept(this);
         }
-        this.global.define(stmt.name, initializer);
+        this.environment.define(stmt.name, initializer);
         return initializer;
     }
 
@@ -70,12 +84,12 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
 
     visitAssignExpr(expr: AssignExpr): ValueType {
         const v = expr.right.accept(this);
-        this.global.assign(expr.varName, v);
+        this.environment.assign(expr.varName, v);
         return v;
     }
 
     visitVariableExpr(expr: VariableExpr): ValueType {
-        return this.global.get(expr.name);
+        return this.environment.get(expr.name);
     }
 
     visitBinaryExpr(expr: BinaryExpr): number | boolean {

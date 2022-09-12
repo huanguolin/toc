@@ -8,6 +8,7 @@ import { LiteralExpr } from "./Exprs/LiteralExpr";
 import { UnaryExpr } from "./Exprs/UnaryExpr";
 import { VariableExpr } from "./Exprs/VariableExpr";
 import { ParseError } from "./ParseError";
+import { BlockStmt } from "./Stmts/BlockStmt";
 import { ExprStmt } from "./Stmts/ExprStmt";
 import { IStmt } from "./Stmts/IStmt";
 import { VarStmt } from "./Stmts/varStmt";
@@ -32,8 +33,23 @@ export class Parser {
     private statement(): IStmt {
         if (this.match('var')) {
             return this.varDeclaration();
+        } else if (this.match('{')) {
+            return this.blockStatement();
         }
         return this.expressionStatement();
+    }
+
+    private blockStatement(): IStmt {
+        const stmts: IStmt[] = [];
+        while(!this.isAtEnd() && !this.match('}')) {
+            stmts.push(this.statement());
+        }
+
+        if (this.previous().type !== '}') {
+            throw new ParseError('Expect "}" end the block.');
+        }
+
+        return new BlockStmt(stmts);
     }
 
     private varDeclaration(): IStmt {

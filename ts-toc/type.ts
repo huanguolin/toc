@@ -5,6 +5,8 @@ export type TokenType =
     | 'true'
     | 'false'
     | 'null'
+    | '{'
+    | '}'
     | '='
     | ';'
     | '('
