@@ -65,6 +65,8 @@ export class Scanner {
                     }
                     throw new ScanError("Unknown support token at: " + c);
                 case '\u0020':
+                case '\n':
+                case '\t':
                     break;
                 default:
                     if (this.isNumberChar(c)) {
