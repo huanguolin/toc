@@ -3,7 +3,7 @@ import { Token } from '../scanner/Token';
 import { Keywords, ValueType } from '../type';
 import { Safe } from '../utils/common';
 import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr, BuildVariableExpr, VariableExpr, BuildAssignExpr } from "./Expr";
-import { Match, TokenLike } from './utils';
+import { Identifier, Match, TokenLike } from './utils';
 
 export type ParseExprError<M extends string> = ErrorResult<`[ParseExprError]: ${M}`>;
 export type ParseExprSuccess<R extends Expr, T extends Token[]> = SuccessResult<{ expr: R, rest: T }>;
@@ -20,13 +20,6 @@ export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 // factor:      * /         左结合
 // unary:       !           右结合
 // primary:     number ()
-type LogicOrOpToken = Token & { type: '||' };
-type LogicAndOpToken = Token & { type: '&&' };
-type EqualityOpToken = Token & { type: '==' | '!=' };
-type RelationOpToken = Token & { type: '<' | '>' | '<=' | '>=' };
-type TermOpToken = Token & { type: '+' | '-' };
-type FactorOpToken = Token & { type: '*' | '/' | '%' };
-type UnaryOpToken = Token & { type: '!' };
 
 // assign part
 type ParseAssign<Tokens extends Token[], R = ParseLogicOr<Tokens>> =
@@ -130,7 +123,7 @@ type ParsePrimary<Tokens extends Token[]> =
             ? ParseExprSuccess<BuildLiteralExpr<V>, R>
             : E extends { type: infer B extends keyof Keywords }
                 ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
-                : E extends TokenLike<{ type: 'identifier' }>
+                : E extends Identifier
                     ? ParseExprSuccess<BuildVariableExpr<E>, R>
                     : E extends TokenLike<'('>
                         ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>

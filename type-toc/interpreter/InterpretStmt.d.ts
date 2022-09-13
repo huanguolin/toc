@@ -1,11 +1,11 @@
 import { Expr } from "../parser/Expr";
-import { ParseExpr } from "../parser/ParseExprHelper";
-import { BlockStmt, ExprStmt, IfStmt, Stmt, VarStmt } from "../parser/Stmt";
+import { BlockStmt, ExprStmt, FunStmt, IfStmt, Stmt, VarStmt } from "../parser/Stmt";
 import { ErrorResult, NoWay, SuccessResult } from "../Result"
 import { ValueType } from "../type";
-import { IsFalse, IsTrue } from "../utils/logic";
+import { IsTrue } from "../utils/logic";
 import { BuildEnv, EnvDefine, Environment } from "./Environment";
 import { InterpretExpr, InterpretExprSuccess } from "./InterpretExpr";
+import { BuildFunObj, FunObject } from '../FunObject';
 
 export type InterpretStmtError<M extends string> = ErrorResult<`[InterpretStmtError]: ${M}`>;
 export type InterpretStmtSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
@@ -19,7 +19,19 @@ export type InterpretStmt<S extends Stmt, Env extends Environment> =
                 ? InterpretBlockStmt<S['stmts'], Env>
                 : S extends IfStmt
                     ? InterpretIfStmt<S, Env>
-                    : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+                    : S extends FunStmt
+                        ? InterpretFunStmt<S, Env>
+                        : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretFunStmt<
+    S extends FunStmt,
+    Env extends Environment,
+    F extends FunObject = BuildFunObj<S, Env>,
+> = EnvDefine<Env, S['name']['lexeme'], F> extends infer NewEnv
+    ? NewEnv extends Environment
+        ? InterpretStmtSuccess<F, NewEnv>
+        : NewEnv // error
+    : NoWay<'InterpretFunStmt'>;
 
 type InterpretIfStmt<
     S extends IfStmt,

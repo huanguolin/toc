@@ -1,23 +1,27 @@
+import { FunObject, FunObjToString } from "./FunObject";
 import { Interpret } from "./interpreter";
 import { Parse } from "./parser";
-import { Stmt } from "./parser/Stmt";
+import { BuildBlockStmt, FunStmt, Stmt } from "./parser/Stmt";
 import { NoWay } from "./Result";
 import { Scan } from "./scanner";
-import { Token } from "./scanner/Token";
+import { BuildToken, Token } from "./scanner/Token";
 
 export type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
         ? Tokens extends Token[]
             ? Parse<Tokens> extends infer Stmts
                 ? Stmts extends Stmt[]
-                    ? Interpret<Stmts>
+                    ? Interpret<Stmts> extends infer Value
+                        ? Value extends FunObject
+                            ? FunObjToString<Value>
+                            : Value
+                        : NoWay<'Toc-Interprets'>
                     : Stmts // error
-                : NoWay<'Toc'>
+                : NoWay<'Toc-Parse'>
             : Tokens // error
-        : NoWay<'Toc'>;
+        : NoWay<'Toc-Scan'>;
 
-type Result = Toc<'var a = 8; !(10 + a / 3 - 999);'>;
-
+type Result = Toc<'fun a(p1, p2) { var a = 5;}'>;
 
 /**
  * debug
@@ -25,12 +29,7 @@ type Result = Toc<'var a = 8; !(10 + a / 3 - 999);'>;
 // type Input = ' 123 % 100 + 15 - 12 / 3 / ( 5 -3);';
 // type Input = '(5 -3 ) * 6 || 7 - ( 9 / 3 );';
 type Input = `
-var b = 4;
-{
-    var a= b = 3;
-	b = 99;
-}
-var c = b + 12;
+fun a(p1, p2) { var a = 5;}
 `;
 type Tokens = Scan<Input>;
 type Ast = Parse<Tokens>;

@@ -6,7 +6,7 @@ import { Push } from "../utils/array";
 import { NoWay } from "../Result";
 
 export type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
-    Tokens extends [infer E extends EOF]
+    Tokens extends [EOF]
         ? Stmts
         : ParseStmt<Tokens> extends infer Result
             ? Result extends ParseStmtSuccess<infer R, infer Rest>

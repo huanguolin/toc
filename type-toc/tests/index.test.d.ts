@@ -121,6 +121,7 @@ type cases = [
         }
         var c = b + 12;
     `>, 16>>,
+    Expect<Equal<Toc<`{}`>, null>>,
 
     // if statement
     Expect<Equal<Toc<`
@@ -146,4 +147,25 @@ type cases = [
         else { var a = false; }
         a;
     `>, 0>>,
+    Expect<Equal<Toc<`
+        if (false) { }
+        else { }
+    `>, null>>,
+
+    // fun declaration
+    Expect<Equal<Toc<`
+        fun a() {}
+    `>, '<fun a()>'>>,
+    Expect<Equal<Toc<`
+        fun a () { var a = 5;}
+    `>, '<fun a()>'>>,
+    Expect<Equal<Toc<`
+        fun a () { var a = 5;}
+        var b = 0;
+        a;
+    `>, '<fun a()>'>>,
+    Expect<Equal<Toc<`
+        fun a(p1, p2) { var a = 5;}
+        a;
+    `>, '<fun a(p1, p2)>'>>,
 ];

@@ -6,7 +6,8 @@ export type StmtType =
     | 'expression'
     | 'varDeclaration'
     | 'block'
-    | 'if';
+    | 'if'
+    | 'fun';
 
 export interface Stmt {
     type: StmtType;
@@ -35,6 +36,13 @@ export interface IfStmt extends Stmt {
     elseClause: Stmt | null;
 }
 
+export interface FunStmt extends Stmt {
+    type: 'fun';
+    name: Token;
+    parameters: Token[];
+    body: BlockStmt;
+}
+
 export type BuildExprStmt<E extends Expr> = { type: 'expression', expression: E };
 export type BuildVarStmt<N extends Token, E extends Expr | null> = { type: 'varDeclaration', name: N, initializer: E };
 export type BuildBlockStmt<Stmts extends Stmt[]> = { type: 'block', stmts: Stmts };
@@ -47,5 +55,15 @@ export type BuildIfStmt<
     condition: Condition,
     ifClause: IfClause,
     elseClause: ElseClause,
+};
+export type BuildFunStmt<
+    Name extends Token,
+    Parameters extends Token[],
+    Body extends BlockStmt,
+> = {
+    type: 'fun',
+    name: Name,
+    parameters: Parameters,
+    body: Body,
 };
 

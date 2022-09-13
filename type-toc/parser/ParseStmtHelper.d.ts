@@ -1,9 +1,9 @@
 import { ErrorResult, NoWay, SuccessResult } from "../Result";
-import { EOF, Token } from "../scanner/Token";
+import { BuildToken, EOF, Token } from "../scanner/Token";
 import { Push } from "../utils/array";
 import { ParseExpr, ParseExprSuccess } from "./ParseExprHelper";
-import { BuildBlockStmt, BuildExprStmt, BuildIfStmt, BuildVarStmt, Stmt } from "./Stmt";
-import { Match, TokenLike } from "./utils";
+import { BlockStmt, BuildBlockStmt, BuildExprStmt, BuildFunStmt, BuildIfStmt, BuildVarStmt, Stmt } from "./Stmt";
+import { Identifier, Match, TokenLike } from "./utils";
 
 export type ParseStmtError<M extends string> = ErrorResult<`[ParseStmtError]: ${M}`>;
 export type ParseStmtSuccess<R extends Stmt, T extends Token[]> = SuccessResult<{ stmt: R, rest: T }>;
@@ -15,7 +15,44 @@ export type ParseStmt<Tokens extends Token[]> =
             ? ParseBlockStmt<Rest>
             : Tokens extends Match<TokenLike<'if'>, infer Rest>
                 ? ParseIfStmt<Rest>
-                : ParseExprStmt<Tokens>;
+                : Tokens extends Match<TokenLike<'fun'>, infer Rest>
+                    ? ParseFunStmt<Rest>
+                    : ParseExprStmt<Tokens>;
+
+type ParseFunStmt<
+    Tokens extends Token[],
+> = Tokens extends Match<infer Name extends Identifier, infer Rest>
+    ? ParseFunParams<Rest> extends infer PR
+        ? PR extends Match<infer Params extends Identifier[], infer Rest>
+            ? ParseBlockStmt<Rest> extends infer BR
+                ? BR extends ParseStmtSuccess<infer Body extends BlockStmt, infer Rest>
+                    ? ParseStmtSuccess<BuildFunStmt<Name, Params, Body>, Rest>
+                    : BR // error
+                : NoWay<'ParseFunStmt-ParseBlockStmt'>
+            : PR // error
+        : NoWay<'ParseFunStmt-ParseFunParams'>
+    : ParseStmtError<`Expect function name, but got: ${Tokens[0]['type']}`>;
+type ParseFunParams<
+    Tokens extends Token[],
+> = Tokens extends Match<TokenLike<'('>, infer Rest>
+    ? Rest extends Match<TokenLike<')'>, infer Rest>
+        ? [[], ...Rest]
+        : ParseFunParamsCore<Rest> extends infer PR
+            ? PR extends Match<infer Params extends Identifier[], infer Rest>
+                ? Rest extends Match<TokenLike<')'>, infer Rest>
+                    ? [Params, ...Rest]
+                    : ParseStmtError<`Expect ')', but got: ${Rest[0]['type']}`>
+                : PR // error
+            : NoWay<'ParseFunParams-ParseFunParamsCore'>
+    : ParseStmtError<`Expect '(', but got: ${Tokens[0]['type']}`>;
+type ParseFunParamsCore<
+    Tokens extends Token[],
+    Params extends Identifier[] = [],
+> = Tokens extends Match<infer P extends Identifier, infer Rest>
+    ? Rest extends Match<TokenLike<','>, infer Rest>
+        ? ParseFunParamsCore<Rest, Push<Params, P>>
+        : [Push<Params, P>, ...Rest]
+    : ParseStmtError<`Expect param name, but got: ${Tokens[0]['type']}`>;
 
 type ParseIfStmt<
     Tokens extends Token[],
@@ -43,7 +80,7 @@ type ParseBlockStmt<
     Tokens extends Token[],
     Stmts extends Stmt[] = [],
 > = Tokens extends [EOF]
-    ? ParseStmtError<'Expect "}" end the block.'>
+    ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Tokens>
     : Tokens extends Match<TokenLike<'}'>, infer Rest>
         ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Rest>
         : ParseBlockStmtBody<ParseStmt<Tokens>, Stmts>;
@@ -51,9 +88,10 @@ type ParseBlockStmtBody<SR, Stmts extends Stmt[]> =
     SR extends ParseStmtSuccess<infer S, infer R>
         ? ParseBlockStmt<R, Push<Stmts, S>>
         : SR; // error
+type t = ParseBlockStmt<[BuildToken<'{', '{'>, BuildToken<'}', '}'>, EOF]>
 
 type ParseVarStmt<Tokens extends Token[]> =
-    Tokens extends Match<infer VarName extends TokenLike<{ type: 'identifier' }>, infer Rest>
+    Tokens extends Match<infer VarName extends Identifier, infer Rest>
         ? Rest extends Match<TokenLike<';'>, infer Rest>
             ? ParseStmtSuccess<BuildVarStmt<VarName, null>, Rest>
             : Rest extends Match<TokenLike<'='>, infer Rest>
@@ -72,7 +110,7 @@ type ParseVarStmt<Tokens extends Token[]> =
 //     EOF]>;
 
 type ParseExprStmt<Tokens extends Token[], R = ParseExpr<Tokens>> =
-    ParseExpr<Tokens> extends ParseExprSuccess<infer Expr, infer Rest1>
+    R extends ParseExprSuccess<infer Expr, infer Rest1>
         ? Rest1 extends Match<TokenLike<';'>, infer Rest2>
             ? ParseStmtSuccess<BuildExprStmt<Expr>, Rest2>
             : ParseStmtError<'Expect ";" after expression.'>
