@@ -1,3 +1,4 @@
+import { FunObject } from "../FunObject";
 import { AssignExpr } from "../Parser/Exprs/AssignExpr";
 import { BinaryExpr } from "../Parser/Exprs/BinaryExpr";
 import { GroupExpr } from "../Parser/Exprs/GroupExpr";
@@ -7,6 +8,7 @@ import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
 import { VariableExpr } from "../Parser/Exprs/VariableExpr";
 import { BlockStmt } from "../Parser/Stmts/BlockStmt";
 import { ExprStmt } from "../Parser/Stmts/ExprStmt";
+import { FunStmt } from "../Parser/Stmts/FunStmt";
 import { IfStmt } from "../Parser/Stmts/IfStmt";
 import { IStmt } from "../Parser/Stmts/IStmt";
 import { IStmtVisitor } from "../Parser/Stmts/IStmtVisitor";
@@ -56,6 +58,12 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         return lastResult;
     }
 
+    visitFunStmt(stmt: FunStmt): FunObject {
+        const funObj = new FunObject(stmt, this.environment);
+        this.environment.define(stmt.name, funObj);
+        return funObj;
+    }
+
     visitIfStmt(stmt: IfStmt): ValueType {
         const cond = stmt.condition.accept(this);
         if (cond) {
@@ -89,7 +97,7 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         return initializer;
     }
 
-    visitExprStmt(stmt: ExprStmt): number | boolean {
+    visitExprStmt(stmt: ExprStmt): ValueType {
         return stmt.expression.accept(this);
     }
 
@@ -129,11 +137,11 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         throw new RuntimeError('Unknown unary operator: ' + expr.operator.type);
     }
 
-    visitGroupExpr(expr: GroupExpr): number | boolean {
+    visitGroupExpr(expr: GroupExpr): ValueType {
         return expr.expression.accept(this);
     }
 
-    visitLiteralExpr(expr: LiteralExpr): number | boolean {
+    visitLiteralExpr(expr: LiteralExpr): Exclude<ValueType, FunObject> {
         return expr.value;
     }
 }

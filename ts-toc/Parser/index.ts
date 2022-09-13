@@ -10,6 +10,7 @@ import { VariableExpr } from "./Exprs/VariableExpr";
 import { ParseError } from "./ParseError";
 import { BlockStmt } from "./Stmts/BlockStmt";
 import { ExprStmt } from "./Stmts/ExprStmt";
+import { FunStmt } from "./Stmts/FunStmt";
 import { IfStmt } from "./Stmts/IfStmt";
 import { IStmt } from "./Stmts/IStmt";
 import { VarStmt } from "./Stmts/varStmt";
@@ -26,15 +27,56 @@ export class Parser {
     parse(): IStmt[] {
         const stmts: IStmt[] = [];
         while (!this.isAtEnd()) {
-            stmts.push(this.statement());
+            stmts.push(this.declaration());
         }
         return stmts;
     }
 
-    private statement(): IStmt {
+    private declaration() {
         if (this.match('var')) {
             return this.varDeclaration();
-        } else if (this.match('{')) {
+        } else if (this.match('fun')) {
+            return this.funDeclaration();
+        }
+
+        return this.statement();
+    }
+
+    private funDeclaration() {
+        this.consume('identifier', `Expect function name.`);
+        const name = this.previous();
+        this.consume('(', `Expect '(' after function name.`);
+        let params: Token[] = [];
+        if (!this.match(')')) {
+            params = this.parameters();
+            this.consume(')', `Expect ')' after function parameters.`);
+        }
+        const body = this.blockStatement();
+        return new FunStmt(name, params, body);
+    }
+
+    private parameters(): Token[] {
+        const params: Token[] = [];
+        do {
+            this.consume('identifier', 'Expect parameter name.');
+            params.push(this.previous());
+        } while(this.match(','))
+        return params;
+    }
+
+    private varDeclaration() {
+        this.consume('identifier', `Expect var name.`);
+        const name = this.previous();
+        let initializer = null;
+        if (this.match('=')) {
+            initializer = this.expression();
+        }
+        this.consume(';', `Expect ';' after var declaration.`);
+        return new VarStmt(name, initializer);
+    }
+
+    private statement() {
+        if (this.match('{')) {
             return this.blockStatement();
         } else if (this.match('if')) {
             return this.ifStatement();
@@ -42,7 +84,7 @@ export class Parser {
         return this.expressionStatement();
     }
 
-    private ifStatement(): IStmt {
+    private ifStatement() {
         this.consume('(', 'Expect "(" before if condition.');
         const condition = this.expression();
         this.consume(')', 'Expect ")" after if condition.');
@@ -54,10 +96,10 @@ export class Parser {
         return new IfStmt(condition, ifClause, elseClause);
     }
 
-    private blockStatement(): IStmt {
+    private blockStatement() {
         const stmts: IStmt[] = [];
         while(!this.isAtEnd() && !this.match('}')) {
-            stmts.push(this.statement());
+            stmts.push(this.declaration());
         }
 
         if (this.previous().type !== '}') {
@@ -67,18 +109,7 @@ export class Parser {
         return new BlockStmt(stmts);
     }
 
-    private varDeclaration(): IStmt {
-        this.consume('identifier', `Expect var name.`);
-        const name = this.previous();
-        let initializer = null;
-        if (this.match('=')) {
-            initializer = this.expression();
-        }
-        this.consume(';', `Expect ';' after var declaration.`);
-        return new VarStmt(name, initializer);
-    }
-
-    private expressionStatement(): IStmt {
+    private expressionStatement() {
         const expr = this.expression();
         this.consume(';', 'Expect ";" after expression.');
         return new ExprStmt(expr);

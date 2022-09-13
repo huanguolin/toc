@@ -1,6 +1,11 @@
+import { FunObject } from "./FunObject";
+import { Environment } from "./Interpreter/Environment";
+import { FunStmt } from "./Parser/Stmts/FunStmt";
+
 export type TokenType =
     | 'identifier'
     | 'number'
+    | 'fun'
     | 'var'
     | 'if'
     | 'else'
@@ -9,8 +14,9 @@ export type TokenType =
     | 'null'
     | '{'
     | '}'
-    | '='
     | ';'
+    | ','
+    | '='
     | '('
     | ')'
     | '+'
@@ -29,6 +35,7 @@ export type TokenType =
     | 'EOF';
 
 export const keywords = [
+    'fun',
     'if',
     'else',
     'var',
@@ -37,4 +44,4 @@ export const keywords = [
     'null',
 ];
 
-export type ValueType = number | boolean | null;
+export type ValueType = FunObject | number | boolean | null;

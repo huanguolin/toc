@@ -17,8 +17,9 @@ function main() {
     process.stdout.write('> ');
     rl.on('line', function (line) {
         try {
-            const result = run(line);
-            console.log('=', result);
+            const result = toc(line);
+            const printVal = typeof result === 'object' ? result.toString() : result;
+            console.log('=', printVal);
         } catch (e) {
             let errMsg = e;
             if (e instanceof Error) {
@@ -30,7 +31,7 @@ function main() {
     });
 }
 
-function run(source: string) {
+function toc(source: string) {
     const scanner = new Scanner(source);
     const parser = new Parser(scanner.scan());
     return interpreter.interpret(parser.parse());

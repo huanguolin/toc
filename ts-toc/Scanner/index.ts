@@ -21,6 +21,7 @@ export class Scanner {
             switch (c) {
                 case '{':
                 case '}':
+                case ',':
                 case ';':
                 case '(':
                 case ')':
