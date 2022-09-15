@@ -6,7 +6,8 @@ export type ExprType =
     | 'binary'
     | 'unary'
     | 'literal'
-    | 'variable';
+    | 'variable'
+    | 'call';
 
 export interface IExpr {
     type: ExprType;

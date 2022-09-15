@@ -1,6 +1,7 @@
 import { FunObject } from "../FunObject";
 import { AssignExpr } from "../Parser/Exprs/AssignExpr";
 import { BinaryExpr } from "../Parser/Exprs/BinaryExpr";
+import { CallExpr } from "../Parser/Exprs/CallExpr";
 import { GroupExpr } from "../Parser/Exprs/GroupExpr";
 import { IExprVisitor } from "../Parser/Exprs/IExprVisitor";
 import { LiteralExpr } from "../Parser/Exprs/LiteralExpr";
@@ -42,15 +43,12 @@ function isAny(x: unknown): x is any {
 
 export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     private environment: Environment;
-    private stmts: IStmt[];
 
     constructor() {
         this.environment = new Environment(null);
     }
 
     interpret(stmts: IStmt[]) {
-        this.stmts = stmts;
-
         let lastResult: unknown = null;
         for (const stmt of stmts) {
             lastResult = stmt.accept(this);
@@ -75,17 +73,26 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
     }
 
     visitBlockStmt(blockStmt: BlockStmt): ValueType {
+
+        const result = this.executeBlock(blockStmt, new Environment(this.environment));
+
+        return result;
+    }
+
+    executeBlock(blockStmt: BlockStmt, env: Environment) {
         const previousEnv = this.environment;
-        this.environment = new Environment(this.environment);
-        
-        let lastResult: ValueType = null;
-        for (const stmt of blockStmt.stmts) {
-            lastResult = stmt.accept(this);
+
+        try {
+            this.environment = env;
+
+            let lastResult: ValueType = null;
+            for (const stmt of blockStmt.stmts) {
+                lastResult = stmt.accept(this);
+            }
+            return lastResult;
+        } finally {
+            this.environment = previousEnv;
         }
-
-        this.environment = previousEnv;
-
-        return lastResult;
     }
 
     visitVarStmt(stmt: VarStmt): ValueType {
@@ -135,6 +142,16 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
             return !v;
         }
         throw new RuntimeError('Unknown unary operator: ' + expr.operator.type);
+    }
+
+    visitCallExpr(expr: CallExpr): ValueType {
+        const callee = expr.callee.accept(this);
+
+        if (callee instanceof FunObject) {
+            return callee.execute(expr.args, this);
+        }
+
+        throw new RuntimeError(`Callee must be a 'FunObject', but got: ${callee}(${typeof callee})`);
     }
 
     visitGroupExpr(expr: GroupExpr): ValueType {

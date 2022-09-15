@@ -2,6 +2,7 @@ import { Token } from "../Scanner/Token";
 import { TokenType } from "../type";
 import { AssignExpr } from "./Exprs/AssignExpr";
 import { BinaryExpr } from "./Exprs/BinaryExpr";
+import { CallExpr } from "./Exprs/CallExpr";
 import { GroupExpr } from "./Exprs/GroupExpr";
 import { IExpr } from "./Exprs/IExpr";
 import { LiteralExpr } from "./Exprs/LiteralExpr";
@@ -123,15 +124,16 @@ export class Parser {
     }
 
     // 表达式分类并按照由低到高：
-    // assign:      =           右结合
-    // logic or:    ||          左结合
-    // logic and:   &&          左结合
-    // equality:    == !=       左结合
-    // relation:    < > <= >=   左结合
-    // term:        + -         左结合
-    // factor:      * /         左结合
-    // unary:       !           右结合
-    // primary:     number ()
+    // assign:      =                   右结合
+    // logic or:    ||                  左结合
+    // logic and:   &&                  左结合
+    // equality:    == !=               左结合
+    // relation:    < > <= >=           左结合
+    // term:        + -                 左结合
+    // factor:      * /                 左结合
+    // unary:       !                   右结合
+    // call:        primary(arg?)       左结合
+    // primary:     number boolean null 'identifier' ()
     private expression(): IExpr {
         return this.assign();
     }
@@ -217,7 +219,28 @@ export class Parser {
             const expr = this.unary(); // 右结合
             return new UnaryExpr(operator, expr);
         }
-        return this.primary();
+        return this.call();
+    }
+
+    private call(): IExpr {
+        let expr = this.primary();
+        while (this.match('(')) {
+            let args: IExpr[] = [];
+            if (!this.match(')')) {
+                args = this.arguments();
+                this.consume(')', 'Expect ")" end fun call.');
+            }
+            expr = new CallExpr(expr, args);
+        }
+        return expr;
+    }
+
+    private arguments(): IExpr[] {
+        const args: IExpr[] = [];
+        do {
+            args.push(this.expression());
+        } while(this.match(','));
+        return args;
     }
 
     private primary(): IExpr {
