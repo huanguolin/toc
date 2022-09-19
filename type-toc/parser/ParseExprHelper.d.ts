@@ -16,7 +16,7 @@ export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 // logic and:   &&          左结合
 // equality:    == !=       左结合
 // relation:    < > <= >=   左结合
-// term:        + -         左结合
+// additive:    + -         左结合
 // factor:      * /         左结合
 // unary:       !           右结合
 // primary:     number ()
@@ -72,27 +72,27 @@ type ParseEqualityBody<Left extends Expr, Tokens extends Token[]> =
         : ParseExprSuccess<Left, Tokens>;
 
 // relation part
-type ParseRelation<Tokens extends Token[], R = ParseTerm<Tokens>> =
+type ParseRelation<Tokens extends Token[], R = ParseAdditive<Tokens>> =
     R extends ParseExprSuccess<infer Left, infer Rest>
         ? ParseRelationBody<Left, Rest>
         : R;
 type ParseRelationBody<Left extends Expr, Tokens extends Token[]> =
     Tokens extends Match<infer Op extends TokenLike<'>' | '<' | '>=' | '<='>, infer Rest1>
-        ? ParseTerm<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
+        ? ParseAdditive<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
             ? ParseRelationBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
             : ParseExprError<`Parse relation of right fail: ${Rest1[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
-// term part
-type ParseTerm<Tokens extends Token[], R = ParseFactor<Tokens>> =
+// additive part
+type ParseAdditive<Tokens extends Token[], R = ParseFactor<Tokens>> =
     R extends ParseExprSuccess<infer Left, infer Rest>
-        ? ParseTermBody<Left, Rest>
+        ? ParseAdditiveBody<Left, Rest>
         : R;
-type ParseTermBody<Left extends Expr, Tokens extends Token[]> =
+type ParseAdditiveBody<Left extends Expr, Tokens extends Token[]> =
     Tokens extends Match<infer Op extends TokenLike<'+' | '-'>, infer Rest1>
         ? ParseFactor<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
-            ? ParseTermBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
-            : ParseExprError<`Parse term of right fail: ${Rest1[0]['lexeme']}`>
+            ? ParseAdditiveBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
+            : ParseExprError<`Parse additive of right fail: ${Rest1[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
 // factor part

@@ -42,8 +42,8 @@ assignment     → IDENTIFIER "=" assignment
 logic_or       → logic_and ( "||" logic_and )* ;
 logic_and      → equality ( "&&" equality )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-term           → factor ( ( "-" | "+" ) factor )* ;
+comparison     → additive ( ( ">" | ">=" | "<" | "<=" ) additive )* ;
+additive       → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" | "%" ) unary )* ;
 
 unary          → "!" unary | call ;

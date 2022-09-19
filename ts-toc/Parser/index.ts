@@ -129,7 +129,7 @@ export class Parser {
     // logic and:   &&                  左结合
     // equality:    == !=               左结合
     // relation:    < > <= >=           左结合
-    // term:        + -                 左结合
+    // additive:    + -                 左结合
     // factor:      * /                 左结合
     // unary:       !                   右结合
     // call:        primary(arg?)       左结合
@@ -184,16 +184,16 @@ export class Parser {
     }
 
     private relation(): IExpr {
-        let expr: IExpr = this.term();
+        let expr: IExpr = this.additive();
         while (this.match('<', '>', '<=', '>=')) {
             const operator = this.previous();
-            const right = this.term();
+            const right = this.additive();
             expr = new BinaryExpr(expr, operator, right);
         }
         return expr;
     }
 
-    private term(): IExpr {
+    private additive(): IExpr {
         let expr: IExpr = this.factor();
         while (this.match('+', '-')) {
             const operator = this.previous();
