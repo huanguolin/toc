@@ -24,12 +24,14 @@ type ParseFunStmt<
 > = Tokens extends Match<infer Name extends Identifier, infer Rest>
     ? ParseFunParams<Rest> extends infer PR
         ? PR extends Match<infer Params extends Identifier[], infer Rest>
-            ? ParseBlockStmt<Rest> extends infer BR
-                ? BR extends ParseStmtSuccess<infer Body extends BlockStmt, infer Rest>
-                    ? ParseStmtSuccess<BuildFunStmt<Name, Params, Body>, Rest>
-                    : BR // error
-                : NoWay<'ParseFunStmt-ParseBlockStmt'>
-            : PR // error
+            ? Rest extends Match<TokenLike<'{'>, infer Rest>
+                ? ParseBlockStmt<Rest> extends infer BR
+                    ? BR extends ParseStmtSuccess<infer Body extends BlockStmt, infer Rest>
+                        ? ParseStmtSuccess<BuildFunStmt<Name, Params, Body>, Rest>
+                        : BR // error
+                    : NoWay<'ParseFunStmt-ParseBlockStmt'>
+                : PR // error
+            : ParseStmtError<`Expect '{' before function body.`>
         : NoWay<'ParseFunStmt-ParseFunParams'>
     : ParseStmtError<`Expect function name, but got: ${Tokens[0]['type']}`>;
 type ParseFunParams<

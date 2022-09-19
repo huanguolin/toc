@@ -1,10 +1,14 @@
-import { AssignExpr, BinaryExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr, VariableExpr } from "../parser/Expr";
-import { SuccessResult } from "../Result";
+import { FunObject } from "../FunObject";
+import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr, VariableExpr } from "../parser/Expr";
+import { TokenLike } from "../parser/utils";
+import { NoWay, SuccessResult } from "../Result";
+import { Token } from "../scanner/Token";
 import { TokenType, ValueType } from "../type";
 import { EQ, Safe } from "../utils/common";
 import { Inverse, IsTrue } from "../utils/logic";
 import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math";
-import { EnvAssign, EnvGet, Environment } from "./Environment";
+import { BuildEnv, EnvAssign, EnvDefine, EnvGet, Environment } from "./Environment";
+import { InterpretBlockStmt, InterpretBlockStmtBody } from "./InterpretStmt";
 import { RuntimeError } from './RuntimeError';
 
 export type InterpretExprSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
@@ -23,7 +27,48 @@ export type InterpretExpr<E extends Expr, Env extends Environment> =
                         ? EvalVariableExpr<E, Env>
                         : E extends AssignExpr
                             ? EvalAssignExpr<E, Env>
-                            : RuntimeError<`Unknown expression type: ${E['type']}`>;
+                            : E extends CallExpr
+                                ? EvalCallExpr<E, Env>
+                                : RuntimeError<`Unknown expression type: ${E['type']}`>;
+
+type EvalCallExpr<
+    E extends CallExpr,
+    Env extends Environment,
+    CV = InterpretExpr<E['callee'], Env>
+> = CV extends InterpretExprSuccess<infer Callee, infer Env>
+    ? Callee extends FunObject
+        ? Callee['declaration']['parameters']['length'] extends E['arguments']['length']
+            ? InjectArgsToEnv<Callee['declaration']['parameters'], E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
+                ? EE extends InjectArgsToEnvSuccess<infer CallerEnv, infer FunScopeEnv>
+                    ? InterpretBlockStmt<Callee['declaration']['body']['stmts'], CallerEnv, FunScopeEnv>
+                    : EE // error
+                : NoWay<'EvalCallExpr-InjectArgsToEnv'>
+            : RuntimeError<'Arguments length not match parameters.'>
+        : RuntimeError<`Callee must be a 'FunObject', but got: ${Safe<Callee, Exclude<ValueType, FunObject>>}`>
+    : CV; // error
+
+type InjectArgsToEnv<
+    Params extends Token[],
+    Args extends Expr[],
+    CallerEnv extends Environment,
+    FunScopeEnv extends Environment,
+> = Params extends [infer P1 extends TokenLike<{ type: 'identifier'}>, ...infer RestParams extends Token[]]
+        ? Args extends [infer A1 extends Expr, ...infer RestArgs extends Expr[]]
+            ? InterpretExpr<A1, CallerEnv> extends infer PV
+                ? PV extends InterpretExprSuccess<infer V, infer CallerEnv>
+                    ? EnvDefine<FunScopeEnv, P1['lexeme'], V> extends infer FunScopeEnv
+                        ? FunScopeEnv extends Environment
+                            ? InjectArgsToEnv<RestParams, RestArgs, CallerEnv, FunScopeEnv>
+                            : FunScopeEnv // error
+                        : NoWay<'InjectArgsToEnv-EnvDefine'>
+                    : PV // error
+                : NoWay<'InjectArgsToEnv-InterpretExpr'>
+            : RuntimeError<'No way here, params and args must match here!'>
+        : InjectArgsToEnvSuccess<CallerEnv, FunScopeEnv>;
+type InjectArgsToEnvSuccess<
+    CallerEnv extends Environment,
+    FunScopeEnv extends Environment,
+> = SuccessResult<{ callerEnv: CallerEnv, funScopeEnv: FunScopeEnv }>;
 
 type EvalAssignExpr<
     E extends AssignExpr,

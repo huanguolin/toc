@@ -7,7 +7,8 @@ export type ExprType =
     | 'binary'
     | 'unary'
     | 'literal'
-    | 'variable';
+    | 'variable'
+    | 'call';
 
 export interface Expr {
     type: ExprType;
@@ -41,6 +42,12 @@ export interface BinaryExpr extends Expr {
     right: Expr;
 }
 
+export interface CallExpr extends Expr {
+    type: 'call';
+    callee: Expr;
+    arguments: Expr[];
+}
+
 export interface UnaryExpr extends Expr {
     type: 'unary';
     operator: Token;
@@ -52,5 +59,6 @@ export type BuildVariableExpr<N extends Token> = { type: 'variable', name: N };
 export type BuildAssignExpr<N extends Token, E extends Expr> = { type: 'assign', varName: N, right: E };
 export type BuildGroupExpr<E extends Expr> = { type: 'group', expression: E };
 export type BuildBinaryExpr<L extends Expr, Op extends Token, R extends Expr> = { type: 'binary', left: L, operator: Op, right: R };
+export type BuildCallExpr<Callee extends Expr, Args extends Expr[]> = { type: 'call', callee: Callee, arguments: Args };
 export type BuildUnaryExpr<Op extends Token, E extends Expr> = { type: 'unary', operator: Op, expression: E };
 

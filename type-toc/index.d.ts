@@ -1,10 +1,10 @@
 import { FunObject, FunObjToString } from "./FunObject";
 import { Interpret } from "./interpreter";
 import { Parse } from "./parser";
-import { BuildBlockStmt, FunStmt, Stmt } from "./parser/Stmt";
+import { Stmt } from "./parser/Stmt";
 import { NoWay } from "./Result";
 import { Scan } from "./scanner";
-import { BuildToken, Token } from "./scanner/Token";
+import { Token } from "./scanner/Token";
 
 export type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
@@ -21,7 +21,7 @@ export type Toc<Source extends string> =
             : Tokens // error
         : NoWay<'Toc-Scan'>;
 
-type Result = Toc<'fun a(p1, p2) { var a = 5;}'>;
+type Result = Toc<'fun a(i) {i+1;} a(2);'>;
 
 /**
  * debug
@@ -29,7 +29,11 @@ type Result = Toc<'fun a(p1, p2) { var a = 5;}'>;
 // type Input = ' 123 % 100 + 15 - 12 / 3 / ( 5 -3);';
 // type Input = '(5 -3 ) * 6 || 7 - ( 9 / 3 );';
 type Input = `
-fun a(p1, p2) { var a = 5;}
+fun x(f) {
+    fun p(a, b) {
+        f(a, b);
+    }
+}
 `;
 type Tokens = Scan<Input>;
 type Ast = Parse<Tokens>;

@@ -1,8 +1,9 @@
-import { ErrorResult, SuccessResult } from '../Result';
+import { ErrorResult, NoWay, SuccessResult } from '../Result';
 import { Token } from '../scanner/Token';
 import { Keywords, ValueType } from '../type';
+import { Push } from '../utils/array';
 import { Safe } from '../utils/common';
-import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr, BuildVariableExpr, VariableExpr, BuildAssignExpr } from "./Expr";
+import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr, BuildVariableExpr, VariableExpr, BuildAssignExpr, BuildCallExpr } from "./Expr";
 import { Identifier, Match, TokenLike } from './utils';
 
 export type ParseExprError<M extends string> = ErrorResult<`[ParseExprError]: ${M}`>;
@@ -12,15 +13,16 @@ export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 
 // 优先级、结合性参考 C 语言：https://www.tutorialspoint.com/cprogramming/c_operators_precedence.htm
 // 表达式分类并按照由低到高：
-// assign:      =           右结合
-// logic or:    ||          左结合
-// logic and:   &&          左结合
-// equality:    == !=       左结合
-// relation:    < > <= >=   左结合
-// additive:    + -         左结合
-// factor:      * /         左结合
-// unary:       !           右结合
-// primary:     number ()
+// assign:      =                   右结合
+// logic or:    ||                  左结合
+// logic and:   &&                  左结合
+// equality:    == !=               左结合
+// relation:    < > <= >=           左结合
+// additive:    + -                 左结合
+// factor:      * /                 左结合
+// unary:       !                   右结合
+// call:        primary(arg?)       左结合
+// primary:     number boolean null 'identifier' ()
 
 // assign part
 type ParseAssign<Tokens extends Token[], R = ParseLogicOr<Tokens>> =
@@ -115,7 +117,35 @@ type ParseUnary<Tokens extends Token[]> =
         ? ParseUnary<Rest1> extends ParseExprSuccess<infer Expr, infer Rest2>
             ? ParseExprSuccess<BuildUnaryExpr<Op, Expr>, Rest2>
             : ParseExprError<`ParseUnary error after ${Op["lexeme"]}`>
-        : ParsePrimary<Tokens>;
+        : ParseCall<Tokens>;
+
+
+// call part
+type ParseCall<Tokens extends Token[], CR = ParsePrimary<Tokens>> =
+    CR extends ParseExprSuccess<infer Callee, infer Rest>
+        ? Rest extends Match<TokenLike<'('>, infer Rest>
+            ? Rest extends Match<TokenLike<')'>, infer Rest>
+                ? ParseCall<Rest, ParseExprSuccess<BuildCallExpr<Callee, []>, Rest>>
+                : ParseArgs<Rest> extends infer AR
+                    ? AR extends ParseArgsSuccess<infer Args, infer Rest>
+                        ? Rest extends Match<TokenLike<')'>, infer Rest>
+                            ? ParseCall<Rest, ParseExprSuccess<BuildCallExpr<Callee, Args>, Rest>>
+                            : ParseExprError<'Expect ")" after call.'>
+                        : AR // error
+                    : NoWay<'ParseCall-ParseArgs'>
+            : CR // not match more '('
+        : CR; // error
+
+type ParseArgsSuccess<R extends Expr[], T extends Token[]> = SuccessResult<{ args: R, rest: T }>;
+type ParseArgs<Tokens extends Token[], Args extends Expr[] = []> =
+    ParseExpr<Tokens> extends infer AE
+        ? AE extends ParseExprSuccess<infer Arg, infer Rest>
+            ? Rest extends Match<TokenLike<','>, infer Rest>
+                ? ParseArgs<Rest, Push<Args, Arg>>
+                : ParseArgsSuccess<Push<Args, Arg>, Rest>
+            : AE // error
+        : NoWay<'ParseArgs-ParseExpr'>;
+
 
 // primary part
 type ParsePrimary<Tokens extends Token[]> =
