@@ -52,12 +52,6 @@ export class Parser {
             params = this.parameters();
             this.consume(')', `Expect ')' after function parameters.`);
         }
-        // 下面这句可要可不要，只是空块语句得到的 AST 有差异，但不影响执行结果：
-        // 不要的话, 得到块语句中包了一个空块：
-        // {} => BlockStmt{ ... stmts: [BlockStmt{ ... stmts: [] }] }
-        // 要的话，得到直接是一个空块：
-        // {} => BlockStmt{ ... stmts: [] }
-        // 如果方便还是要上。但对于 type-toc 就会麻烦一点，可以选择不要。
         this.consume('{', `Expect '{' before function body.`);
         const body = this.blockStatement();
         return new FunStmt(name, params, body);

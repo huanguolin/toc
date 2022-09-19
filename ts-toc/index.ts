@@ -18,7 +18,7 @@ function main() {
     rl.on('line', function (line) {
         try {
             const result = toc(line);
-            const printVal = typeof result === 'object' ? result.toString() : result;
+            const printVal = result && typeof result === 'object' ? result.toString() : result;
             console.log('=', printVal);
         } catch (e) {
             let errMsg = e;
