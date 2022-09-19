@@ -10,6 +10,7 @@ export type ParseExprSuccess<R extends Expr, T extends Token[]> = SuccessResult<
 
 export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 
+// 优先级、结合性参考 C 语言：https://www.tutorialspoint.com/cprogramming/c_operators_precedence.htm
 // 表达式分类并按照由低到高：
 // assign:      =           右结合
 // logic or:    ||          左结合
