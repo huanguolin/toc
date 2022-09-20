@@ -5,7 +5,8 @@ export type StmtType =
     | 'varDeclaration'
     | 'block'
     | 'if'
-    | 'fun';
+    | 'fun'
+    | 'for';
 
 export interface IStmt {
     type: StmtType;

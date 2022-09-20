@@ -7,6 +7,7 @@ export type TokenType =
     | 'number'
     | 'fun'
     | 'var'
+    | 'for'
     | 'if'
     | 'else'
     | 'true'
@@ -36,6 +37,7 @@ export type TokenType =
 
 export const keywords = [
     'fun',
+    'for',
     'if',
     'else',
     'var',

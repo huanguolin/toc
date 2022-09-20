@@ -11,6 +11,7 @@ import { VariableExpr } from "./Exprs/VariableExpr";
 import { ParseError } from "./ParseError";
 import { BlockStmt } from "./Stmts/BlockStmt";
 import { ExprStmt } from "./Stmts/ExprStmt";
+import { ForStmt } from "./Stmts/ForStmt";
 import { FunStmt } from "./Stmts/FunStmt";
 import { IfStmt } from "./Stmts/IfStmt";
 import { IStmt } from "./Stmts/IStmt";
@@ -82,8 +83,42 @@ export class Parser {
             return this.blockStatement();
         } else if (this.match('if')) {
             return this.ifStatement();
+        } else if (this.match('for')) {
+            return this.forStatement();
         }
         return this.expressionStatement();
+    }
+
+    private forStatement() {
+        this.consume('(', 'Expect "(" after for keyword.');
+
+        let initializer: IStmt | null;
+        if (this.match(';')) {
+            initializer = null;
+        } else if (this.match('var')) {
+            initializer = this.varDeclaration();
+        } else {
+            initializer = this.expressionStatement();
+        }
+
+        let condition: IExpr | null;
+        if (this.match(';')) {
+            condition = null;
+        } else {
+            condition = this.expression();
+            this.consume(';', 'Expect ";" after for condition.');
+        }
+
+        let increment: IExpr | null;
+        if (this.match(')')) {
+            increment = null;
+        } else {
+            increment = this.expression();
+            this.consume(')', 'Expect ")" after for increment.');
+        }
+
+        const body = this.statement();
+        return new ForStmt(initializer, condition, increment, body);
     }
 
     private ifStatement() {
