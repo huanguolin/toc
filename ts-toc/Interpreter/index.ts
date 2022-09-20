@@ -9,6 +9,7 @@ import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
 import { VariableExpr } from "../Parser/Exprs/VariableExpr";
 import { BlockStmt } from "../Parser/Stmts/BlockStmt";
 import { ExprStmt } from "../Parser/Stmts/ExprStmt";
+import { ForStmt } from "../Parser/Stmts/ForStmt";
 import { FunStmt } from "../Parser/Stmts/FunStmt";
 import { IfStmt } from "../Parser/Stmts/IfStmt";
 import { IStmt } from "../Parser/Stmts/IStmt";
@@ -54,6 +55,34 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
             lastResult = stmt.accept(this);
         }
         return lastResult;
+    }
+
+    visitForStmt(stmt: ForStmt): ValueType {
+        const previousEnv = this.environment;
+        this.environment = new Environment(this.environment);
+        
+        if (stmt.initializer) {
+            stmt.initializer.accept(this);
+        }
+
+        let conditionResult: ValueType = true;
+        if (stmt.condition) {
+            conditionResult = stmt.condition.accept(this);
+        }
+
+        let result: ValueType = null;
+        while (conditionResult) {
+            result = stmt.body.accept(this);
+            if (stmt.increment) {
+                stmt.increment.accept(this);
+            }
+            if (stmt.condition) {
+                conditionResult = stmt.condition.accept(this);
+            }
+        }
+
+        this.environment = previousEnv;
+        return result;
     }
 
     visitFunStmt(stmt: FunStmt): FunObject {
