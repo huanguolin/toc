@@ -1,3 +1,4 @@
+import { NoWay } from "../Result";
 import { ValueType } from "../type";
 import { RuntimeError } from "./RuntimeError";
 
@@ -43,7 +44,11 @@ export type EnvAssign<
 > = Has<Store, Key> extends true
     ? BuildEnv<Set<Store, Key, Value>, Outer>
     : Outer extends Environment
-        ? EnvAssign<Outer, Key, Value>
+        ? EnvAssign<Outer, Key, Value> extends infer NewOuter
+            ? NewOuter extends Environment
+                ? BuildEnv<Store, NewOuter>
+                : NewOuter // error
+            : NoWay<'EnvAssign'>
         : RuntimeError<`Undefined variable '${Key}'.`>;
 
 type EnvMap = { [key: string]: ValueType };

@@ -116,7 +116,7 @@ type cases = [
     Expect<Equal<Toc<`
         var b = 4;
         {
-            var a= b = 3;
+            var b = 3;
             b = 99;
         }
         var c = b + 12;

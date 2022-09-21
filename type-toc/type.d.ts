@@ -4,6 +4,7 @@ export type TokenType =
     | 'identifier'
     | 'number'
     | 'fun'
+    | 'for'
     | 'if'
     | 'else'
     | 'var'
@@ -41,6 +42,7 @@ export type Keywords = {
     var: true,
     if: true,
     else: true,
+    for: true,
 };
 
 export type ValueType = FunObject | number | boolean | null;

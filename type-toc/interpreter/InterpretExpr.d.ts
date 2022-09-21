@@ -8,7 +8,7 @@ import { EQ, Safe } from "../utils/common";
 import { Inverse, IsTrue } from "../utils/logic";
 import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math";
 import { BuildEnv, EnvAssign, EnvDefine, EnvGet, Environment } from "./Environment";
-import { InterpretBlockStmt, InterpretBlockStmtBody } from "./InterpretStmt";
+import { InterpretBlockStmt, InterpretBlockStmtBody, InterpretStmtSuccess } from "./InterpretStmt";
 import { RuntimeError } from './RuntimeError';
 
 export type InterpretExprSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
@@ -40,7 +40,11 @@ type EvalCallExpr<
         ? Callee['declaration']['parameters']['length'] extends E['arguments']['length']
             ? InjectArgsToEnv<Callee['declaration']['parameters'], E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
                 ? EE extends InjectArgsToEnvSuccess<infer CallerEnv, infer FunScopeEnv>
-                    ? InterpretBlockStmt<Callee['declaration']['body']['stmts'], CallerEnv, FunScopeEnv>
+                    ? InterpretBlockStmt<Callee['declaration']['body']['stmts'], FunScopeEnv> extends infer BR
+                        ? BR extends InterpretStmtSuccess<infer BV, infer Env>
+                            ? InterpretStmtSuccess<BV, CallerEnv> // 函数body执行完要回到CallerEnv
+                            : BR // error
+                        : NoWay<'EvalCallExpr-InterpretBlockStmt'>
                     : EE // error
                 : NoWay<'EvalCallExpr-InjectArgsToEnv'>
             : RuntimeError<'Arguments length not match parameters.'>

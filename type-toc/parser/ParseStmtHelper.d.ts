@@ -1,8 +1,9 @@
 import { ErrorResult, NoWay, SuccessResult } from "../Result";
 import { BuildToken, EOF, Token } from "../scanner/Token";
 import { Push } from "../utils/array";
+import { Expr } from "./Expr";
 import { ParseExpr, ParseExprSuccess } from "./ParseExprHelper";
-import { BlockStmt, BuildBlockStmt, BuildExprStmt, BuildFunStmt, BuildIfStmt, BuildVarStmt, Stmt } from "./Stmt";
+import { BlockStmt, BuildBlockStmt, BuildExprStmt, BuildForStmt, BuildFunStmt, BuildIfStmt, BuildVarStmt, Stmt } from "./Stmt";
 import { Identifier, Match, TokenLike } from "./utils";
 
 export type ParseStmtError<M extends string> = ErrorResult<`[ParseStmtError]: ${M}`>;
@@ -17,7 +18,61 @@ export type ParseStmt<Tokens extends Token[]> =
                 ? ParseIfStmt<Rest>
                 : Tokens extends Match<TokenLike<'fun'>, infer Rest>
                     ? ParseFunStmt<Rest>
-                    : ParseExprStmt<Tokens>;
+                    : Tokens extends Match<TokenLike<'for'>, infer Rest>
+                        ? ParseForStmt<Rest>
+                        : ParseExprStmt<Tokens>;
+
+type ParseForStmt<
+    Tokens extends Token[],
+> = Tokens extends Match<TokenLike<'('>, infer Rest>
+    ? Rest extends Match<TokenLike<';'>, infer Rest>
+        ? ParseForStmtFromCondition<Rest, null>
+        : Rest extends Match<TokenLike<'var'>, infer Rest>
+            ? ParseForStmtFromInitializerResult<ParseVarStmt<Rest>>
+            : ParseForStmtFromInitializerResult<ParseExprStmt<Rest>>
+    : ParseStmtError<'Expect "(" after for keyword.'>;
+
+type ParseForStmtFromInitializerResult<IR> =
+    IR extends ParseStmtSuccess<infer Initializer, infer Rest>
+        ? ParseForStmtFromCondition<Rest, Initializer>
+        : IR; // error
+
+type ParseForStmtFromCondition<
+    Tokens extends Token[],
+    Initializer extends Stmt | null,
+> = Tokens extends Match<TokenLike<';'>, infer Rest>
+    ? ParseForStmtFromIncrement<Rest, Initializer, null>
+    : ParseExpr<Tokens> extends infer CR
+        ? CR extends ParseExprSuccess<infer Condition, infer Rest>
+            ? Rest extends Match<TokenLike<';'>, infer Rest>
+                ? ParseForStmtFromIncrement<Rest, Initializer, Condition>
+                : ParseStmtError<'Expect ";" after for condition.'>
+            : CR // error
+        : NoWay<'ParseForStmtFromCondition'>
+
+type ParseForStmtFromIncrement<
+    Tokens extends Token[],
+    Initializer extends Stmt | null,
+    Condition extends Expr | null,
+> = Tokens extends Match<TokenLike<')'>, infer Rest>
+    ? ParseForStmtFromBody<Rest, Initializer, Condition, null>
+    : ParseExpr<Tokens> extends infer IR
+        ? IR extends ParseExprSuccess<infer Increment, infer Rest>
+            ? Rest extends Match<TokenLike<')'>, infer Rest>
+                ? ParseForStmtFromBody<Rest, Initializer, Condition, Increment>
+                : ParseStmtError<'Expect ")" after for increment.'>
+            : IR // error
+        : NoWay<'ParseForStmtFromIncrement'>;
+
+type ParseForStmtFromBody<
+    Tokens extends Token[],
+    Initializer extends Stmt | null,
+    Condition extends Expr | null,
+    Increment extends Expr | null,
+    BR = ParseStmt<Tokens>,
+> = BR extends ParseStmtSuccess<infer Body, infer Rest>
+    ? ParseStmtSuccess<BuildForStmt<Initializer, Condition, Increment, Body>, Rest>
+    : BR; // error
 
 type ParseFunStmt<
     Tokens extends Token[],

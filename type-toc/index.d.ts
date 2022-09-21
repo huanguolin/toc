@@ -29,11 +29,9 @@ type Result = Toc<'fun a(i) {i+1;} a(2);'>;
 // type Input = ' 123 % 100 + 15 - 12 / 3 / ( 5 -3);';
 // type Input = '(5 -3 ) * 6 || 7 - ( 9 / 3 );';
 type Input = `
-fun x(f) {
-    fun p(a, b) {
-        f(a, b);
-    }
-}
+var x = 0;
+for (var i = 1; i < 5; i=i+1)
+    x = x + i;
 `;
 type Tokens = Scan<Input>;
 type Ast = Parse<Tokens>;
