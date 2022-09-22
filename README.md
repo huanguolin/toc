@@ -21,7 +21,6 @@ parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 statement      → exprStmt
                | forStmt
                | ifStmt
-               | returnStmt
                | block ;
 
 exprStmt       → expression ";" ;
@@ -30,7 +29,6 @@ forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
                            expression? ")" statement ;
 ifStmt         → "if" "(" expression ")" statement
                  ( "else" statement )? ;
-returnStmt     → "return" expression? ";" ;
 block          → "{" declaration* "}" ;
 
 # expressions
