@@ -122,8 +122,19 @@ export class Scanner {
         while (!this.isAtEnd() && this.current() !== '"') {
             if (this.current() === '\\') {
                 this.advance();
+                const c = this.advance();
+                // https://en.wikipedia.org/wiki/Escape_character#:~:text=%5Bedit%5D-,JavaScript,-%5Bedit%5D
+                if (ESCAPE_CHAR_MAP[c]) {
+                    s += ESCAPE_CHAR_MAP[c];
+                } else {
+                    // \'
+                    // \"
+                    // \\
+                    s += c;
+                }
+            } else {
+                s += this.advance();
             }
-            s += this.advance();
         }
 
         if (this.isAtEnd()) {
@@ -180,3 +191,13 @@ export class Scanner {
                 || c === '_');
     }
 }
+
+const ESCAPE_CHAR_MAP = {
+    n: '\n',
+    r: '\r',
+    t: '\t',
+    b: '\b',
+    f: '\f',
+    v: '\v',
+    0: '\0',
+} as const;
