@@ -20,7 +20,6 @@ import { Environment } from "./Environment";
 import { RuntimeError } from "./RuntimeError";
 
 const BinaryEvalMapping = {
-    '+': [isNumber, (a: number, b: number) => a + b],
     '-': [isNumber, (a: number, b: number) => a - b],
     '*': [isNumber, (a: number, b: number) => a * b],
     '/': [isNumber, (a: number, b: number) => a / b],
@@ -42,6 +41,11 @@ function isAny(x: unknown): x is any {
     return true;
 }
 
+function isString(x: unknown): x is string {
+    return typeof x === 'string';
+}
+
+
 export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     private environment: Environment;
 
@@ -49,8 +53,8 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         this.environment = new Environment(null);
     }
 
-    interpret(stmts: IStmt[]) {
-        let lastResult: unknown = null;
+    interpret(stmts: IStmt[]): ValueType {
+        let lastResult: ValueType = null;
         for (const stmt of stmts) {
             lastResult = stmt.accept(this);
         }
@@ -108,7 +112,7 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         return result;
     }
 
-    executeBlock(blockStmt: BlockStmt, env: Environment) {
+    executeBlock(blockStmt: BlockStmt, env: Environment): ValueType {
         const previousEnv = this.environment;
 
         try {
@@ -147,10 +151,20 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         return this.environment.get(expr.name);
     }
 
-    visitBinaryExpr(expr: BinaryExpr): number | boolean {
+    visitBinaryExpr(expr: BinaryExpr): ValueType {
         const operator = expr.operator;
         const left = expr.left.accept(this);
         const right = expr.right.accept(this);
+
+        if (operator.type === '+') {
+            if (isString(left) && isString(right)) {
+                return left + right;
+            } else if (isNumber(left) && isNumber(right)) {
+                return left + right;
+            }
+
+            throw new RuntimeError('"+" operator only support both operand is string or number.');
+        }
 
         const mapping = BinaryEvalMapping[operator.type];
         if (!mapping) {

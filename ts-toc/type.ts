@@ -1,9 +1,8 @@
 import { FunObject } from "./FunObject";
-import { Environment } from "./Interpreter/Environment";
-import { FunStmt } from "./Parser/Stmts/FunStmt";
 
 export type TokenType =
     | 'identifier'
+    | 'string'
     | 'number'
     | 'fun'
     | 'var'
@@ -46,4 +45,4 @@ export const keywords = [
     'null',
 ];
 
-export type ValueType = FunObject | number | boolean | null;
+export type ValueType = FunObject | string | number | boolean | null;

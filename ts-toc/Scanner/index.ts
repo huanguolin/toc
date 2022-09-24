@@ -69,6 +69,9 @@ export class Scanner {
                 case '\n':
                 case '\t':
                     break;
+                case '"':
+                    this.addString();
+                    break;
                 default:
                     if (this.isNumberChar(c)) {
                         this.addNumber();
@@ -112,6 +115,25 @@ export class Scanner {
 
     private addToken(type: TokenType, lexeme: string, literal: number | null = null) {
         this.tokens.push(new Token(type, lexeme, literal));
+    }
+
+    private addString() {
+        let s = '';
+        while (!this.isAtEnd() && this.current() !== '"') {
+            if (this.current() === '\\') {
+                this.advance();
+            }
+            s += this.advance();
+        }
+
+        if (this.isAtEnd()) {
+            throw new ScanError('Unterminated string.');
+        }
+
+        // consume "
+        this.advance();
+
+        this.addToken('string', s);
     }
 
     private addNumber() {

@@ -282,6 +282,8 @@ export class Parser {
                 return new LiteralExpr(null);
             }
             return new LiteralExpr(type === 'true');
+        } else if (this.match('string')) {
+            return new LiteralExpr(this.previous().lexeme);
         } else if (this.match('identifier')) {
             return new VariableExpr(this.previous());
         } else if (this.match('(')) {
