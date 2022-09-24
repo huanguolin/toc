@@ -19,10 +19,9 @@ type ScanBody<S extends string, A extends Token[] = []> =
             ? Scan<R, Push<A, T>>
             : ScanIdentifier<S> extends ScanSuccess<infer T, infer R>
                 ? Scan<R, Push<A, T>>
-                : ScanError<`Unknown next token: ${ShiftChar<S>['char']}`>;
-
-type tScan = Scan<'a = b = 8;'>;
-
+                : ScanString<S> extends ScanSuccess<infer T, infer R>
+                    ? Scan<R, Push<A, T>>
+                    : ScanError<`Unknown next token: ${ShiftChar<S>['char']}`>;
 
 type SingleOperators =
     | '{'
@@ -60,6 +59,23 @@ type ScanOperator<S extends string> =
                     : S extends `${infer C extends SingleOperators}${infer R extends string}`
                         ? ScanSuccess<BuildToken<Safe<C, SingleOperators>, C>, R>
                         : ScanError<'Not match an operator.'>;
+
+type ScanString<S extends string> =
+    S extends `${infer C extends '"'}${infer R extends string}`
+        ? ScanStringBody<R>
+        : ScanError<'Not match a string.'>;
+// ts type 下已经处理过转义字符，所以要转义 ", 只能这样写 \\".
+// 不过正因为已经转义，就不必像 ts-toc 版本中写那么多代码。
+type ScanStringBody<S extends string, Str extends string = ''> =
+    S extends `${infer C extends string}${infer R extends string}`
+        ? C extends '"'
+            ? ScanSuccess<BuildToken<'string', Str>, R>
+            : C extends '\\'
+                ? R extends `${infer C extends string}${infer R extends string}`
+                    ? ScanStringBody<R, PushChar<Str, C>>
+                    : ScanError<'String not close'>
+                : ScanStringBody<R, PushChar<Str, C>>
+        : ScanError<'String not close'>;
 
 type ScanNumber<S extends string, N extends NumStr | '' = ''> =
     S extends `${infer C extends NumChars}${infer R extends string}`

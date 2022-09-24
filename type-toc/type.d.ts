@@ -2,6 +2,7 @@ import { FunObject } from "./FunObject";
 
 export type TokenType =
     | 'identifier'
+    | 'string'
     | 'number'
     | 'fun'
     | 'for'
@@ -45,4 +46,4 @@ export type Keywords = {
     for: true,
 };
 
-export type ValueType = FunObject | number | boolean | null;
+export type ValueType = FunObject | string | number | boolean | null;

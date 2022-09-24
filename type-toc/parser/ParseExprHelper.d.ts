@@ -152,17 +152,19 @@ type ParsePrimary<Tokens extends Token[]> =
     Tokens extends Match<infer E extends Token, infer R>
         ? E extends { type: 'number', value: infer V extends number }
             ? ParseExprSuccess<BuildLiteralExpr<V>, R>
-            : E extends { type: infer B extends keyof Keywords }
-                ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
-                : E extends Identifier
-                    ? ParseExprSuccess<BuildVariableExpr<E>, R>
-                    : E extends TokenLike<'('>
-                        ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
-                            ? RG extends Match<TokenLike<')'>, infer Rest>
-                                ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
-                                : ParseExprError<`Group not match ')'.`>
-                            : ParseExprError<`Parse Group expression fail.`>
-                        : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
+            : E extends { type: 'string', lexeme: infer V extends string }
+                ? ParseExprSuccess<BuildLiteralExpr<V>, R>
+                : E extends { type: infer B extends keyof Keywords }
+                    ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
+                    : E extends Identifier
+                        ? ParseExprSuccess<BuildVariableExpr<E>, R>
+                        : E extends TokenLike<'('>
+                            ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
+                                ? RG extends Match<TokenLike<')'>, infer Rest>
+                                    ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
+                                    : ParseExprError<`Group not match ')'.`>
+                                : ParseExprError<`Parse Group expression fail.`>
+                            : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
         : ParseExprError<`ParsePrimary fail`>;
 
 type ToValue<K extends keyof Keywords> = Safe<KeywordValueMapping[Safe<K, keyof KeywordValueMapping>], ValueType>;

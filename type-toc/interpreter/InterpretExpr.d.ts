@@ -118,7 +118,7 @@ type EvalBinaryExpr<
             ? EvalEquality<Op, LV, InterpretExpr<Right, Env>, Env>
             : Op extends '&&' | '||'
                 ? EvalLogicAndOr<Op, LV, Right, Env>
-                : EvalMath<Op, LV, InterpretExpr<Right, Env>, Env>
+                : EvalRestBinaryExpr<Op, LV, InterpretExpr<Right, Env>, Env>
         : LR; // error
 
 type EvalLogicAndOr<
@@ -150,38 +150,49 @@ type EvalEquality<
             : RuntimeError<`EvalEquality fail when meet: ${Op}`>
     : RR; // error
 
+type IsStrings<N1 extends string, N2 extends string> = [N1, N2];
 type IsNumbers<N1 extends number, N2 extends number> = [N1, N2];
-// type t = [1, 2] extends IsNumbers<infer A, infer B> ? A : never;
-type EvalMath<
+type EvalRestBinaryExpr<
     Op extends TokenType,
     LV extends ValueType,
     RR,
     Env extends Environment, // 不需要，但是为了一致，没去掉
 > = RR extends InterpretExprSuccess<infer RV, infer Env>
-    ? [LV, RV] extends IsNumbers<infer N1, infer N2>
-        ? Op extends '+'
-            ? WrapMathResult<Add<N1, N2>, Env>
-            : Op extends '-'
-                ? WrapMathResult<Sub<N1, N2>, Env>
-                : Op extends '*'
-                    ? WrapMathResult<Mul<N1, N2>, Env>
-                    : Op extends '/'
-                        ? WrapMathResult<Div<N1, N2>, Env>
-                        : Op extends '%'
-                            ? WrapMathResult<Mod<N1, N2>, Env>
-                            : Op extends '<'
-                                ? WrapMathResult<LT<N1, N2>, Env>
-                                : Op extends '>'
-                                    ? WrapMathResult<GT<N1, N2>, Env>
-                                    : Op extends '<='
-                                        ? WrapMathResult<LTE<N1, N2>, Env>
-                                        : Op extends '>='
-                                            ? WrapMathResult<GTE<N1, N2>, Env>
-                                            : RuntimeError<`Unknown binary operator: ${Op}`>
-        : RuntimeError<`EvalMath fail, Left or Right is not a number: left:${ExtractError<LV>}, right:${ExtractError<RR>}`>
+    ? Op extends '+'
+        ? [LV, RV] extends IsNumbers<infer N1, infer N2>
+            ? WrapBinaryResult<Add<N1, N2>, Env>
+            : [LV, RV] extends IsStrings<infer N1, infer N2>
+                ? WrapBinaryResult<`${N1}${N2}`, Env>
+                : RuntimeError<'"+" operator only support both operand is string or number.'>
+        : [LV, RV] extends IsNumbers<infer N1, infer N2>
+            ? EvalMath<Op, N1, N2, Env>
+            : RuntimeError<`EvalRestBinaryExpr fail, Left or Right is not a number: left:${ExtractError<LV>}, right:${ExtractError<RR>}`>
     : RR; // error
 
-type WrapMathResult<V, Env extends Environment> =
+type EvalMath<
+    Op extends TokenType,
+    N1 extends number,
+    N2 extends number,
+    Env extends Environment,
+> = Op extends '-'
+    ? WrapBinaryResult<Sub<N1, N2>, Env>
+    : Op extends '*'
+        ? WrapBinaryResult<Mul<N1, N2>, Env>
+        : Op extends '/'
+            ? WrapBinaryResult<Div<N1, N2>, Env>
+            : Op extends '%'
+                ? WrapBinaryResult<Mod<N1, N2>, Env>
+                : Op extends '<'
+                    ? WrapBinaryResult<LT<N1, N2>, Env>
+                    : Op extends '>'
+                        ? WrapBinaryResult<GT<N1, N2>, Env>
+                        : Op extends '<='
+                            ? WrapBinaryResult<LTE<N1, N2>, Env>
+                            : Op extends '>='
+                                ? WrapBinaryResult<GTE<N1, N2>, Env>
+                                : RuntimeError<`Unknown binary operator: ${Op}`>;
+
+type WrapBinaryResult<V, Env extends Environment> =
     V extends ValueType
         ? InterpretExprSuccess<V, Env>
         : ExtractError<V>;
