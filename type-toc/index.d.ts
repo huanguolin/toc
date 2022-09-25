@@ -26,11 +26,10 @@ type Result = Toc<'fun a(i) {i+1;} a(2);'>;
 /**
  * debug
  */
-// type Input = ' 123 % 100 + 15 - 12 / 3 / ( 5 -3);';
-// type Input = '(5 -3 ) * 6 || 7 - ( 9 / 3 );';
 type Input = `
 var x = 0;
-for (var i = 1; i < 5; i=i+1)
+var i = 1;
+for (; i < 4; i=i+1)
     x = x + i;
 `;
 type Tokens = Scan<Input>;

@@ -17,8 +17,6 @@ type tStrLength = StrLength<'123'>;
 
 
 export type Str2Num<S extends NumStr> = S extends `${infer N extends number}` ? N : never;
-// type tStr2Num1 = Str2Num<'13'>;
-// type tStr2Num2 = Str2Num<'13d'>;
 
 
 export type NumStr = `${number}`;

@@ -4,14 +4,14 @@
  * ref: https://itnext.io/implementing-arithmetic-within-typescripts-type-system-a1ef140a6f6f
  */
 
-import { ErrorResult } from "../Result";
-import { Concat, Drop, Init, Length, Push } from "./array";
-import { EQ, Safe } from "./common";
-import { Inverse } from "./logic";
-import { NumChars, NumStr, StrLength, ShiftChar } from "./string";
-
+import { ErrorResult } from "../../../Result";
+import { Concat, Drop, Init, Length, Push } from "../../array";
+import { EQ, Safe } from "../../common";
+import { Inverse } from "../../logic";
+import { NumChars, NumStr, StrLength, ShiftChar } from "../../string";
 
 export type Add<N1 extends number, N2 extends number> = Length<Concat<Init<N1>, Init<N2>>>;
+// type tAdd = Add<9991, 123>;
 
 // export type Sub<N1 extends number, N2 extends number, A1 extends any[] = Init<N1>, A2 extends any[] = []> =
 //     Length<A2> extends N2

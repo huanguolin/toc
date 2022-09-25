@@ -6,9 +6,10 @@ import { Token } from "../scanner/Token";
 import { TokenType, ValueType } from "../type";
 import { EQ, Safe } from "../utils/common";
 import { Inverse, IsTrue } from "../utils/logic";
-import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math";
+import { Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math/simple/math";
+import { Add } from "../utils/math/fast/add";
 import { BuildEnv, EnvAssign, EnvDefine, EnvGet, Environment } from "./Environment";
-import { InterpretBlockStmt, InterpretBlockStmtBody, InterpretStmtSuccess } from "./InterpretStmt";
+import { InterpretBlockStmt, InterpretStmtSuccess } from "./InterpretStmt";
 import { RuntimeError } from './RuntimeError';
 
 export type InterpretExprSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
@@ -144,7 +145,7 @@ type EvalEquality<
     Env extends Environment, // 不需要，但是为了一致，没去掉
 > = RR extends InterpretExprSuccess<infer RV, infer Env>
     ? Op extends '=='
-        ? InterpretExprSuccess<EQ<LV, RV>, Env>
+        ? InterpretExprSuccess<EQ<LV, RV>, Safe<Env, Environment>>
         : Op extends '!='
             ? InterpretExprSuccess<Inverse<EQ<LV, RV>>, Env>
             : RuntimeError<`EvalEquality fail when meet: ${Op}`>
