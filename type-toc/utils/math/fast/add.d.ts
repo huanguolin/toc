@@ -5,7 +5,7 @@
 import { Safe } from "../../common";
 import { NumChars } from "../../string";
 import { ToNumChars, ToNumber, TrimZeroStart } from "./utils";
-type t = Add<24690, 12345>;
+
 export type Add<
     N1 extends number,
     N2 extends number,

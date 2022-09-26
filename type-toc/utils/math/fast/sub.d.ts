@@ -2,9 +2,7 @@
  * 目前只支持正整数运算。
  */
 
-import { Safe } from "../../common";
 import { NumChars } from "../../string";
-import { Add } from "./add";
 import { LTE } from "./compare";
 import { ToNumber, ToNumChars, TrimZeroStart } from "./utils";
 
