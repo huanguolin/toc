@@ -2,15 +2,16 @@
  * 目前只支持正整数运算。
  */
 
+import { Safe } from "../../common";
 import { NumChars } from "../../string";
-import { ToNumChars, ToNumber } from "./utils";
-
+import { ToNumChars, ToNumber, TrimZeroStart } from "./utils";
+type t = Add<24690, 12345>;
 export type Add<
     N1 extends number,
     N2 extends number,
 > = AddCore<ToNumChars<N1>, ToNumChars<N2>> extends infer R
     ? R extends NumChars[]
-        ? ToNumber<R>
+        ? ToNumber<TrimZeroStart<R>>
         : R
     : never; // error
 
@@ -48,24 +49,20 @@ type AtomC<Num extends NumChars> = AddAtom<Num, '1'>;
 type AddNumChar<
     N1 extends NumChars,
     N2 extends NumChars,
-    Carry extends '0' | '1' = '0',
-> = AddMap[N1][N2] extends AddAtom<infer N, infer C>
-    ? C extends '0'
-        ? AddAtom<N, Carry>
-        : Carry extends '0'
-            ? AtomC<N>
-            : AddNumChar<N, C, Carry>
+    Carry extends NumChars = '0',
+> = AddMap[N1][N2] extends AddAtom<infer N, infer NC1>
+    ? AddMap[Carry][N] extends AddAtom<infer N, infer NC2>
+        ? AddAtom<N, Safe<AddMap[NC1][NC2]['num'], '0' | '1'>>
+        : never
     : `AddNumChar Error: invalid N1(${N1}) or N2(${N2}).`;
 
 type AddCore<
     N1 extends NumChars[],
     N2 extends NumChars[],
     Result extends NumChars[] = [],
-    Carry extends '0' | '1' = '0',
+    Carry extends NumChars = '0',
 > = [N1, N2] extends [[], []]
-    ? Carry extends '0'
-        ? Result
-        : ['1', ...Result]
+    ? [Carry, ...Result]
     : N1 extends []
         ? AddCoreCarry<N2, Result, Carry>
         : N2 extends []
@@ -80,7 +77,7 @@ type AddCore<
 type AddCoreCarry<
     N extends NumChars[],
     Result extends NumChars[] = [],
-    Carry extends '0' | '1' = '0',
+    Carry extends NumChars = '0',
 > = Carry extends '0'
     ? [...N, ...Result]
     : N extends [...infer Rest extends NumChars[], infer NC extends NumChars]

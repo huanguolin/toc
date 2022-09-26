@@ -1,3 +1,7 @@
+/**
+ * 目前只支持正整数运算。
+ */
+
 import { Safe, EQ } from "../../common";
 import { Inverse } from "../../logic";
 import { NumChars, NumStr, ShiftChar, StrLength } from "../../string";
