@@ -5,10 +5,12 @@
   "main": "index.d.ts",
   "dependencies": {},
   "devDependencies": {
+    "@typescript/analyze-trace": "^0.9.0",
     "typescript": "^4.8.3"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "trace": "rm -rf ./trace && tsc -p ./tsconfig.analyze.json --generateTrace trace --incremental false",
+    "analyze": "npm run trace && analyze-trace ./trace"
   },
   "author": "alvin.huang",
   "license": "MIT"
