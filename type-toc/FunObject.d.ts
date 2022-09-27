@@ -18,7 +18,9 @@ export type BuildFunObj<
 export type FunObjToString<
     F extends FunObject,
     D extends FunStmt = F['declaration']
-> = `<fun ${D['name']['lexeme']}(${ParamsToString<D['parameters']>})>`;
+> = `<fun ${GetFunName<F>}(${ParamsToString<D['parameters']>})>`;
+
+export type GetFunName<F extends FunObject> = F['declaration']['name']['lexeme'];
 
 type ParamsToString<
     Params extends Token[],
