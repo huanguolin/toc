@@ -1,61 +1,12 @@
 # Toc
-A toy programming language implements by `TypeScript` language (`ts-toc`) and `TypeScript` type system (`type-toc`).
+A toy interpreter implemented with TypeScript's type system (see `type-toc` folder).
+> As a comparison, one was also implemented directly in TypeScript(see `ts-toc` folder).
 
-# Syntax Grammar
-```shell
-program        → declaration* EOF ;
+# Language Grammar of the Interpreter
+> see [Toc Grammar](./docs/grammar.md)
 
-# declarations
-declaration    → funDecl
-               | varDecl
-               | statement ;
+# Implement Detail
+> see [类型体操之实现一个类C风格语言的解释器](./docs/implement-detail.md)
 
-funDecl        → "fun" function ;
-varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-
-function       → IDENTIFIER "(" parameters? ")" block ;
-parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
-
-
-# statements
-statement      → exprStmt
-               | forStmt
-               | ifStmt
-               | block ;
-
-exprStmt       → expression ";" ;
-forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
-                           expression? ";"
-                           expression? ")" statement ;
-ifStmt         → "if" "(" expression ")" statement
-                 ( "else" statement )? ;
-block          → "{" declaration* "}" ;
-
-# expressions
-expression     → assignment ;
-
-assignment     → IDENTIFIER "=" assignment
-               | logic_or ;
-
-logic_or       → logic_and ( "||" logic_and )* ;
-logic_and      → equality ( "&&" equality )* ;
-equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-comparison     → additive ( ( ">" | ">=" | "<" | "<=" ) additive )* ;
-additive       → factor ( ( "-" | "+" ) factor )* ;
-factor         → unary ( ( "/" | "*" | "%" ) unary )* ;
-
-unary          → "!" unary | call ;
-call           → primary ( "(" arguments? ")" )* ;
-primary        → "true" | "false" | "null" | NUMBER | STRING | IDENTIFIER | "(" expression ")";
-
-arguments      → expression ( "," expression )* ;
-```
-
-# Lexical Grammar
-```shell
-NUMBER         → DIGIT+ ;
-STRING         → "\"" <any char except "\"">* "\"" ;
-IDENTIFIER     → ALPHA ( ALPHA | DIGIT )* ;
-ALPHA          → "a" ... "z" | "A" ... "Z" | "_" ;
-DIGIT          → "0" ... "9" ;
-```
+# License
+MIT
