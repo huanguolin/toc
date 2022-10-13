@@ -1,3 +1,4 @@
 output/
 node_modules/
 trace/
+tools/prepare-ts-playground/toc.d.ts
