@@ -1,5 +1,6 @@
 import { NoWay } from "../Result";
 import { ValueType } from "../type";
+
 import { RuntimeError } from "./RuntimeError";
 
 export type Environment = {
@@ -53,6 +54,7 @@ export type EnvAssign<
 
 type EnvMap = { [key: string]: ValueType };
 
+// eslint-disable-next-line no-redeclare
 type Set<
     M extends EnvMap,
     K extends string,

@@ -1,6 +1,7 @@
-import { Stmt } from "../parser/Stmt";
 import { NoWay } from "../Result";
+import { Stmt } from "../parser/Stmt";
 import { ValueType } from "../type";
+
 import { BuildEnv, Environment } from "./Environment";
 import { InterpretStmt, InterpretStmtSuccess } from "./InterpretStmt";
 

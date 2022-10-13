@@ -1,12 +1,13 @@
 import { FunObject } from "../FunObject";
+import { NoWay, SuccessResult } from "../Result";
 import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr, VariableExpr } from "../parser/Expr";
 import { TokenLike } from "../parser/utils";
-import { NoWay, SuccessResult } from "../Result";
 import { Token } from "../scanner/Token";
 import { TokenType, ValueType } from "../type";
 import { EQ, Safe } from "../utils/common";
 import { Inverse, IsTrue } from "../utils/logic";
 import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math/fast/index";
+
 import { BuildEnv, EnvAssign, EnvDefine, EnvGet, Environment } from "./Environment";
 import { InterpretBlockStmt, InterpretStmtSuccess } from "./InterpretStmt";
 import { RuntimeError } from './RuntimeError';

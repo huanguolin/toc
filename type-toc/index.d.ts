@@ -1,8 +1,8 @@
 import { FunObject, FunObjToString } from "./FunObject";
+import { NoWay } from "./Result";
 import { Interpret } from "./interpreter";
 import { Parse } from "./parser";
 import { Stmt } from "./parser/Stmt";
-import { NoWay } from "./Result";
 import { Scan } from "./scanner";
 import { Token } from "./scanner/Token";
 

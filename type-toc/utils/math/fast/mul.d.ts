@@ -3,9 +3,10 @@
  */
 
 import { Safe } from "../../common";
-import { GT } from "./compare"
-import { Sub } from "./sub";
+
 import { Add } from "./add";
+import { GT } from "./compare";
+import { Sub } from "./sub";
 
 export type Mul<
     N1 extends number,

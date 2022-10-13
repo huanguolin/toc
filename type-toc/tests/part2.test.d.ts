@@ -1,5 +1,6 @@
-import type { Equal, Expect } from './utils';
 import { Toc } from '..';
+
+import type { Equal, Expect } from './utils';
 
 // expect error can use @ts-expect-error
 

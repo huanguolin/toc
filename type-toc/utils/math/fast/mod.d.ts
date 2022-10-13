@@ -3,7 +3,8 @@
  */
 
 import { Safe } from "../../common";
-import { GTE } from "./compare"
+
+import { GTE } from "./compare";
 import { Sub } from "./sub";
 
 export type Mod<

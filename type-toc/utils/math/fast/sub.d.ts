@@ -3,6 +3,7 @@
  */
 
 import { NumChars } from "../../string";
+
 import { LTE } from "./compare";
 import { ToNumber, ToNumChars, TrimZeroStart } from "./utils";
 

@@ -1,9 +1,10 @@
+import { NoWay } from "../Result";
 import { Token } from "../scanner/Token";
 import { EOF } from "../scanner/Token";
-import { ParseStmt, ParseStmtError, ParseStmtSuccess } from "./ParseStmtHelper";
-import { Stmt } from "./Stmt";
 import { Push } from "../utils/array";
-import { NoWay } from "../Result";
+
+import { ParseStmt, ParseStmtSuccess } from "./ParseStmtHelper";
+import { Stmt } from "./Stmt";
 
 export type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
     Tokens extends [EOF]

@@ -3,9 +3,10 @@
  */
 
 import { Safe } from "../../common";
-import { GTE } from "./compare"
-import { Sub } from "./sub";
+
 import { Add } from "./add";
+import { GTE } from "./compare";
+import { Sub } from "./sub";
 
 export type Div<
     N1 extends number,

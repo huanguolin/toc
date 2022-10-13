@@ -1,12 +1,13 @@
+import { BuildFunObj, FunObject } from '../FunObject';
+import { ErrorResult, NoWay, SuccessResult } from "../Result";
 import { Expr } from "../parser/Expr";
 import { BlockStmt, ExprStmt, ForStmt, FunStmt, IfStmt, Stmt, VarStmt } from "../parser/Stmt";
-import { ErrorResult, NoWay, SuccessResult } from "../Result"
 import { ValueType } from "../type";
+import { Safe } from "../utils/common";
 import { IsTrue } from "../utils/logic";
+
 import { BuildEnv, EnvDefine, Environment } from "./Environment";
 import { InterpretExpr, InterpretExprSuccess } from "./InterpretExpr";
-import { BuildFunObj, FunObject } from '../FunObject';
-import { Safe } from "../utils/common";
 
 export type InterpretStmtError<M extends string> = ErrorResult<`[InterpretStmtError]: ${M}`>;
 export type InterpretStmtSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
@@ -100,7 +101,7 @@ type InterpretBlockStmt<
 type InterpretBlockStmtBody<
     RV,
     Rest extends Stmt[],
-> = 
+> =
     RV extends InterpretStmtSuccess<infer V, infer NewEnv>
         ? InterpretBlockStmt<Rest, NewEnv, V>
         : RV; // error

@@ -1,9 +1,10 @@
+import { Keywords, TokenType } from '../type';
 import { Push } from "../utils/array";
 import { Safe } from "../utils/common";
 import { AlphaChars, NumChars, NumStr, PushChar, ShiftChar, SpaceChars } from "../utils/string";
+
 import { ScanError, ScanSuccess } from "./ScanResult";
 import { BuildToken, EOF, Token } from "./Token";
-import { Keywords, TokenType } from '../type';
 
 export type Scan<S extends string, A extends Token[] = []> =
     S extends ''
