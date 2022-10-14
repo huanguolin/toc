@@ -6,9 +6,10 @@ import { Stmt } from "./parser/Stmt";
 import { Scan } from "./scanner";
 import { Token } from "./scanner/Token";
 
-// Change Toc's input, and hover "Result" to see the result. 😀
-// 👇👇👇
-
+/**
+ * Change Toc's input, and hover "Result" to see the result. 😀
+ * 👇👇👇
+ */
 type Result = Toc<`
     fun genInc(x) {
         fun inc(y) {
