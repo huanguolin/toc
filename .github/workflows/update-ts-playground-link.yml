@@ -11,16 +11,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Setup node.js env
       uses: actions/setup-node@v3
       with:
         node-version: 16
+
     - name: Restore dependencies
       run: cd tools/prepare-ts-playground && npm i
+
     - name: Update README.md
       run: cd tools/prepare-ts-playground && npm start
-    - id: git_commit
-      uses: zwaldowski/git-commit-action@v1
+
+    - name: Auto commit
+      uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: Update README.md
-        author_name: github action
+        commit_message: (Github Action) Update README.md
