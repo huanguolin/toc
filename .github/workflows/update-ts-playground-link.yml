@@ -18,7 +18,7 @@ jobs:
     - name: Restore dependencies
       run: cd tools/prepare-ts-playground && npm i
     - name: Update README.md
-      run: npm start
+      run: cd tools/prepare-ts-playground && npm start
     - id: git_commit
       uses: zwaldowski/git-commit-action@v1
       with:
