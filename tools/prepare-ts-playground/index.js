@@ -11,11 +11,12 @@ try {
         name: 'toc',
         main: '../../type-toc/index.d.ts',
         out: mergeFilePath,
-        exclude: /node_modules\/.*/,
+        headerPath: path.resolve('./header.txt'),
     });
     console.log('Merge files success!');
 } catch (err) {
     console.error(`Merge files error: ${err}`);
+    return;
 }
 
 // Build url for ts playground.
@@ -28,19 +29,22 @@ try {
     console.log('Build url success!');
 } catch (err) {
     console.error(`Read file form ${mergeFilePath} error: ${err}`);
+    return;
 }
 
 // Update README.md.
 const readmePath = path.resolve('../../README.md');
 try {
     let readme = fs.readFileSync(readmePath, 'utf8');
-    readme = readme.replace(/Click\s\[here\]\(\w+?\)/, `Click [here](${url})`);
+    readme = readme.replace(/Click\s\[here\]\([^\)]*?\)/, `Click [here](${url})`);
     try {
         fs.writeFileSync(readmePath, readme);
         console.log('Update readme success!');
     } catch (err) {
         console.error(`Read file form ${readmePath} error: ${err}`);
+        return;
     }
 } catch (err) {
     console.error(`Read file form ${readmePath} error: ${err}`);
+    return;
 }

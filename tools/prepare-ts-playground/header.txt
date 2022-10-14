@@ -1,0 +1,9 @@
+// type-toc
+//
+// The MIT License (MIT)
+//
+// Copyright (c) 2022-present, alvin huang <huanguolin@outlook.com>
+//
+// Repository: https://github.com/huanguolin/toc.git
+//
+

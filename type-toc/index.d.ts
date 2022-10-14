@@ -6,6 +6,20 @@ import { Stmt } from "./parser/Stmt";
 import { Scan } from "./scanner";
 import { Token } from "./scanner/Token";
 
+// Change Toc's input, and hover "Result" to see the result. 😀
+// 👇👇👇
+
+type Result = Toc<`
+    fun genInc(x) {
+        fun inc(y) {
+            x + y;
+        }
+    }
+
+    var inc3 = genInc(3);
+    inc3(22 + 20 * 100 - 3);
+`>
+
 export type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
         ? Tokens extends Token[]
@@ -20,8 +34,6 @@ export type Toc<Source extends string> =
                 : NoWay<'Toc-Parse'>
             : Tokens // error
         : NoWay<'Toc-Scan'>;
-
-type Result = Toc<'fun a(i) {i+1;} a(2);'>;
 
 /**
  * debug
