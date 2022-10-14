@@ -26,4 +26,4 @@ jobs:
     - name: Auto commit
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: (Github Action) Update README.md
+        commit_message: Update README.md

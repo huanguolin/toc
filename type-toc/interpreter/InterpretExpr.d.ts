@@ -1,4 +1,4 @@
-import { FunObject } from "../FunObject";
+import { FunObject, GetFunName } from "../FunObject";
 import { NoWay, SuccessResult } from "../Result";
 import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr, VariableExpr } from "../parser/Expr";
 import { TokenLike } from "../parser/utils";
@@ -39,6 +39,8 @@ type EvalCallExpr<
 > = CV extends InterpretExprSuccess<infer Callee, infer Env>
     ? Callee extends FunObject
         ? Callee['declaration']['parameters']['length'] extends E['arguments']['length']
+            // 下面这句用来支持函数的递归调用，但是会变的更容易出现：Type instantiation is excessively deep and possibly infinite.ts(2589)
+            // ? InjectArgsToEnv<Callee['declaration']['parameters'], E['arguments'], Env, BuildEnv<{ [k in GetFunName<Callee>]: Callee }, Callee['environment']>> extends infer EE
             ? InjectArgsToEnv<Callee['declaration']['parameters'], E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
                 ? EE extends InjectArgsToEnvSuccess<infer CallerEnv, infer FunScopeEnv>
                     ? InterpretBlockStmt<Callee['declaration']['body']['stmts'], FunScopeEnv> extends infer BR
