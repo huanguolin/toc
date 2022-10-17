@@ -1,5 +1,27 @@
 # 类型体操之实现一个类C风格语言的解释器
 
+- [类型体操之实现一个类C风格语言的解释器](#类型体操之实现一个类c风格语言的解释器)
+  - [1. ts 的类型系统是怎样的函数式语言？](#1-ts-的类型系统是怎样的函数式语言)
+    - [1.1 类型与值](#11-类型与值)
+    - [1.2 变量](#12-变量)
+    - [1.3 条件](#13-条件)
+      - [1.3.1 可赋值性](#131-可赋值性)
+      - [1.3.2 模式匹配](#132-模式匹配)
+      - [1.3.3 局部常量](#133-局部常量)
+    - [1.4 函数](#14-函数)
+      - [1.4.1 泛型](#141-泛型)
+      - [1.4.2 类型工具——函数](#142-类型工具函数)
+      - [1.4.2 递归](#142-递归)
+      - [1.4.3 循环 <=> 递归](#143-循环--递归)
+      - [1.4.4 尾递归](#144-尾递归)
+      - [1.4.5 First-Class-Function](#145-first-class-function)
+  - [2. 如何实现 toc 解释器？](#2-如何实现-toc-解释器)
+    - [2.1 四则运算以及大小比较](#21-四则运算以及大小比较)
+    - [2.2 解释器](#22-解释器)
+      - [2.2.1 词法分析](#221-词法分析)
+      - [2.2.2 表达式](#222-表达式)
+      - [2.2.3 语句](#223-语句)
+
 TypeScript 是 JavaScript 的超集，主要给 JavaScript 添加了静态类型检查，并且与之完全兼容。在运行时，类型完全擦除。正因为如此，TypeScript 类型系统极其强大，这样才能在维持 JavaScript 动态性，做快速开发的同时，做到更多的类型提示与错误检查。
 
 > 下面为了简单，将用 ts、js 这样的简称代替 TypeScript、JavaScript。
@@ -290,7 +312,204 @@ type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 简单来说，使用 `Function(arguments, environment1) => return + environment2` 的方式，可以表达对等的东西。
 
-好了，休息一下。我们要开始下一段奇妙之旅了。
+以上就是这门函数式编程语言的介绍。休息一下。我们就要开始编写解释器了😄。
 
 
 ## 2. 如何实现 toc 解释器？
+
+在实现解释器之前，我遇到的第一个麻烦事情是，如何实现四则运算？毕竟这些基本运算是一定要支持的啊！就仅仅支持正整数运算，就要一些技巧呢！是的，我们就只支持正整数运算。
+
+### 2.1 四则运算以及大小比较
+如果第一次面对这个问题，还真是有点摸不着头脑。就最简单，加法怎么实现啊？我似乎是 Google 后，找到答案的。
+```ts
+type A = [1, 2, 3];
+type L1 = A['length']; // 3
+type L2 = ['a', number]['length']; // 2
+type L3 = []['length']; // 0
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UDaBGANFATBgzAXQG4BYAKFEigBkUFYkByAGwgDsBzYAC3sKgHo+UHKXLRKmWgwCG9DCwCuAWwBGEAE54Gzdlx4F+gzCPBickzU1YduvAVAAMQA)，在线体验。
+
+以上的例子代码，是否让你找到了实现加法的灵感？或许你已经想到了……没错，加法就是准备两个指定长度数组，然后合并，然后取合并数组的长度。先实现生成指定长度数组的函数，然后实现加法！
+
+```ts
+type InitArray<L extends number, A extends any[] = []> =
+    A['length'] extends L
+        ? A
+        : InitArray<L, [...A, any]>;
+type Add<N1 extends number, N2 extends number> = [...InitArray<N1>, ...InitArray<N2>]['length'];
+type test1 = Add<1, 3>; // 4
+type test2 = Add<0, 10>; // 10
+type test3 = Add<19, 13>; // 32
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueVBIdjIybAA5AEZOIx5aRmY2aIAmBO4qZKZUaXEvb3gkNEwcOMk2b08Sl3KY9MkhVQ04bT0hELkw6BIKYHjxZEjsWLYAZmDQ8D6IAczh0YAGNljl6Z7ZqH7gCbEIqNiATjWpoKA)，在线体验。
+
+实现了加法，减法也是手到擒来。还是两个数组，被减数数组每次减少一个元素，减少减数次，在取被减数数组长度即可。
+
+```ts
+type Sub<
+    N1 extends number,
+    N2 extends number,
+    A extends any[] = InitArray<N1>, // 被减数数组
+    C extends any[] = [], // 计数数组
+> = N2 extends C['length']
+    ? A['length']
+    : A extends [infer F, ...infer Rest extends any[]]
+        ? Sub<N1, N2, Rest, [...C, any]>
+        : 0; // 被减数小于减数
+type test1 = Sub<10, 3>; // 7
+type test2 = Sub<18, 9>; // 9
+type test3 = Sub<9, 13>; // 0
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueXlQSHYyMmwAOQBGTiMeWkZmNhiAJkTuKhSmVGlxL294JDRMHHjJNm9PUpcK2IzJIVUNOG09IRC5MPBoAGUaBmxbRXjs42p6fJYxqEzJ5Jm0+Y5DHN5+YTEnMtdKuOqoAHoTqEBqiMB5xUAHUxvAEb95gGElqn8doqE2M6hAQui7x5yQoLLIbKZPNpaXT6ebWZCQjrQoTzRzrLhTAQIOAAM2YUAAYjVvFjcagoAAlCAUYCvLaCITIhR2KxQIYjeLpDJsSnUjy1J5+fiBebmRwABiCp3O1xugHgdQBxcrc+hESNSEuI2dg4mK2ABmYJSqAAdmV0FVwCyGuGWoAHGwAJwGn7201Qc263aa+1sOL6yU-MVAA)，在线体验。
+
+😄，nice！
+有了加法，乘法也很容易，`A * B` 等同于 `B` 个 `A` 相加，不过要注意 0 乘以任何数 都得 0:
+
+```ts
+type Mul<
+    N1 extends number,
+    N2 extends number,
+    A extends number = N1, // 结果
+    C extends number = 1, // 计数数字
+> = N1 extends 0
+    ? 0
+    : N2 extends 0
+        ? 0
+        : C extends N2
+            ? A
+            : Mul<N1, N2, Add<A, N1>, Add<C, 1>>;
+type test1 = Mul<11, 3>; // 33
+type test2 = Mul<8, 9>; // 72
+type test3 = Mul<9, 0>; // 0
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueXlQSHYyMmwAOQBGTiMeWkZmNhiAJkTuKhSmVGlxL294JDRMHHjJNm9PUpcK2IzJIVUNOG09IRC5MPBoAGUaBmxbRXjs42p6fJYxqEzJ5Jm0+Y5DHN5+YTEnMtdKuOqoAHoTqEBqiMB5xUAHUxvAEb95gGElqn8doqE2M6hAQui7x5yQoLLIbKZPNpaXT6ebWZCQjrQoTzRzrLhTAQIOAAM2YUAAYjVvFjcagoAAlCAUYCvLaCITIhR2KxQIYjeLpDJsSnUjy1J5+fiBebmRwABiCp3O1xugHgdQBxcrdQnJwtAALI0NSjJnjBJg5apVjzRb63IrI069i0vJ48QcqVQQDLfoAc82e1vNuzi33O-xugHVteTAiamqBi2GhlEg2lhy3mawx5lQRwvEOZEXMuHpuyODVa+2ZNjIKLYXwLI6F4sCqBHYJ9CIkakJcS57BxL1QADMwQdHY7degDeAWWbmuwAA42ABObs-ADsGX7UEHHd2LcnbDFM-OYqAA)，在线体验。
+
+不过 `Add<A, N1>` 这里提示 `Type 'Add<A, N1>' does not satisfy the constraint 'number'.(2344)`。意思是它的结果不是永远都能得到 `number`, 所以不安全。这里应该是可能输出 `never` 或者 `any` 的情况，这很极端，我们一般使用一个类似断言的工具函数来处理这个问题：
+
+```ts
+type Safe<T, Type, Default extends Type = Type> = T extends Type ? T : Default;
+
+type Mul<
+    N1 extends number,
+    N2 extends number,
+    A extends number = N1, // 结果
+    C extends number = 1, // 计数数字
+> = N1 extends 0
+    ? 0
+    : N2 extends 0
+        ? 0
+        : C extends N2
+            ? A
+            : Mul<N1, N2, Safe<Add<A, N1>, number>, Safe<Add<C, 1>, number>>;
+type test1 = Mul<11, 3>; // 33
+type test2 = Mul<8, 9>; // 72
+type test3 = Mul<9, 0>; // 0
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueXlQSHYyMmwAOQBGTiMeWkZmNhiAJkTuKhSmVGlxL294JDRMHHjJNm9PUpcK2IzJIVUNOG09IRC5MPBoAGUaBmxbRXjs42p6fJYxqEzJ5Jm0+Y5DHN5+YTEnMtdKuOqoAHoTqEBqiMB5xUAHUxvAEb95gGElqn8doqE2M6hAQui7x5yQoLLIbKZPNpaXT6ebWZCQjrQoTzRzrLhTAQIOAAM2YUAAYjVvFjcagoAAlCAUYCvLaCITIhR2KxQIYjeLpDJsSnUjy1J5+fiBebmRwABiCp3O1xugHgdQBxcrdQnJwoMMLjsAAVNia-psAAiEGxGBoahpYJ4uoi4itEGBmtptpZDschuNpuAPT6EQAsqbRkzxgkLbkVqx5osQ9NUuHA+xaXk8eIOVKoIBlv0AOebPBNh3Zxb7nf43QDq2vJgRMo2LYVAq3HHJH0Txa8yWc3mY4XlHMiLmXCe3ZHH61LF8yC2AN1RBsMgotP0kc2ImCuPJ9PZwKoAvo-lJMFvdASNSEuIh9g4qOAMzBVMXi-7qCH4BZE-+gAcbAAnNefgB2DL3x8L12U8PzYMVv3OMUgA)，在线体验。
+
+接下来该除法了。思路是类似的，直接看代码：
+```ts
+type Div<
+    N1 extends number,
+    N2 extends number,
+    A extends number = N1, // 结果
+    C extends number = 0, // 计数数字
+> = N1 extends 0
+    ? 0
+    : N2 extends 0
+        ? never // 除数不能为 0
+        : A extends 0
+            ? C
+            : Div<N1, N2, Sub<A, N2>, Safe<Add<C, 1>, number>>;
+type test1 = Div<12, 3>; // 4
+type test2 = Div<8, 9>; // 0
+type test3 = Div<100, 33>; // 3
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueXlQSHYyMmwAOQBGTiMeWkZmNhiAJkTuKhSmVGlxL294JDRMHHjJNm9PUpcK2IzJIVUNOG09IRC5MPBoAGUaBmxbRXjs42p6fJYxqEzJ5Jm0+Y5DHN5+YTEnMtdKuOqoAHoTqEBqiMB5xUAHUxvAEb95gGElqn8doqE2M6hAQui7x5yQoLLIbKZPNpaXT6ebWZCQjrQoTzRzrLhTAQIOAAM2YUAAYjVvFjcagoAAlCAUYCvLaCITIhR2KxQIYjeLpDJsSnUjy1J5+fiBebmRwABiCp3O1xugHgdQBxcrdQnJwoMMLjsAAVNia-psAAiEGxGBoahpYJ4uoi4itEGBmtptpZDschuNpuAPT6EQAsqbRkzxgkLbkVqx5osQ9NUuHA+xaXk8eIOVKoIBlv0AOebPBNh3Zxb7nf43QDq2vJgRMo2LYVAq3HHJH0Txa8yWc3mY4XlHMiLmXCe3ZHH61LF8yC2AN1RBsMgotP0kc2ImCuPJ9PZwKoAvo-lJMFlaqoPqEAA3APmCuN0MxuZxhtJK+zNY5mO7FM-TPZqNL3Zigt-O6lkCr7BpeNbVm2DggrSEEWNYcAQMeeI-IAJmk3IAsHKAL8BgBccmBcaivGlb9rBUBPER+FHqeKaZOOwxziCxwThqM7RBuW5LruPQHiQ1IJOIFHYHEXJQAAzMEqYACzetA3HAFkfEntgAAcbAAJxiT8tZcVSwDCbs-FxGKv4iaJko-MJQA)，在线体验。
+
+跑起来看看，啊！`test2`, `test3` 的值怎么是 `1` 和 `4`， 不是我们期待的 `0` 和 `3`。原因在于像，`8 / 9` 这种情况，我们无法分辨出 `8 - 9` 和 `8 - 8` 这样的区别。如果能分辨大小就好办了。
+
+怎么比较大小呢？说实话，我第一次想这个问题，真的是一点思路也没有😓。还好我 Google 到了。方法就是同时对两个数字减 1，谁先到 0，谁就小。相等的情况比较好处理。下面来看实现：
+
+```ts
+type Eq<A, B> =
+    A extends B
+    ? (B extends A ? true : false)
+    : false;
+
+type Lt<A extends number, B extends number> =
+    Eq<A, B> extends true
+        ? false
+        : A extends 0
+            ? true
+            : B extends 0
+                ? false
+                : Lt<Sub<A, 1>, Sub<B, 1>>;
+type test1 = Lt<1, 3>;
+type test2 = Lt<3, 2>;
+type test3 = Lt<3, 3>;
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueXlQSHYyMmwAOQBGTiMeWkZmNhiAJkTuKhSmVGlxL294JDRMHHjJNm9PUpcK2IzJIVUNOG09IRC5MPBoAGUaBmxbRXjs42p6fJYxqEzJ5Jm0+Y5DHN5+YTEnMtdKuOqoAHoTqEBqiMB5xUAHUxvAEb95gGElqn8doqE2M6hAQui7x5yQoLLIbKZPNpaXT6ebWZCQjrQoTzRzrLhTAQIOAAM2YUAAYjVvFjcagoAAlCAUYCvLaCITIhR2KxQIYjeLpDJsSnUjy1J5+fiBebmRwABiCp3O1xugHgdQBxcrdQnJwoMMLjsAAVNia-psAAiEGxGBoahpYJ4uoi4itEGBmtptpZDschuNpuAPT6EQAsqbRkzxgkLbkVqx5osQ9NUuHA+xaXk8eIOVKoIBlv0AOebPBNh3Zxb7nf43QDq2vJgRMo2LYVAq3HHJH0Txa8yWc3mY4XlHMiLmXCe3ZHH61LF8yC2AN1RBsMgotP0kc2ImCuPJ9PZwKoAvo-lJMFlaqoABRACOc6gACFCmtaefqwAKc+0jjWYCoGjQRzGtQUCAAShRUBfj+Xoqv0UC4MA045jGbCPlGS5XnGJ5npetKvu+-YskBECYaitJti2igvm+OFxi2jhwY2VAEYR5jWNhmHkeBkFsmeW6seebBHHuoERCQ1IJOIEHYKOADMPEHvxwBZEJkGiWwzQ9JJVLAKJuzCfJUDiUEQA)，在线体验。
+
+接下来我们把除法搞对：
+
+```ts
+type Div<
+    N1 extends number,
+    N2 extends number,
+    A extends number = N1, // 结果
+    C extends number = 0, // 计数数字
+> = N1 extends 0
+    ? 0
+    : N2 extends 0
+        ? never // 除数不能为 0
+        : Lt<A, N2> extends true
+            ? C
+            : Div<N1, N2, Sub<A, N2>, Safe<Add<C, 1>, number>>;
+type test1 = Div<12, 3>; // 4
+type test2 = Div<8, 9>; // 0
+type test3 = Div<100, 33>; // 3
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueXlQSHYyMmwAOQBGTiMeWkZmNhiAJkTuKhSmVGlxL294JDRMHHjJNm9PUpcK2IzJIVUNOG09IRC5MPBoAGUaBmxbRXjs42p6fJYxqEzJ5Jm0+Y5DHN5+YTEnMtdKuOqoAHoTqEBqiMB5xUAHUxvAEb95gGElqn8doqE2M6hAQui7x5yQoLLIbKZPNpaXT6ebWZCQjrQoTzRzrLhTAQIOAAM2YUAAYjVvFjcagoAAlCAUYCvLaCITIhR2KxQIYjeLpDJsSnUjy1J5+fiBebmRwABiCp3O1xugHgdQBxcrdQnJwoMMLjsAAVNia-psAAiEGxGBoahpYJ4uoi4itEGBmtptpZDschuNpuAPT6EQAsqbRkzxgkLbkVqx5osQ9NUuHA+xaXk8eIOVKoIBlv0AOebPBNh3Zxb7nf43QDq2vJgRMo2LYVAq3HHJH0Txa8yWc3mY4XlHMiLmXCe3ZHH61LF8yC2AN1RBsMgotP0kc2ImCuPJ9PZwKoAvo-lJMFlaqoABRACOc6gACFCmtaefqwAKc+0jjWYCoGjQRzGtQUCAAShRUBfj+Xoqv0UC4MA045jGbCPlGS5XnGJ5npetKvu+-YskBECYaitJti2igvm+OFxi2jhwY2VAEYR5jWNhmHkeBkFsmeW6seebBHHuvSgRE+oIAAbgG5gVlR26rHGDZJKGMHXvBubJqOPyZtmCkxrsYoFn8dylkCuxiTJNbVjR9aguJNF0dQECCXiPyACZpNyALBygC-AYAXHLGWRSiOBBZ6ZNIUboaRtFEVATyMd5UACcJKaZOOwx+c0K4ajO0QbluCE8QeJDUgk4jRdgcRclAADMwSpgALN60A5cAWT5UJ2AABxsAAnOVPy1tlVLACVuwFXEYpaaVZWSj8JVAA)，在线体验。
+
+Good job! 一切都如期而至！
+
+上面实现了 `Lt`， 那么其他几个比较函数就不难了，这部分就留着读者你去试试吧。
+
+在这一小节结束，我想说，实现四则运算和大小比较其实还有另外一种思路。我最早考虑加法的实现就只想到这个思路——用字符串来实现。
+
+对于加法，就是按位(是个位，十位这样哦)查表加，含进位处理。结果还是一个数字字符串。
+
+对于小于比较，先比较字符串长度，谁短谁小，长度一样，按位查表比较，从高位开始。
+
+对于大小比较这个方案，是完全OK的。但是加法，从数字转字符串很容易。但是反过来，却什么好没办法。不过，[4.8](https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#infer-types-template-strings) 版本这个问题解决了。
+```ts
+type SN = '123' extends `${infer N extends number}` ? N : never; // 123
+```
+> 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAygclAvFA5ARgEwGYVQgD2AgDsATAZygAMASAbwEtiAzCAJygQKLMuIFcAtgCN2AXypQA-JygAuKMQgA3dgG4oAek1RMWIA)，在线体验。
+
+所以一切都很完美！你可能会问，这个方案听起来很复杂，和前面用数组实现的比起来，似乎没有任何优势。复杂是真的复杂，但优势是有的。我们前面说过，ts 类型运算是有递归深度限制的。数组的实现可以很快触碰到限制，而字符串的方案在很大的数上都没有触到限制。
+```ts
+type test1 = Add<999, 999>; // 1998
+type test2 = Add<999, 1000>; // Type instantiation is excessively deep and possibly infinite.(2589) 
+```
+点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEBYAFBRF7AQHIANqQDmwABYqRREuSq55S81AD87MxcUAuWIhToseNgIB035Gz4ghSQBueXlQSHYyMmwAOQBGTiMeWkZmNhiAJkTuKhSmVGlxL294JDRMHHjJNm9PUpcK2IzJIVUNOG09IRC5MPBoEgpgBPFkKOwATim2KYngvojB4CzR8dm2OIAGbeCgA)，在线体验。
+
+如果你想体验字符串版本，可以直接去仓库 [toc](https://github.com/huanguolin/toc) 点击前往解释器。输入 `type Result = Toc<'99999 + 99999;'>` 来体验。因为 `toc` 底层就是用的字符串版本。代码在[这里](https://github.com/huanguolin/toc/tree/master/type-toc/utils/math/fast)。
+
+好了，现在，我们应该准备好开始实现解释器了。
+
+### 2.2 解释器
+
+这可是个大工程。我们一步一步来。但总的分三步：词法分析，语法分析，执行。另外为了对比，也为了照顾想我一样非计算机专业出身的人（我个人感觉直接看一门熟悉的语言来实现解释器会更好接受一点），我会讲两个版本的实现：
+* 用 ts（你可以理解为用 js）实现的，在 [ts-toc](https://github.com/huanguolin/toc/tree/master/ts-toc) 下。
+* 用 ts 类型系统实现的，在 [type-toc](https://github.com/huanguolin/toc/tree/master/type-toc) 下。
+
+我在讲一个特性时，回先讲 ts 版，然后说 type 版。
+
+#### 2.2.1 词法分析
+
+#### 2.2.2 表达式
+
+
+#### 2.2.3 语句
