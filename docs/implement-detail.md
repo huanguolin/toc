@@ -278,15 +278,15 @@ type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 > 点击[这里](https://www.typescriptlang.org/play?#code/C4TwDgpgBAKgThCA5A9gE2gXigbwLABQUxUAbgIYA2ArhAFxQB21AtgEYRwDchJUlEAGbAG8RKgxQAPk2qVKPIiTgBLAOYALEbATJ00Gc3mKAvosKhIOxAB4AalAgAPYBEZoAzrPacANFAAZRxc3T2s9SUM5SihsI0p-ACVg13cvMQiDWXlY7MoAPlz8JWIKGnooO0U+AWEGAOrldS0GRNNzAktoAAUEAHk4DDh4clJODwgbGBTQ9N0JCELMXhJp51SwjJsVRkFOSv8dvbhAw939xPyVvmIAfigAbTt-ADo33ogBoZGxuAmbAL5V7vfqDTg-caTS4AXWuNwYD2hHQA9MibnwAIyEVHoqBo4gAHWx+L4ACYbgA2Yk3NEE9FEgg4kgAZhIAFZ0QB2al8Om4-EMpl8AAsuIAHCQAJwWcDQYC6XJbDG+OFbUkqko3LbMjW4m7xXV61a6GzC-JAuF8LZs82G4hbCl2-XRJ1Wk2c124rZii2avVbSXm80dLpQVweYC5D5fcFwUaQmzyxD5Lh4tEPZVQdVQHVQYX+Nn+R1QD1QMX+SXQoA)，在线体验。
 
 尾递归与非尾递归的区别就是函数返回时，是直接一个函数调用，还是函数调用夹在一个表达式中。
-[尾递归优化](https://stackoverflow.com/questions/310974/what-is-tail-call-optimization)，就复用一个函数调用栈来避免爆栈。在 ts 中也是有这样的优化。你跳到上面的在线体验示例，会发现 `? [V, ...PreOrderTraverse<L>, ...PreOrderTraverse<R>]` 这一行，ts 有 error 提示：`Type instantiation is excessively deep and possibly infinite.(2589)`
+[尾递归优化](https://stackoverflow.com/questions/310974/what-is-tail-call-optimization)，是通过复用一个函数调用栈来避免爆栈。在 ts 中也是有这样的优化。你跳到上面的在线体验示例，会发现 `? [V, ...PreOrderTraverse<L>, ...PreOrderTraverse<R>]` 这一行，ts 有 error 提示：`Type instantiation is excessively deep and possibly infinite.(2589)`
 
-为什么呢？就如提示所说：类型实例化的深度过大，可能是无限的。ts 需要在我们写代码时，进行实时代码提示和纠错。过于复杂的类型势必会拖累这个过程，造成不可接受的用户体验下降。所以 ts 不仅要避免爆栈，而且还要计算速度。早期版本对递归深度的限制是 50 层。在 [4.5](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5/#tailrec-conditional) 时做了优化，提高到 100 层，如果是尾递归提高到 1000 层。基于此，我们可以实现比以前更复杂的体操。
+为什么呢？就如提示所说：类型实例化的深度过大，可能是无限的。ts 需要在我们写代码时，进行实时代码提示和纠错。过于复杂的类型势必会拖累这个过程，造成不可接受的用户体验下降。所以 ts 不仅要避免爆栈，而且还要计算速度。早期版本对递归深度的限制是 50 层。在 [4.5](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5/#tailrec-conditional) 时做了优化，提高到 100 层，如果是尾递归则提高到 1000 层。基于此，我们可以实现比以前更复杂的体操。
 
-但是，最终，这里的限制比其他编程语言更苛刻，不允许我们做长时间的运算。意味着，基于它实现的循环无法循环太多的次数😓，实现的函数也必然不能调用太深……
+但是，最终，这里的限制比其他编程语言更苛刻，不允许我们做长时运算。意味着，基于它实现的循环只能循环很有限的次数😓，函数调用也必然不能太深……
 
 
 #### 1.4.5 First-Class-Function
-在看到前面说的限制后，或许你有点遗憾（一切都是权衡，没有什么是完美的）。但是不得不告诉你，还有另外一件不幸的事。它没有函数式语言的标志性能力—— [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)。即没有办法传入/传出函数，无法实现高阶函数。不过好在，没有这个能力，并不会影响表达能力。不过会麻烦很多😓。
+在看到上面的限制后，或许你感到有点遗憾（一切都是权衡，没有什么是完美的）。但是不得不告诉你，还有另外一件不幸的事。它没有函数式语言的标志性能力—— [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)。即没有办法传入/传出函数，无法实现高阶函数。不过好在，没有这个能力，并不会影响表达能力。只是麻烦很多😓。
 
 简单来说，使用 `Function(arguments, environment1) => return + environment2` 的方式，可以表达对等的东西。
 
