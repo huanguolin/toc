@@ -502,11 +502,11 @@ type test2 = Add<999, 1000>; // Type instantiation is excessively deep and possi
 
 ### 2.2 解释器
 
-这可是个大工程。我们一步一步来。但总的分三步：词法分析，语法分析，执行。另外为了对比，也为了照顾想我一样非计算机专业出身的人（我个人感觉直接看一门熟悉的语言来实现解释器会更好接受一点），我会讲两个版本的实现：
+这可是个大工程。我们一步一步来。但总的分三步：词法分析，语法分析，执行。另外为了对比，也为了照顾想我一样非科班出身的人（我个人感觉直接看一门熟悉的语言来实现解释器会更好接受一点），我会讲两个版本的实现：
 * 用 ts（你可以理解为用 js）实现的，在 [ts-toc](https://github.com/huanguolin/toc/tree/master/ts-toc) 下。
 * 用 ts 类型系统实现的，在 [type-toc](https://github.com/huanguolin/toc/tree/master/type-toc) 下。
 
-我在讲一个特性时，回先讲 ts 版，然后说 type 版。
+我在讲一个特性时，会先讲 ts 版，然后说 type 版。
 
 #### 2.2.1 toc 的语法
 
