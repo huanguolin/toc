@@ -20,7 +20,7 @@ jobs:
     - name: Restore dependencies
       run: cd tools/prepare-ts-playground && npm i
 
-    - name: Update README.md
+    - name: Update docs' ts-playground links
       run: cd tools/prepare-ts-playground && npm run toc && npm run doc
 
     - name: Auto commit
