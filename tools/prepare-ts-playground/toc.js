@@ -1,7 +1,10 @@
 const dts = require('@qiwi/dts-bundle');
 const path = require('path');
-const LZString = require('lz-string');
 const fs = require('fs');
+
+const utils = require('./utils');
+
+const { log, error } = utils.getLogger('toc');
 
 const mergeFilePath = path.resolve('./toc.d.ts');
 
@@ -13,22 +16,20 @@ try {
         out: mergeFilePath,
         headerPath: path.resolve('./header.txt'),
     });
-    console.log('Merge files success!');
+    log('Merge files success!');
 } catch (err) {
-    console.error(`Merge files error: ${err}`);
+    error(`Merge files error: ${err}`);
     return;
 }
 
 // Build url for ts playground.
 let url = '';
 try {
-    const urlPrefix = 'https://www.typescriptlang.org/play?#code/';
     const srcCode = fs.readFileSync(mergeFilePath, 'utf8');
-    const encodedSrcCode = LZString.compressToEncodedURIComponent(srcCode);
-    url = urlPrefix + encodedSrcCode;
-    console.log('Build url success!');
+    url = utils.buildTsPlaygroundUrl(srcCode);
+    log('Build url success!');
 } catch (err) {
-    console.error(`Read file form ${mergeFilePath} error: ${err}`);
+    error(`Read file form ${mergeFilePath} error: ${err}`);
     return;
 }
 
@@ -39,12 +40,12 @@ try {
     readme = readme.replace(/Click\s\[here\]\([^\)]*?\)/, `Click [here](${url})`);
     try {
         fs.writeFileSync(readmePath, readme);
-        console.log('Update readme success!');
+        log('Update readme success!');
     } catch (err) {
-        console.error(`Read file form ${readmePath} error: ${err}`);
+        error(`Write file to ${readmePath} error: ${err}`);
         return;
     }
 } catch (err) {
-    console.error(`Read file form ${readmePath} error: ${err}`);
+    error(`Read file form ${readmePath} error: ${err}`);
     return;
 }

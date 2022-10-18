@@ -9,7 +9,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "node index.js"
+    "toc": "node toc.js",
+    "doc": "node doc.js"
   },
   "author": "alvin huang <huanguolin@outlook.com>",
   "license": "MIT"

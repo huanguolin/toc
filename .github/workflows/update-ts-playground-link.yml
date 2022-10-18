@@ -21,7 +21,7 @@ jobs:
       run: cd tools/prepare-ts-playground && npm i
 
     - name: Update README.md
-      run: cd tools/prepare-ts-playground && npm start
+      run: cd tools/prepare-ts-playground && npm run toc && npm run doc
 
     - name: Auto commit
       uses: stefanzweifel/git-auto-commit-action@v4
