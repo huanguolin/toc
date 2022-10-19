@@ -15,13 +15,18 @@
       - [1.4.3 循环 <=> 递归](#143-循环--递归)
       - [1.4.4 尾递归](#144-尾递归)
       - [1.4.5 First-Class-Function](#145-first-class-function)
-  - [2. 如何实现 toc 解释器？](#2-如何实现-toc-解释器)
+  - [2. 如何实现 Toc 解释器？](#2-如何实现-toc-解释器)
     - [2.1 四则运算以及大小比较](#21-四则运算以及大小比较)
     - [2.2 解释器](#22-解释器)
-      - [2.2.1 toc 的语法](#221-toc-的语法)
+      - [2.2.1 Toc 的语法](#221-toc-的语法)
       - [2.2.2 词法分析](#222-词法分析)
-      - [2.2.3 表达式](#223-表达式)
-      - [2.2.4 语句](#224-语句)
+      - [2.2.3 语法分析](#223-语法分析)
+      - [2.2.4 执行](#224-执行)
+      - [2.2.5 var 语句](#225-var-语句)
+      - [2.2.6 if 语句](#226-if-语句)
+      - [2.2.7 块语句与环境](#227-块语句与环境)
+      - [2.2.8 函数与闭包](#228-函数与闭包)
+      - [2.2.9 未尽事宜](#229-未尽事宜)
 
 TypeScript 是 JavaScript 的超集，主要给 JavaScript 添加了静态类型检查，并且与之完全兼容。在运行时，类型完全擦除。正因为如此，TypeScript 类型系统极其强大，这样才能在维持 JavaScript 动态性，做快速开发的同时，做到更多的类型提示与错误检查。
 
@@ -29,11 +34,11 @@ TypeScript 是 JavaScript 的超集，主要给 JavaScript 添加了静态类型
 
 动态性与静态检查似乎是冲突的？但是 ts 团队和社区给出了要兼顾两者的一条路。就是在 ts 编译器无法做出推断时，让开发者告诉 ts 如何推断。而告诉 ts 的这段类型描述（简单说，就是随着输入类型不同，输出类型应该是什么），和对应 js 代码逻辑是一致的（因为只考虑类型，往往会简单一些）。所以 ts 的类型系统，要强大到[图灵完备](https://github.com/microsoft/TypeScript/issues/14833)才能胜任。
 
-ts 的类型系统是一门函数式编程语言。类型体操说的就是利用这门编程语言玩花样。我们今天要玩的，就是用它实现另一门语言（这门语言我取名叫[toc](https://github.com/huanguolin/toc)）的解释器(如果要体验这个解释器请到[toc](https://github.com/huanguolin/toc)仓库, 很容易找到入口😊)。`toc` 语言是 `C` 风格语法，接近 `js`。支持变量，表达式，`if` 语句，`for` 语句，函数等主要特性，且函数是一等公民，可以传入传出，支持闭包。更详细的语法，可以参见 [Toc Grammar Spec](./grammar.md)。
+ts 的类型系统是一门函数式编程语言。类型体操说的就是利用这门编程语言玩花样。我们今天要玩的，就是用它实现另一门语言（这门语言我取名叫[Toc](https://github.com/huanguolin/Toc)）的解释器(如果要体验这个解释器请到[Toc](https://github.com/huanguolin/Toc)仓库, 很容易找到入口😊)。`Toc` 语言是 `C` 风格语法，接近 `js`。动态类型，基础类型有数字、布尔、字符串和 `null`，支持变量，表达式，块语句，`if-else` 条件语句，`for` 循环语句，函数。且函数是一等公民，可以传入传出，支持闭包。更详细的语法，可以参见 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md)。
 
-我们不是马上就动手实现它，先做点热身运动——来看看 ts 的类型系统提供了什么，有什么限制。所以，本文分为两个部分：
+如果你对 ts 的类型系统还不是很了解，没关系。😊我们不是马上就动手实现它，先做点热身运动——来看看 ts 的类型系统提供了什么，有什么限制。所以，本文分为两个部分：
 1. ts 的类型系统是怎样的函数式语言？
-2. 如何实现 toc 解释器？
+2. 如何实现 Toc 解释器？
 
 如果第一部分对你没有什么新奇的，可以直接跳到第二部分。
 
@@ -294,7 +299,7 @@ type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 以上就是这门函数式编程语言的介绍。休息一下。我们就要开始编写解释器了😄。
 
 
-## 2. 如何实现 toc 解释器？
+## 2. 如何实现 Toc 解释器？
 
 在实现解释器之前，我遇到的第一个麻烦事情是，如何实现四则运算？毕竟这些基本运算是一定要支持的啊！就仅仅支持正整数运算，就要一些技巧呢！是的，我们就只支持正整数运算。
 
@@ -483,23 +488,314 @@ type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and 
 ```
 > [auto_gen()](Add)
 
-如果你想体验字符串版本，可以直接去仓库 [toc](https://github.com/huanguolin/toc) 点击前往解释器。输入 `type Result = Toc<'99999 + 99999;'>` 来体验。因为 `toc` 底层就是用的字符串版本。代码在[这里](https://github.com/huanguolin/toc/tree/master/type-toc/utils/math/fast)。
+如果你想体验字符串版本，可以直接去仓库 [Toc](https://github.com/huanguolin/Toc) 点击前往解释器。输入 `type Result = Toc<'99999 + 99999;'>` 来体验。因为 `Toc` 底层就是用的字符串版本。代码在[这里](https://github.com/huanguolin/Toc/tree/master/type-Toc/utils/math/fast)。
 
 好了，现在，我们应该准备好开始实现解释器了。
 
 ### 2.2 解释器
 
-这可是个大工程。我们一步一步来。但总的分三步：词法分析，语法分析，执行。另外为了对比，也为了照顾想我一样非科班出身的人（我个人感觉直接看一门熟悉的语言来实现解释器会更好接受一点），我会讲两个版本的实现：
-* 用 ts（你可以理解为用 js）实现的，在 [ts-toc](https://github.com/huanguolin/toc/tree/master/ts-toc) 下。
-* 用 ts 类型系统实现的，在 [type-toc](https://github.com/huanguolin/toc/tree/master/type-toc) 下。
+我们的解释器主要分三步：词法分析，语法分析，执行。
 
-我在讲一个特性时，会先讲 ts 版，然后说 type 版。
+![interpreter-3-steps](https://github.com/huanguolin/toc/blob/master/docs/imgs/interpreter-3-steps.png)
 
-#### 2.2.1 toc 的语法
+另外为了对比，也为了照顾想我一样非科班出身的人，我会讲两个版本的实现（个人感觉直接看一门熟悉的语言来实现解释器会更好接受一点）：
+* 用 ts（你可以理解为用 js）实现的，在 [ts-Toc](https://github.com/huanguolin/Toc/tree/master/ts-Toc) 下。
+* 用 ts 类型系统实现的，在 [type-Toc](https://github.com/huanguolin/Toc/tree/master/type-Toc) 下。
+
+我在讲一个特性时，会先讲 ts 版，然后说 type 版。在实现 ts 版本时，不会考虑要“翻译”为 type 版，而放弃对它来说最自然的方法。这样做的目的，一是为了好理解（特别是非科班的同学）；二是为了对比，能看到在语言“贫瘠”的情况下，我们如何“绕”。
+
+#### 2.2.1 Toc 的语法
+在实现一门语言时，先要知道它的语法，`Toc` 的语法定义已经定义在 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md)。但是对于没有编译原理基础的人来说，对那些符号要表达什么还是很困惑的（比如我🤦）。我们在这里以表达式为引子，做一个简要的解释。
+
+我们常常看到下面这样的表达式，这些都是我们熟悉，且被 `Toc` 支持的：
+```js
+// Toc 支持的表达式
+1 + (10 - 2 * 3) < 4 == false
+```
+
+`Toc` 的表达式包含的要素：   
+* 字面量，即基础数据类型：数字，布尔，字符串和 `null`
+* 一元表达式，即只有一个操作数的表达式：仅逻辑反 ！
+* 二元表达式，即有两个操作数的表达式：有数学表达式(+, -, *, /, %)和逻辑表达式(&&, ||, ==, !=, >, >=, <, <=)
+* 括号表达式，即用圆括号括起来的表达式：()
+
+如果我们用语法定义来翻译上面这段话：
+```sh
+expression     → literal
+               | unary
+               | binary
+               | grouping ;
+
+literal        → NUMBER | STRING | "true" | "false" | "null" ;
+unary          → "!" expression ;
+binary         → expression operator expression ;
+operator       → "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">="
+               | "+" | "-" | "*" | "/" | "%" ;
+grouping       → "(" expression ")" ;
+```
+其中，`NUMBER` 和 `STRING` 代表任何数字、字符串。带引号的都是终止符。当然 `literal` 也都是终止符。终止符是什么意思呢？就是它无法再继续展开成更基本的单位。上面的 `expression`, `unary`, `binary`, `grouping` 都是可以继续展开的，所以是非终止符。如何展开，就代表了相印的语法规则。
+
+你可能注意到，上面的这段语法描述和 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中的并不完全一样。不过这仅仅是形式的不同，语法含义是一样的。只是这里为了简单没有包含优先级的信息。 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中的描述不仅包含了优先级信息，而且为了易于实现，做了一些调整。不过，所要表达语法规则是一致的。关于优先级的部分，我们在语法分析的部分会重点讲解。基于现在认识，我想你已经能看懂 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中绝大数的规则了。可以开始词法分析啦😺。
 
 #### 2.2.2 词法分析
+词法分析的关键是分词——就是把输入的代码拆成一个一个有序的语法符号（token）。这里要处理的主要问题是，在哪里拆开？为什么这些字符要连到一起作为一个语法符号？我们取上面表达式的例子：
+```js
+1 + (10 - 2 * 3) < 4 == false
+// 拆分成：
+['1', '+', '(', '10', '-', '2', '*', '3', ')', '<', '4', '==', 'false']
+```
+做这个拆分可以用正则，也可以逐字符来分析。这里我选取后者，不仅是因为 ts 类型系统中没有正则，逐字符分拆的代码也很自然简单，且高效！
 
-#### 2.2.3 表达式
+不过上面的数组一般不建议直接作为 `Tokens` 输出给语法分析器。常规的做法是定义一个 `Token` 的结构来描述。不仅仅包含原始的词素(`lexeme`)，还应该包含必要信息，比如：是字符串还是数字，是操作符还是关键字等。正常还要包含 `debug` 需要的行号、列号等信息。我们这里为了简单，只包含最主要的信息，没有 `debug` 信息。下面是 `Token` 的定义：
+```ts
+type TokenType =
+    | 'identifier'
+    | 'string'
+    | 'number'
+    | 'fun'
+    | 'var'
+    | 'for'
+    | 'if'
+    | 'else'
+    | 'true'
+    | 'false'
+    | 'null'
+    | '{'
+    | '}'
+    | ';'
+    | ','
+    | '='
+    | '('
+    | ')'
+    | '+'
+    | '-'
+    | '/'
+    | '*'
+    | '<'
+    | '>'
+    | '<='
+    | '>='
+    | '=='
+    | '!='
+    | '&&'
+    | '||'
+    | '!'
+    | 'EOF';
+
+class Token {
+    type: TokenType; // 像操作符、关键字（包含 true, false, null 等）用这个可以直接区分。
+    lexeme: string; // 放原始的词素字符串。
+    literal: number | null; // 仅仅当是数字时，将数字字符串转成数字放这里。
+
+    constructor(type: TokenType, lexeme: string, literal: number | null = null) {
+        this.type = type;
+        this.lexeme = lexeme;
+        this.literal = literal;
+    }
+}
+```
+> [disable_auto_gen()]()
+
+下面是 type 版的：
+```ts
+// TokenType 和 ts 版完全一致，在此省略。
+
+type Token = {
+    type: TokenType,
+    lexeme: string,
+    value: number | null,
+};
+
+// 方便构造 Token 的工具函数
+type BuildToken<
+    Type extends TokenType,
+    Lexeme extends string,
+> = {
+    type: Type,
+    lexeme: Lexeme,
+    value: Eq<Type, 'number'> extends true ? Str2Num<Safe<Lexeme, NumStr>> : null, // Str2Num 怎么实现，在讲四则运算的末尾有提到
+};
+
+// EOF 直接定义出来方便用
+type EOF = BuildToken<'EOF', ''>;
+```
+> [disable_auto_gen()]()
+
+接下来我们来逐字符扫描，产生 `Token` 放到 `tokens` 数组。输入是 `source`, 我们用 `index` 来代表当前的扫描位置。`scan` 方法的核心是一个循环，`index` 不断后移并拿到一个字符。然后在 `switch` 中做决断，这个字符是一个什么语法标记？
+```ts
+class Scanner {
+    private source: string;
+    private index: number;
+    private tokens: Token[];
+
+    constructor(source: string) {
+        this.source = source;
+        this.index = 0;
+        this.tokens = [];
+    }
+
+     scan(): Token[] {
+        while (!this.isAtEnd()) {
+            let c = this.advance(); // 返回当前字符，并将 index + 1
+            switch (c) {
+                case '{':
+                case '}':
+                case ',':
+                case ';':
+                case '(':
+                case ')':
+                case '*':
+                case '/':
+                case '+':
+                case '-':
+                    this.addToken(c, c); // 构造 Token 并添加到 tokens 数组
+                    break;
+                // ... 其他的决断
+                default:
+                    // ...
+                    throw new ScanError("Unknown token at: " + c);
+            }
+        }
+        this.addToken('EOF', ''); // 末尾添加终止 Token
+        return this.tokens;
+    }
+
+    // 省略了工具函数
+}
+```
+上面代码展示了扫描器的架子。`scan` 方法中展示了处理最简单的 `Token` 处理——单个字符便可确定的直接构造添加即可。现在我们来看麻烦一点的：   
+* 像 !=, ==, >=, <= 这样，必须要先看第二个字符是否匹配 =, 否则应该是 !, =, >, <
+* 像 &&, || 这样，必须两个字符都匹配，仅仅匹配第一个字符的话直接报错（我们不支持位运算哦）
+
+这段代码也不复杂：
+```ts
+// ...
+case '<':
+case '>':
+    if (this.match('=')) { // match 返回当前位置是否匹配指定的字符，并将 index + 1
+        c += '=';
+    }
+    this.addToken(c as TokenType, c);
+    break;
+case '!':
+    if (this.match('=')) {
+        c += '=';
+    }
+    this.addToken(c as TokenType, c);
+    break;
+case '=':
+    if (this.match('=')) {
+        const r = '==';
+        this.addToken(r, r);
+    } else {
+        this.addToken(c, c);
+    }
+    break;
+case '&':
+    if (this.match('&')) {
+        const r = '&&';
+        this.addToken(r, r);
+        break;
+    }
+case '|':
+    if (this.match('|')) {
+        const r = '||';
+        this.addToken(r, r);
+        break;
+    }
+    throw new ScanError("Unknown token at: " + c);
+// ...
+```
+> [disable_auto_gen()]()
+
+对于空白字符，直接跳过即可：
+```ts
+// ...
+case '\u0020':
+case '\n':
+case '\t':
+    break;
+// ...
+```
+> [disable_auto_gen()]()
+
+当看到双引号时，认为是字符串，然后“陷入”一个局部循环，不断后移 `index`, 知道找到下一个双引号。不过要考虑转义和到了代码结尾也没找到的情况，编译器要能识别错误代码并报告，而不是奔溃！
+```ts
+// ...
+case '"':
+    this.addString();
+    break;
+// ...
+private addString() {
+    let s = '';
+    while (!this.isAtEnd() && this.current() !== '"') {
+        if (this.current() === '\\') {
+            this.advance();
+            const c = this.advance();
+            // https://en.wikipedia.org/wiki/Escape_character#:~:text=%5Bedit%5D-,JavaScript,-%5Bedit%5D
+            if (ESCAPE_CHAR_MAP[c]) {
+                s += ESCAPE_CHAR_MAP[c];
+            } else {
+                // \'
+                // \"
+                // \\
+                s += c;
+            }
+        } else {
+            s += this.advance();
+        }
+    }
+
+    if (this.isAtEnd()) {
+        throw new ScanError('Unterminated string.');
+    }
+
+    // consume "
+    this.advance();
+
+    this.addToken('string', s);
+}
+//...
+const ESCAPE_CHAR_MAP = {
+    n: '\n',
+    r: '\r',
+    t: '\t',
+    b: '\b',
+    f: '\f',
+    v: '\v',
+    0: '\0',
+} as const;
+// ...
+```
+> [disable_auto_gen()]()
+
+对于数字和标志符的处理比字符串要简单一些。如果当前字符是一个数字字符，则认为是数字 `Token`，然后找到数字末尾得到完整数字。如果当前字符是一个字母字符或者下划线字符，则认为是标志符 `Token`，然后找到标识符末尾得到完整的标志符。要注意的是标志符从第二个字符以后可以是数字。标志符在构造 `Token` 前，还要判断是不是关键字，是的话构造的就是关键字的 `Token` 了。
+```ts
+// ...
+default:
+    if (this.isNumberChar(c)) {
+        this.addNumber();
+        break;
+    } else if (this.isAlphaChar(c)) {
+        this.addIdentifier();
+        break;
+    }
+    throw new ScanError("Unknown token at: " + c);
+// ...
+```
+> [disable_auto_gen()]()
+
+以上就是 ts 版本的分词的全部了。是不是很简单😄。完整代码，请看 [ts-scanner](https://github.com/huanguolin/toc/blob/master/ts-toc/Scanner/index.ts).
 
 
-#### 2.2.4 语句
+
+#### 2.2.3 语法分析
+
+
+#### 2.2.4 执行
+
+#### 2.2.5 var 语句
+#### 2.2.6 if 语句
+#### 2.2.7 块语句与环境
+#### 2.2.8 函数与闭包
+#### 2.2.9 未尽事宜

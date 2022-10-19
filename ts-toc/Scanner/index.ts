@@ -64,7 +64,7 @@ export class Scanner {
                         this.addToken(r, r);
                         break;
                     }
-                    throw new ScanError("Unknown support token at: " + c);
+                    throw new ScanError("Unknown token at: " + c);
                 case '\u0020':
                 case '\n':
                 case '\t':
