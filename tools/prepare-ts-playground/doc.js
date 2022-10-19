@@ -13,7 +13,7 @@ main();
 function main() {
     const docInputPath = path.resolve('../../docs/implement-detail_origin.md');
     const docOutputPath = path.resolve('../../docs/implement-detail.md');
-    
+
     let docSrc = '';
     try {
         docSrc = fs.readFileSync(docInputPath, 'utf8');
@@ -59,6 +59,10 @@ function rebuildDoc(docSrc) {
 }
 
 function buildAppendContent(lines, codeBlockMap, codeBlock) {
+    if (codeBlock.disabled) {
+        return '';
+    }
+
     const codeBlocks = [...resolveDeps(codeBlockMap, codeBlock), codeBlock];
 
     const srcCode = codeBlocks
@@ -95,8 +99,6 @@ function resolveDeps(codeBlockMap, codeBlock) {
 function getCodeBlock(lines, index) {
     const start = index;
     let end = index + 1;
-    let name = '';
-    let deps = [];
 
     while (end < lines.length && !lines[end++].trim().endsWith('```'));
 
@@ -104,8 +106,11 @@ function getCodeBlock(lines, index) {
         throw new Error('Code block not end!');
     }
 
+    let name = '';
+    let deps = [];
     const markLine = lines[end];
-    const hasMarker = markLine.startsWith('> [auto_gen');
+    const hasMarker = markLine.includes('auto_gen');
+    const disabled = hasMarker && markLine.startsWith('> [disable_auto_gen');
     if (hasMarker) {
         const arr = markLine.match(/\(.*?\)/g).map(trimPairs);
         if (arr.length !== 2) {
@@ -121,6 +126,7 @@ function getCodeBlock(lines, index) {
         name,
         deps,
         hasMarker,
+        disabled,
     };
 }
 
