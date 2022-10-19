@@ -7,7 +7,7 @@ import { Inverse } from "../../logic";
 import { NumChars, NumStr, ShiftChar, StrLength } from "../../string";
 
 
-export type LT<
+export type Lt<
     N1 extends number,
     N2 extends number,
     L1 extends number = StrLength<`${N1}`>,
@@ -19,22 +19,22 @@ export type LT<
         : StrNumLT<`${L1}`, `${L2}`>; // 位数不想等比较位数数字
 
 
-export type GT<N1 extends number, N2 extends number> =
+export type Gt<N1 extends number, N2 extends number> =
     Eq<N1, N2> extends true
         ? false
-        : Inverse<LT<N1, N2>>;
+        : Inverse<Lt<N1, N2>>;
 
 
-export type LTE<N1 extends number, N2 extends number> =
+export type Lte<N1 extends number, N2 extends number> =
     Eq<N1, N2> extends true
         ? true
-        : LT<N1, N2>;
+        : Lt<N1, N2>;
 
 
-export type GTE<N1 extends number, N2 extends number> =
+export type Gte<N1 extends number, N2 extends number> =
     Eq<N1, N2> extends true
         ? true
-        : Inverse<LT<N1, N2>>;
+        : Inverse<Lt<N1, N2>>;
 
 
 

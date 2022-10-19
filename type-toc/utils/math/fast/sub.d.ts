@@ -4,13 +4,13 @@
 
 import { NumChars } from "../../string";
 
-import { LTE } from "./compare";
+import { Lte } from "./compare";
 import { ToNumber, ToNumChars, TrimZeroStart } from "./utils";
 
 export type Sub<
     N1 extends number,
     N2 extends number,
-> = LTE<N1, N2> extends true
+> = Lte<N1, N2> extends true
     ? 0
     : SubCore<ToNumChars<N1>, ToNumChars<N2>> extends infer R
         ? R extends NumChars[]

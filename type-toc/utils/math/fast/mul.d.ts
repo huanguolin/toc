@@ -5,13 +5,13 @@
 import { Safe } from "../../common";
 
 import { Add } from "./add";
-import { GT } from "./compare";
+import { Gt } from "./compare";
 import { Sub } from "./sub";
 
 export type Mul<
     N1 extends number,
     N2 extends number,
-> = GT<N1, N2> extends true
+> = Gt<N1, N2> extends true
     ? MulBody<N1, N2>
     : MulBody<N2, N1>;
 type MulBody<

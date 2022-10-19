@@ -35,7 +35,7 @@ export type Div<
         ? ErrorResult<'The divisor cannot be 0'>
         : N1 extends 0
             ? 0
-            : LT<Length<A1>, N2> extends true
+            : Lt<Length<A1>, N2> extends true
                 ? Length<A2>
                 : Div<N1, N2, Drop<A1, N2>, Push<A2, any>>;
 
@@ -49,12 +49,12 @@ export type Mod<
         ? N2
         : N1 extends 0
             ? 0
-            : LT<Length<A1>, N2> extends true
+            : Lt<Length<A1>, N2> extends true
                 ? Length<A1>
                 : Mod<N1, N2, Drop<A1, N2>, Push<A2, any>>;
 
 
-export type LT<
+export type Lt<
     N1 extends number,
     N2 extends number,
 > = N1 extends N2
@@ -63,20 +63,20 @@ export type LT<
         ? true
         : N2 extends 0
             ? false
-            : LT<Safe<Sub<N1, 1>, number>, Safe<Sub<N2, 1>, number>>;
+            : Lt<Safe<Sub<N1, 1>, number>, Safe<Sub<N2, 1>, number>>;
 
 
-export type GT<N1 extends number, N2 extends number> =
+export type Gt<N1 extends number, N2 extends number> =
     Eq<N1, N2> extends true
         ? false
-        : Inverse<LT<N1, N2>>;
+        : Inverse<Lt<N1, N2>>;
 
-export type LTE<N1 extends number, N2 extends number> =
+export type Lte<N1 extends number, N2 extends number> =
     Eq<N1, N2> extends true
         ? true
-        : LT<N1, N2>;
+        : Lt<N1, N2>;
 
-export type GTE<N1 extends number, N2 extends number> =
+export type Gte<N1 extends number, N2 extends number> =
     Eq<N1, N2> extends true
         ? true
-        : Inverse<LT<N1, N2>>;
+        : Inverse<Lt<N1, N2>>;

@@ -4,7 +4,7 @@
 
 import { Safe } from "../../common";
 
-import { GTE } from "./compare";
+import { Gte } from "./compare";
 import { Sub } from "./sub";
 
 export type Mod<
@@ -16,6 +16,6 @@ export type Mod<
 type ModBody<
     Dividend extends number,
     Divisor extends number,
-> = GTE<Dividend, Divisor> extends true
+> = Gte<Dividend, Divisor> extends true
     ? ModBody<Safe<Sub<Dividend, Divisor>, number>, Divisor>
     : Dividend;
