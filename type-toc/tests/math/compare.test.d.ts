@@ -4,7 +4,7 @@ import type { Equal, Expect } from '../utils';
 // expect error can use @ts-expect-error
 
 type cases = [
-    // LT
+    // Lt
     Expect<Equal<Lt<0, 0>, false>>,
     Expect<Equal<Lt<1, 3>, true>>,
     Expect<Equal<Lt<9, 1>, false>>,
@@ -13,7 +13,7 @@ type cases = [
     Expect<Equal<Lt<450, 333>, false>>,
     Expect<Equal<Lt<330, 333>, true>>,
 
-    // GT
+    // Gt
     Expect<Equal<Gt<0, 0>, false>>,
     Expect<Equal<Gt<3, 1>, true>>,
     Expect<Equal<Gt<1, 9>, false>>,
@@ -22,7 +22,7 @@ type cases = [
     Expect<Equal<Gt<333, 450>, false>>,
     Expect<Equal<Gt<333, 330>, true>>,
 
-    // LTE
+    // Lte
     Expect<Equal<Lte<0, 0>, true>>,
     Expect<Equal<Lte<1, 3>, true>>,
     Expect<Equal<Lte<9, 1>, false>>,
@@ -31,7 +31,7 @@ type cases = [
     Expect<Equal<Lte<450, 333>, false>>,
     Expect<Equal<Lte<330, 333>, true>>,
 
-    // GTE
+    // Gte
     Expect<Equal<Gte<0, 0>, true>>,
     Expect<Equal<Gte<3, 1>, true>>,
     Expect<Equal<Gte<1, 9>, false>>,

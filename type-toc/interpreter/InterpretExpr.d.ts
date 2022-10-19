@@ -1,4 +1,4 @@
-import { FunObject, GetFunName } from "../FunObject";
+import { FunObject } from "../FunObject";
 import { NoWay, SuccessResult } from "../Result";
 import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr, VariableExpr } from "../parser/Expr";
 import { TokenLike } from "../parser/utils";
@@ -6,7 +6,7 @@ import { Token } from "../scanner/Token";
 import { TokenType, ValueType } from "../type";
 import { Eq, Safe } from "../utils/common";
 import { Inverse, IsTrue } from "../utils/logic";
-import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math/fast/index";
+import { Add, Div, Gt, Gte, Lt, Lte, Mod, Mul, Sub } from "../utils/math/fast/index";
 
 import { BuildEnv, EnvAssign, EnvDefine, EnvGet, Environment } from "./Environment";
 import { InterpretBlockStmt, InterpretStmtSuccess } from "./InterpretStmt";
@@ -186,13 +186,13 @@ type EvalMath<
             : Op extends '%'
                 ? WrapBinaryResult<Mod<N1, N2>, Env>
                 : Op extends '<'
-                    ? WrapBinaryResult<LT<N1, N2>, Env>
+                    ? WrapBinaryResult<Lt<N1, N2>, Env>
                     : Op extends '>'
-                        ? WrapBinaryResult<GT<N1, N2>, Env>
+                        ? WrapBinaryResult<Gt<N1, N2>, Env>
                         : Op extends '<='
-                            ? WrapBinaryResult<LTE<N1, N2>, Env>
+                            ? WrapBinaryResult<Lte<N1, N2>, Env>
                             : Op extends '>='
-                                ? WrapBinaryResult<GTE<N1, N2>, Env>
+                                ? WrapBinaryResult<Gte<N1, N2>, Env>
                                 : RuntimeError<`Unknown binary operator: ${Op}`>;
 
 type WrapBinaryResult<V, Env extends Environment> =
