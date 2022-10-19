@@ -2,7 +2,7 @@
  * 目前只支持正整数运算。
  */
 
-import { Safe, EQ } from "../../common";
+import { Safe, Eq } from "../../common";
 import { Inverse } from "../../logic";
 import { NumChars, NumStr, ShiftChar, StrLength } from "../../string";
 
@@ -20,19 +20,19 @@ export type LT<
 
 
 export type GT<N1 extends number, N2 extends number> =
-    EQ<N1, N2> extends true
+    Eq<N1, N2> extends true
         ? false
         : Inverse<LT<N1, N2>>;
 
 
 export type LTE<N1 extends number, N2 extends number> =
-    EQ<N1, N2> extends true
+    Eq<N1, N2> extends true
         ? true
         : LT<N1, N2>;
 
 
 export type GTE<N1 extends number, N2 extends number> =
-    EQ<N1, N2> extends true
+    Eq<N1, N2> extends true
         ? true
         : Inverse<LT<N1, N2>>;
 
@@ -74,7 +74,7 @@ type StrNumLT<
 > = L1 extends L2
     ? L1 extends 1 // 只有一位，即可用十位以内小于比较(这一步是优化性能); 否则从高位逐位比较。
         ? NumCharLT<Safe<S1, NumChars>, Safe<S2, NumChars>>
-        : EQ<FirstChar<S1>, FirstChar<S2>> extends true
+        : Eq<FirstChar<S1>, FirstChar<S2>> extends true
             ? StrNumLT<RestStr<S1>, RestStr<S2>>
             : NumCharLT<FirstChar<S1>, FirstChar<S2>>
     : `StrNumLT Error: two number string length not match.`;

@@ -1,5 +1,5 @@
 
-export type EQ<A, B> =
+export type Eq<A, B> =
     A extends B
     ? (B extends A ? true : false)
     : false;

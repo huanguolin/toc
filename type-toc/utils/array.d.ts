@@ -1,4 +1,4 @@
-import { EQ } from "./common";
+import { Eq } from "./common";
 
 export type Length<T extends any[]> = T['length'];
 // type tLen = Length<[1, 23]>;
@@ -30,7 +30,7 @@ export type Init<L extends number, E extends any = any, A extends any[] = []> =
 export type Contains<A extends any[], E extends any, T = A[number]> =
     Length<A> extends 0
         ? false
-        : EQ<E, Pop<A>['element']> extends true
+        : Eq<E, Pop<A>['element']> extends true
             ? true
             : Contains<Drop<A>, E>;
 

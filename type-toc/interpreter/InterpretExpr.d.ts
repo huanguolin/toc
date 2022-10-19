@@ -4,7 +4,7 @@ import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr, UnaryEx
 import { TokenLike } from "../parser/utils";
 import { Token } from "../scanner/Token";
 import { TokenType, ValueType } from "../type";
-import { EQ, Safe } from "../utils/common";
+import { Eq, Safe } from "../utils/common";
 import { Inverse, IsTrue } from "../utils/logic";
 import { Add, Div, GT, GTE, LT, LTE, Mod, Mul, Sub } from "../utils/math/fast/index";
 
@@ -147,9 +147,9 @@ type EvalEquality<
     Env extends Environment, // 不需要，但是为了一致，没去掉
 > = RR extends InterpretExprSuccess<infer RV, infer Env>
     ? Op extends '=='
-        ? InterpretExprSuccess<EQ<LV, RV>, Safe<Env, Environment>>
+        ? InterpretExprSuccess<Eq<LV, RV>, Safe<Env, Environment>>
         : Op extends '!='
-            ? InterpretExprSuccess<Inverse<EQ<LV, RV>>, Env>
+            ? InterpretExprSuccess<Inverse<Eq<LV, RV>>, Env>
             : RuntimeError<`EvalEquality fail when meet: ${Op}`>
     : RR; // error
 

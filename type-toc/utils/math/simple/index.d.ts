@@ -6,7 +6,7 @@
 
 import { ErrorResult } from "../../../Result";
 import { Concat, Drop, Init, Length, Push } from "../../array";
-import { EQ, Safe } from "../../common";
+import { Eq, Safe } from "../../common";
 import { Inverse } from "../../logic";
 
 export type Add<N1 extends number, N2 extends number> = Length<Concat<Init<N1>, Init<N2>>>;
@@ -67,16 +67,16 @@ export type LT<
 
 
 export type GT<N1 extends number, N2 extends number> =
-    EQ<N1, N2> extends true
+    Eq<N1, N2> extends true
         ? false
         : Inverse<LT<N1, N2>>;
 
 export type LTE<N1 extends number, N2 extends number> =
-    EQ<N1, N2> extends true
+    Eq<N1, N2> extends true
         ? true
         : LT<N1, N2>;
 
 export type GTE<N1 extends number, N2 extends number> =
-    EQ<N1, N2> extends true
+    Eq<N1, N2> extends true
         ? true
         : Inverse<LT<N1, N2>>;
