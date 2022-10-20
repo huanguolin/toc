@@ -538,7 +538,7 @@ grouping       → "(" expression ")" ;
 你可能注意到，上面的这段语法描述和 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中的并不完全一样。不过这仅仅是形式的不同，语法含义是一样的。只是这里为了简单没有包含优先级的信息。 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中的描述不仅包含了优先级信息，而且为了易于实现，做了一些调整。不过，所要表达语法规则是一致的。关于优先级的部分，我们在语法分析的部分会重点讲解。基于现在认识，我想你已经能看懂 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中绝大数的规则了。可以开始词法分析啦😺。
 
 #### 2.2.2 词法分析
-词法分析的关键是分词——就是把输入的代码拆成一个一个有序的语法符号（token）。这里要处理的主要问题是，在哪里拆开？为什么这些字符要连到一起作为一个语法符号？我们取上面表达式的例子：
+词法分析的关键是分词——就是把输入的代码拆成一个一个有序的语法符号（token）。这里要处理的主要问题是，在哪里拆开？哪些字符要连到一起作为一个语法符号？我们取上面表达式的例子：
 ```js
 1 + (10 - 2 * 3) < 4 == false
 // 拆分成：
@@ -546,7 +546,7 @@ grouping       → "(" expression ")" ;
 ```
 做这个拆分可以用正则，也可以逐字符来分析。这里我选取后者，不仅是因为 ts 类型系统中没有正则，逐字符分拆的代码也很自然简单，且高效！
 
-不过上面的数组一般不建议直接作为 `Tokens` 输出给语法分析器。常规的做法是定义一个 `Token` 的结构来描述。不仅仅包含原始的词素(`lexeme`)，还应该包含必要信息，比如：是字符串还是数字，是操作符还是关键字等。正常还要包含 `debug` 需要的行号、列号等信息。我们这里为了简单，只包含最主要的信息，没有 `debug` 信息。下面是 `Token` 的定义：
+不过上面的数组一般不建议直接作为 `Tokens` 输出给语法分析器。常规的做法是定义一个 `Token` 的结构来描述。不仅仅包含原始的词素(`lexeme`)，还应该包含必要信息，比如：是字符串还是数字，是操作符还是关键字等。正常还要包含 `debug` 需要的行号、列号等信息。我们这里为了简单，只包含最主要的信息，没有 `debug` 信息。要定义 `Token`，先要定义它有多少种类：
 ```ts
 type TokenType =
     | 'identifier'
@@ -580,8 +580,12 @@ type TokenType =
     | '&&'
     | '||'
     | '!'
-    | 'EOF';
+    | 'EOF'; // 结束标志
+```
+> [disable_auto_gen(TokenType)]()
 
+下面是 `Token` 的定义：
+```ts
 class Token {
     type: TokenType; // 像操作符、关键字（包含 true, false, null 等）用这个可以直接区分。
     lexeme: string; // 放原始的词素字符串。
@@ -619,7 +623,7 @@ type BuildToken<
 // EOF 直接定义出来方便用
 type EOF = BuildToken<'EOF', ''>;
 ```
-> [disable_auto_gen()]()
+> [disable_auto_gen(Token)](TokenType)
 
 接下来我们来逐字符扫描，产生 `Token` 放到 `tokens` 数组。输入是 `source`, 我们用 `index` 来代表当前的扫描位置。`scan` 方法的核心是一个循环，`index` 不断后移并拿到一个字符。然后在 `switch` 中做决断，这个字符是一个什么语法标记？
 ```ts
@@ -787,6 +791,131 @@ default:
 
 以上就是 ts 版本的分词的全部了。是不是很简单😄。完整代码，请看 [ts-scanner](https://github.com/huanguolin/toc/blob/master/ts-toc/Scanner/index.ts).
 
+
+现在该 type 版了。它也可以逐字符来分析。那么怎么取一个字符呢？
+```ts
+type FirstChar<T extends string> =
+    T extends `${infer First}${infer Rest}`
+        ? [First, Rest]
+        : never;
+type test_first_char_1 = FirstChar<'1 + 2'>; // ['1', ' + 2']
+type test_first_char_2 = FirstChar<test_first_char_1[1]>; // [' ', '+ 2']
+type test_first_char_3 = FirstChar<test_first_char_2[1]>; // ['+', ' 2']
+type test_first_char_4 = FirstChar<test_first_char_3[1]>; // [' ', '2']
+type test_first_char_5 = FirstChar<test_first_char_4[1]>; // ['2', '']
+type test_first_char_6 = FirstChar<test_first_char_5[1]>; // never
+```
+以上就是逐字符取出的代码。和 ts 版中 `scan` 函数的循环取出比呢？有相似之处，又明显的不同。
+相似是两者都是一个字符一个字符的取出来。差异是，ts 版中依靠的是 `index` 直接来取相应位置的字符，随着 `index` 值增加，而取的字符位置逐渐后移。类型系统中却没有一个机制可以直接取某个位置的字符。如果我们非要实现，也能利用上面逐字符取加上计数的办法达到类似的效果。但是效率很低，`index` 每后移一位，就要从头遍历一遍。
+
+所以我们不要 `index` 后移的方案。就直接每次取一个字符来做“检测”。类型系统没有 `switch` 语句，只能用条件语句一个一个检查。还要把取剩下的字符串保留下来，下一个循环需要它。但是像 `!=` 这样的需要后看一位，又要再取一个……这做肯定是可以做出来的，但是想想代码写出来的样子，啊，很混乱😫……思路不清晰！
+
+别急，我来重新梳理一下。一个一个取字符是没问题的。但是要让代码可读性好，可以把解析不同种类 `token` 的代码，按种类抽成一个一个的函数。那选用哪个函数还要做一个预判断？那不又是一堆的条件判断……额，或许我们不需要预判断。直接挨个尝试解析，解出来就进行下一个循环，否则就换下一个种类。
+
+嗯，不错😄！那怎么知道能解析出来呢？当然是看返回值了。别忘了我们有模式匹配，如果返回值符合成功的结构，就解出来了，我们顺便从里面拿到 `Token` 和 `Rest` 字符串。`Token` 追加到结果数组中，`Rest` 用于下一个循环的入参。
+```ts
+// S 是 sourceCode, A 是存放结果的 array
+type Scan<S extends string, A extends Token[] = []> =
+    S extends ''
+        ? Push<A, EOF> // 到结尾了
+        : S extends `${infer Space extends SpaceChars}${infer Rest}`
+            ? Scan<Rest, A> // 排除空白字符
+            : ScanBody<S, A>; // 不是空白字符，就来尝试解析
+
+type ScanBody<S extends string, A extends Token[] = []> =
+    ScanNumber<S> extends ScanSuccess<infer T, infer R> // 尝试 number
+        ? Scan<R, Push<A, T>>
+        : ScanOperator<S> extends ScanSuccess<infer T, infer R> // 尝试操作符
+            ? Scan<R, Push<A, T>>
+            : ScanIdentifier<S> extends ScanSuccess<infer T, infer R> // 尝试标志符，同样含关键字
+                ? Scan<R, Push<A, T>>
+                : ScanString<S> extends ScanSuccess<infer T, infer R> // 尝试字符串
+                    ? Scan<R, Push<A, T>>
+                    : ScanError<`Unknown token at: ${S}`>; // 尝试完所有情况，也无法解析，则得到一个错误
+```
+> [disable_auto_gen(Scan)](Token)
+
+上面就是大的架子。其中有些工具函数，`Push` 应该不用说了。重点是 `ScanSuccess` 和 `ScanError`。有他们才知道解析的结果如何。它们其实使用了更基础的结果包装函数，后面的语法分析和执行，都要用到。
+```ts
+// 全局结果包装🔧函数
+type ErrorResult<E> = { type: 'Error', error: E };
+type SuccessResult<R> = { type: 'Success', result: R };
+
+// 用来代替 never 的，带一个名字参数。到后面你就知道，为什么不直接用 never 了……
+type NoWay<Name extends string> = `[${Name}] impossible here!`;
+```
+> [disable_auto_gen(Result)]()
+
+再来看 `ScanSuccess` 和 `ScanError`：
+```ts
+export type ScanError<M extends string> = ErrorResult<`[ScanError]: ${M}`>;
+export type ScanSuccess<T extends Token, R extends string> = SuccessResult<{ token: T, rest: R }>;
+```
+> [disable_auto_gen(ScanResult)](Result)
+
+有个问题，不用这些结果包装函数可以吗？当然是可以的！但是会很啰嗦，还容易手误。更重要的是，用工具还有如下的优势：
+```ts
+// 这里 T 和 R 的类型是确定的，不需要进一步限定。因为 ScanSuccess 在定义时就限定了类型。
+type test = ScanNumber<S> extends ScanSuccess<infer T, infer R>
+
+// 不用工具函数，要用 extends 限定才行。
+type test = ScanNumber<S> extends { token: T extends Token, rest: R extends string }
+```
+> [disable_auto_gen()]()
+
+好了，回归正题。我们看看具体的解析函数，先是 `ScanNumber`，很简单：
+```ts
+type ScanNumber<S extends string, N extends string = ''> =
+    S extends `${infer C extends NumChars}${infer R extends string}`
+        ? ScanNumber<R, `${N}${C}`>
+        : N extends ''
+            ? ScanError<'Not match a number.'>
+            : ScanSuccess<BuildToken<'number', N>, S>;
+```
+> [disable_auto_gen(ScanNumber)](Token)
+
+`ScanOperator` 要复杂一些，重点在模式匹配。要注意的是单字符的操作符放到最后，要优先匹配更长的：
+```ts
+type ScanOperator<S extends string> =
+    S extends OpGteOrLte<infer C1, infer C2, infer R>
+        ? ScanSuccess<BuildToken<`${C1}${C2}`, `${C1}${C2}`>, R>
+        : S extends OpEqOrNot<infer C1, infer C2, infer R>
+            ? ScanSuccess<BuildToken<`${C1}${C2}`, `${C1}${C2}`>, R>
+            : S extends OpAnd<infer C1, infer C2, infer R>
+                ? ScanSuccess<BuildToken<`${C1}${C2}`, `${C1}${C2}`>, R>
+                : S extends OpOr<infer C1, infer C2, infer R>
+                    ? ScanSuccess<BuildToken<`${C1}${C2}`, `${C1}${C2}`>, R>
+                    : S extends `${infer C extends SingleOperators}${infer R extends string}`
+                        ? ScanSuccess<BuildToken<Safe<C, SingleOperators>, C>, R>
+                        : ScanError<'Not match an operator.'>;
+
+type SingleOperators =
+    | '{'
+    | '}'
+    | ','
+    | ';'
+    | '('
+    | ')'
+    | '+'
+    | '-'
+    | '/'
+    | '*'
+    | '%'
+    | '<'
+    | '>'
+    | '!'
+    | '=';
+
+type OpGteOrLte<C1 extends '>' | '<', C2 extends '=', R extends string> = `${C1}${C2}${R}`;
+type OpEqOrNot<C1 extends '=' | '!', C2 extends '=', R extends string> = `${C1}${C2}${R}`;
+type OpAnd<C1 extends '&', C2 extends '&', R extends string> = `${C1}${C2}${R}`;
+type OpOr<C1 extends '|', C2 extends '|', R extends string> = `${C1}${C2}${R}`;
+```
+> [disable_auto_gen(ScanOperator)](Token)
+
+`ScanIdentifier` 和 `ScanString` 也是类似的，就不再贴代码了，完整版请看 [type-Scanner](https://github.com/huanguolin/toc/blob/master/type-toc/scanner/index.d.ts)。
+
+至此，我们的词法分析已经全部完成。是不是渐入佳境😊。接下来，就让我们“攀登”本次最高的“山峰”——语法分析！
 
 
 #### 2.2.3 语法分析

@@ -40,7 +40,7 @@ export type Toc<Source extends string> =
  * debug
  */
 type Input = `
-var x = 0;
+var x = 1006;
 var i = 1;
 for (; i < 4; i=i+1)
     x = x + i;
