@@ -877,7 +877,7 @@ type ScanBody<S extends string, A extends Token[] = []> =
 ```
 
 
-上面就是大的架子。其中有些工具函数，`Push` 应该不用说了。重点是 `ScanSuccess` 和 `ScanError`。有他们才知道解析的结果如何。它们其实使用了更基础的结果包装函数，后面的语法分析和执行，都要用到。
+上面就是大的架子。其中有些工具函数，`Push` 应该不用说了。重点是 `ScanSuccess` 和 `ScanError`。有它们才知道解析的结果如何。它们其实使用了更基础的结果包装函数，后面的语法分析和执行，都要用到。
 ```ts
 // 全局结果包装🔧函数
 type ErrorResult<E> = { type: 'Error', error: E };
