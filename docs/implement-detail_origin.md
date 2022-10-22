@@ -57,7 +57,9 @@ type B = 'red' | 'green' | 'blue';
 // tuple
 type C = [B, number]; // ['red' | 'green' | 'blue', number]
 ```
-当然她也提供了全集和空集：`any` 和 `never`。   
+> [auto_gen()]()
+
+当然她也提供了全集和空集：`any` 和 `never`。
 下面我们回归变量、条件、循环、函数吧。
 
 
@@ -67,6 +69,8 @@ type C = [B, number]; // ['red' | 'green' | 'blue', number]
 type A = 2;
 type B = string | A; // string | 2
 ```
+> [auto_gen()]()
+
 这就是全部吗？额，这是全局常量。其实还有一种是局部常量，这个等说条件的时候讲。另外我说过有函数，函数的入参也是一种常量啊😼。
 
 ### 1.3 条件
@@ -74,6 +78,8 @@ type B = string | A; // string | 2
 type A = 2;
 type B = A extends number ? true : false; // true
 ```
+> [auto_gen()]()
+
 是不是很简单？
 
 `A extends B ? C : D` 这个形式，表达的是 `A` 可以赋值给 `B`，则结果是 `C`，否则为 `D`。可赋值在 ts 中是个关键的东西，我下面就来讲讲。
@@ -103,6 +109,8 @@ let hDog2: HuntDog = hDog; // ok
 cat = hDog; // ok
 hDog2 = cat; // error: Property 'hunt' is missing in type 'Cat' but required in type 'HuntDog'
 ```
+> [auto_gen()]()
+
 回到 `A extends B ? C : D` ，只要 A 类型符合 B 类型的定义，或者说 A 类型是 B 类型的子集（当然，任何集合都是自身的子集），条件就成立，否则为不成立。这种形式下，还有一种可看作是模式匹配的语法。
 
 #### 1.3.2 模式匹配
@@ -113,6 +121,8 @@ type B = A extends Promise<infer C> ? C : never; // string
 type T = [string, 1, null, A];
 type R = T extends [string, ...infer Rest] ? Rest : never; // [1, null, A]
 ```
+> [auto_gen()]()
+
 这种语法可以识别 `extends` 左边是不是符合右边的类型结构，如果符合，可以推断出其中的某个部分。
 
 #### 1.3.3 局部常量
@@ -130,6 +140,8 @@ type R = T extends [string, ...infer Rest]
     : never;
 // undefined
 ```
+> [auto_gen()]()
+
 在 [4.7](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#extends-constraints-on-infer-type-variables), [4.8](https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#infer-types-template-strings) 两个版本还对这个条件表达式有扩展和优化，后续会讲到。
 
 
@@ -155,6 +167,8 @@ function flatten<T>(arr: (T | T[])[]): T[] {
 console.log(flatten([1, 2, [3, 4], 5, [[6, 7], 8]])); // [1, 2, 3, 4, 5, 6, 7, 8]
 console.log(flatten(['abc', ['123', ['456', '789']], 'def'])); // ["abc", "123", "456", "789", "def"]
 ```
+> [auto_gen()]()
+
 这是常规用法——泛型让我们更容易复用算法(且类型安全)。ts 类型系统中，借助泛型可以复用相同形式的类型声明。如 `Promise<T>`。还可用作工具类型，官方就提供了多个 [Utility Types](https://www.typescriptlang.org/docs/handbook/utility-types.html), 如: `Required<Type>, Pick<Type, Keys>`。我们也可以自己实现一些工具类型，用起来就像函数。
 
 #### 1.4.2 类型工具——函数
@@ -172,6 +186,8 @@ type TestF2 = First<[string[]]>; // string[]
 type TestF3 = First<[]>; // unknown
 type TestF4 = First<[], any>; // any
 ```
+> [auto_gen()]()
+
 这里泛型参数就是函数参数，通过 `extends` 可以约束类型，泛型参数也支持默认值。
 
 如果给 `PromiseValue<T>` 传入 `Promise<Promise<number>>` 的话，结果是 `Promise<number>`。假如这个时候，还是想获得最里面的类型，即 `number`。怎么办呢？那就该递归登场了。
@@ -186,6 +202,8 @@ type PromiseValueDeep<T> = T extends PromiseLike<infer V> ? PromiseValueDeep<V> 
 
 type TestPVD1 = PromiseValueDeep<Promise<Promise<number>>>; // number
 ```
+> [auto_gen()]()
+
 有了递归，就可以讲循环了😄！
 
 #### 1.4.3 循环 <=> 递归
@@ -210,6 +228,8 @@ type Join<Arr extends number[], Result extends string = ''> =
         : Result;
 type test = Join<[1, 2, 3]>; // '123'
 ```
+> [auto_gen()]()
+
 上面的用循环实现的代码，用递归也同样能做到。只不过我们的类型版 `Join` 看起来有点啰嗦（多了两个判断😔）。不过，在 [4.7](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#extends-constraints-on-infer-type-variables) 版本有改进这里的语法。所以可以改成：
 ```ts
 function join(arr: number[]): string {
@@ -227,19 +247,21 @@ type Join<Arr extends number[], Result extends string = ''> =
         : Result;
 type test = Join<[1, 2, 3]>; // '123'
 ```
+> [auto_gen()]()
+
 现在看起来是不是简洁了许多，二者转换的代码对比也更容易看清了。从循环映射为递归：
-> 循环结束条件 -> 递归结束条件   
-> 循环累计变量 result -> 递归函数"累计"参数 Result   
-> 循环移动变量 x -> 递归函数"移动"参数 Arr   
+> 循环结束条件 -> 递归结束条件
+> 循环累计变量 result -> 递归函数"累计"参数 Result
+> 循环移动变量 x -> 递归函数"移动"参数 Arr
 
 在纯函数编程语言中，是没有循环的，只能用递归来代替。但是大家都知道，递归会导致函数调用栈快速加深。到达一定深度，就会爆栈。那这个问题怎么解决呢？
 
 答案是尾递归优化。
 
-> 为什么纯函数编程语言中没有循环？难道是因为有递归可用，就不必多搞一套东西？   
-> 额，或者我问你，没有变量如何实现循环？   
-> ……   
-> 😄我想你知道了，做不到！   
+> 为什么纯函数编程语言中没有循环？难道是因为有递归可用，就不必多搞一套东西？
+> 额，或者我问你，没有变量如何实现循环？
+> ……
+> 😄我想你知道了，做不到！
 > 没有变量无法保存状态，所以函数式编程语言选择用函数参数来“保存”。
 
 #### 1.4.4 尾递归
@@ -283,6 +305,8 @@ type tree = Tree<1,
 
 type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
+> [auto_gen()]()
+
 尾递归与非尾递归的区别就是函数返回时，是直接一个函数调用，还是函数调用夹在一个表达式中。
 [尾递归优化](https://stackoverflow.com/questions/310974/what-is-tail-call-optimization)，是通过复用一个函数调用栈来避免爆栈。在 ts 中也是有这样的优化。你跳到上面的在线体验示例，会发现 `? [V, ...PreOrderTraverse<L>, ...PreOrderTraverse<R>]` 这一行，ts 有 error 提示：`Type instantiation is excessively deep and possibly infinite.(2589)`
 
@@ -311,6 +335,8 @@ type L1 = A['length']; // 3
 type L2 = ['a', number]['length']; // 2
 type L3 = []['length']; // 0
 ```
+> [auto_gen()]()
+
 以上的例子代码，是否让你找到了实现加法的灵感？或许你已经想到了……没错，加法就是准备两个指定长度数组，然后合并，然后取合并数组的长度。
 
 那么我需要一个生成指定长度数组的函数:
@@ -484,7 +510,7 @@ type SN = '123' extends `${infer N extends number}` ? N : never; // 123
 所以一切都很完美！你可能会问，这个方案听起来很复杂，和前面用数组实现的比起来，似乎没有任何优势。复杂是真的复杂，但优势是有的。我们前面说过，ts 类型运算是有递归深度限制的。数组的实现可以很快触碰到限制，而字符串的方案在很大的数上都没有触到限制。
 ```ts
 type test_add_1 = Add<999, 999>; // 1998
-type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and possibly infinite.(2589) 
+type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and possibly infinite.(2589)
 ```
 > [auto_gen()](Add)
 
@@ -513,7 +539,7 @@ type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and 
 1 + (10 - 2 * 3) < 4 == false
 ```
 
-`Toc` 的表达式包含的要素：   
+`Toc` 的表达式包含的要素：
 * 字面量，即基础数据类型：数字，布尔，字符串和 `null`
 * 一元表达式，即只有一个操作数的表达式：仅逻辑反 ！
 * 二元表达式，即有两个操作数的表达式：有数学表达式(+, -, *, /, %)和逻辑表达式(&&, ||, ==, !=, >, >=, <, <=)
@@ -582,7 +608,6 @@ type TokenType =
     | '!'
     | 'EOF'; // 结束标志
 ```
-> [disable_auto_gen(TokenType)]()
 
 下面是 `Token` 的定义：
 ```ts
@@ -598,7 +623,6 @@ class Token {
     }
 }
 ```
-> [disable_auto_gen()]()
 
 下面是 type 版的：
 ```ts
@@ -623,7 +647,6 @@ type BuildToken<
 // EOF 直接定义出来方便用
 type EOF = BuildToken<'EOF', ''>;
 ```
-> [disable_auto_gen(Token)](TokenType)
 
 接下来我们来逐字符扫描，产生 `Token` 放到 `tokens` 数组。输入是 `source`, 我们用 `index` 来代表当前的扫描位置。`scan` 方法的核心是一个循环，`index` 不断后移并拿到一个字符。然后在 `switch` 中做决断，这个字符是一个什么语法标记？
 ```ts
@@ -667,7 +690,7 @@ class Scanner {
     // 省略了工具函数
 }
 ```
-上面代码展示了扫描器的架子。`scan` 方法中展示了处理最简单的 `Token` 处理——单个字符便可确定的直接构造添加即可。现在我们来看麻烦一点的：   
+上面代码展示了扫描器的架子。`scan` 方法中展示了处理最简单的 `Token` 处理——单个字符便可确定的直接构造添加即可。现在我们来看麻烦一点的：
 * 像 !=, ==, >=, <= 这样，必须要先看第二个字符是否匹配 =, 否则应该是 !, =, >, <
 * 像 &&, || 这样，必须两个字符都匹配，仅仅匹配第一个字符的话直接报错（我们不支持位运算哦）
 
@@ -710,7 +733,6 @@ case '|':
     throw new ScanError("Unknown token at: " + c);
 // ...
 ```
-> [disable_auto_gen()]()
 
 对于空白字符，直接跳过即可：
 ```ts
@@ -721,7 +743,6 @@ case '\t':
     break;
 // ...
 ```
-> [disable_auto_gen()]()
 
 当看到双引号时，认为是字符串，然后“陷入”一个局部循环，不断后移 `index`, 知道找到下一个双引号。不过要考虑转义和到了代码结尾也没找到的情况，编译器要能识别错误代码并报告，而不是奔溃！
 ```ts
@@ -771,7 +792,6 @@ const ESCAPE_CHAR_MAP = {
 } as const;
 // ...
 ```
-> [disable_auto_gen()]()
 
 对于数字和标志符的处理比字符串要简单一些。如果当前字符是一个数字字符，则认为是数字 `Token`，然后找到数字末尾得到完整数字。如果当前字符是一个字母字符或者下划线字符，则认为是标志符 `Token`，然后找到标识符末尾得到完整的标志符。要注意的是标志符从第二个字符以后可以是数字。标志符在构造 `Token` 前，还要判断是不是关键字，是的话构造的就是关键字的 `Token` 了。
 ```ts
@@ -787,7 +807,6 @@ default:
     throw new ScanError("Unknown token at: " + c);
 // ...
 ```
-> [disable_auto_gen()]()
 
 以上就是 ts 版本的分词的全部了。是不是很简单😄。完整代码，请看 [ts-scanner](https://github.com/huanguolin/toc/blob/master/ts-toc/Scanner/index.ts).
 
@@ -833,7 +852,6 @@ type ScanBody<S extends string, A extends Token[] = []> =
                     ? Scan<R, Push<A, T>>
                     : ScanError<`Unknown token at: ${S}`>; // 尝试完所有情况，也无法解析，则得到一个错误
 ```
-> [disable_auto_gen(Scan)](Token)
 
 上面就是大的架子。其中有些工具函数，`Push` 应该不用说了。重点是 `ScanSuccess` 和 `ScanError`。有它们才知道解析的结果如何。它们其实使用了更基础的结果包装函数，后面的语法分析和执行，都要用到。
 ```ts
@@ -844,14 +862,12 @@ type SuccessResult<R> = { type: 'Success', result: R };
 // 用来代替 never 的，带一个名字参数。到后面你就知道，为什么不直接用 never 了……
 type NoWay<Name extends string> = `[${Name}] impossible here!`;
 ```
-> [disable_auto_gen(Result)]()
 
 再来看 `ScanSuccess` 和 `ScanError`：
 ```ts
 export type ScanError<M extends string> = ErrorResult<`[ScanError]: ${M}`>;
 export type ScanSuccess<T extends Token, R extends string> = SuccessResult<{ token: T, rest: R }>;
 ```
-> [disable_auto_gen(ScanResult)](Result)
 
 有个问题，不用这些结果包装函数可以吗？当然是可以的！但是会很啰嗦，还容易手误。更重要的是，用工具还有如下的优势：
 ```ts
@@ -861,7 +877,6 @@ type test = ScanNumber<S> extends ScanSuccess<infer T, infer R>
 // 不用工具函数，要用 extends 限定才行。
 type test = ScanNumber<S> extends { token: T extends Token, rest: R extends string }
 ```
-> [disable_auto_gen()]()
 
 好了，回归正题。我们看看具体的解析函数，先是 `ScanNumber`，很简单：
 ```ts
@@ -872,7 +887,6 @@ type ScanNumber<S extends string, N extends string = ''> =
             ? ScanError<'Not match a number.'>
             : ScanSuccess<BuildToken<'number', N>, S>;
 ```
-> [disable_auto_gen(ScanNumber)](Token)
 
 `ScanOperator` 要复杂一些，重点在模式匹配。要注意的是单字符的操作符放到最后，要优先匹配更长的：
 ```ts
@@ -911,7 +925,6 @@ type OpEqOrNot<C1 extends '=' | '!', C2 extends '=', R extends string> = `${C1}$
 type OpAnd<C1 extends '&', C2 extends '&', R extends string> = `${C1}${C2}${R}`;
 type OpOr<C1 extends '|', C2 extends '|', R extends string> = `${C1}${C2}${R}`;
 ```
-> [disable_auto_gen(ScanOperator)](Token)
 
 `ScanIdentifier` 和 `ScanString` 也是类似的，就不再贴代码了，完整版请看 [type-Scanner](https://github.com/huanguolin/toc/blob/master/type-toc/scanner/index.d.ts)。
 
@@ -919,7 +932,432 @@ type OpOr<C1 extends '|', C2 extends '|', R extends string> = `${C1}${C2}${R}`;
 
 
 #### 2.2.3 语法分析
+为了你，也为了我，能平滑的完成这件事情，我们先从搞定表达式开始。我们看一个简单的四则运算：
+```ts
+10 - 2 * 3 + 1
+// 按照优先级，对应的抽象语法树:
+//     +
+//    / \
+//   -   1
+//  /  \
+// 10   *
+//     / \
+//    2   3
+```
 
+为什么是这样的树，而不是另外一个呢？是因为优先级高的要先运算，在语法树中，只有操作数都是叶子节点（此时它们都是字面量）时，才能运算。运算时，从最深的运算符节点开始，先左后右，向树根靠拢：
+```ts
+//     +
+//    / \
+//   -   1
+//  /  \
+// 10   *
+//     / \
+//    2   3
+// ========>
+//     +
+//    / \
+//   -   1
+//  /  \
+// 10   6
+// ========>
+//     +
+//    / \
+//   4   1
+// ========>
+//     5
+```
+
+在构建这样的语法树之前，需要先定义语法树的节点。上面的表达式中包含了两种基础的表达式：
+* 字面量表达式
+* 二元表达式
+
+此外我们还有一元表达式和分组表达式。所以我们先定义表达式类型和表达式的接口：
+```ts
+type ExprType =
+    | 'group'
+    | 'binary'
+    | 'unary'
+    | 'literal';
+
+interface IExpr {
+    type: ExprType;
+}
+```
+
+下面，我们依次来定义字面量、一元、二元、分组表达式：
+```ts
+type ValueType =
+    | string
+    | number
+    | boolean
+    | null;
+
+class LiteralExpr implements IExpr {
+    type: ExprType = 'literal';
+    value: ValueType;
+
+    constructor(value: ValueType) {
+        this.value = value;
+    }
+}
+
+class UnaryExpr implements IExpr {
+    type: ExprType = 'unary';
+    operator: Token;
+    expression: IExpr;
+
+    constructor(operator: Token, expr: IExpr) {
+        this.operator = operator;
+        this.expression = expr;
+    }
+}
+
+class BinaryExpr implements IExpr {
+    type: ExprType = 'binary';
+    left: IExpr;
+    operator: Token;
+    right: IExpr;
+
+    constructor(left: IExpr, operator: Token, right: IExpr) {
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
+    }
+}
+
+class GroupExpr implements IExpr {
+    type: ExprType = 'group';
+    expression: IExpr;
+
+    constructor(expr: IExpr) {
+        this.expression = expr;
+    }
+}
+```
+
+现在回到 `10 - 2 * 3 + 1` 这个表达式，期望的语法树应该表示为：
+```ts
+const mulExpr = new BinaryExpr(
+    new LiteralExpr(2),
+    new Token('*', '*'),
+    new LiteralExpr(3));
+
+const minusExpr = new BinaryExpr(
+    new LiteralExpr(10),
+    new Token('-', '-'),
+    mulExpr);
+
+// 最终输出的语法树，就是这个：
+const addExpr = new BinaryExpr(
+    minusExpr,
+    new Token('+', '+'),
+    new LiteralExpr(1));
+```
+
+可是我们要用代码来产生这个！我们输入是 `Token` 数组，输出是一个表达式，具体点就是语法树的根节点。架子代码如下：
+```ts
+class Parser {
+    private tokens: Token[];
+    private index: number;
+
+    constructor(tokens: Token[]) {
+        this.tokens = tokens;
+        this.index = 0;
+    }
+
+    parse(): IExpr {
+        return this.expression();
+    }
+
+    private expression(): IExpr {
+        // TODO
+    }
+}
+```
+
+`expression` 函数怎么实现呢？这就是语法分析的关键了。学过编译原理的同学知道，语法分析有很多算法。但是手写语法分析，简单又实用，必须要掌握的，莫属[递归下降](https://en.wikipedia.org/wiki/Recursive_descent_parser)了。它是[自顶向下语法分析](https://en.wikipedia.org/wiki/Top-down_parsing)的一种。
+
+那么，什么是自顶向下呢？是从整体到局部。对比语法树呢，整体看就是根节点，按上面举的例子，就是加法，具体呢，就要看左右操作数。在这里可以说，自顶向下就是从语法树的根（顶）开始向叶子（向下）节点去。
+
+那么什么是递归下降呢？我们配合例子，从简单一步一步来说会更容易些。
+
+假如只考虑四则运算，加上数字，只有三个优先级，从低到高排列：
+1. 加性运算(additive)：+，-
+2. 乘性运算(factor)：*, /
+3. 数字(literal): NUMBER
+
+上面的例子，`10 - 2 * 3 + 1`, 如果用递归下降来考虑，可以看成：
+```ts
+10 - factor_1 + 1
+// factor_1 = 2 * 3
+```
+如果是 `10 / 5 - 2 * 3 + 1`，就看成：
+```ts
+factor_1 - factor_2 + 1
+// factor_1 = 10 / 5
+// factor_2 = 2 * 3
+```
+或者：
+```ts
+factor_1 - factor_2 + factor_3
+// factor_1 = 10 / 5
+// factor_2 = 2 * 3
+// factor_3 = 1
+```
+注意，这一步很关键，我们把问题抽象简化了，变成只有一种优先级的运算。任何四则运算都可以抽象成这样，我们再看几个例子：
+```ts
+2 + 3
+factor_1 + factor_2
+// factor_1 = 2
+// factor_2 = 3
+
+2 * 3 / 4
+factor_1
+// factor_1 = 2 * 3 / 4
+
+5
+factor_1
+// factor_1 = 5
+```
+所以我只需要考虑相同优先级的运算，直接从左到右即可。假设有 `factor_1 - factor_2 + factor_3`, 得到的代码树如下：
+```ts
+factor_1 - factor_2 + factor_3
+//          +
+//         / \
+//         -   factor_3
+//        / \
+// factor_1  factor_2
+```
+注意相同优先级，从左到右计算，相当于说从左到右，优先级依次降低。所以最右边的运算是根。所以对于加性运算的递归下降代码如下：
+```ts
+class Parser {
+    // ...
+    private expression(): IExpr {
+        return this.additive();
+    }
+
+    private additive(): BinaryExpr {
+        let expr = this.factor();
+        while (this.match('+', '-')) { // 匹配到 + 或者 -
+            const left = expr;
+            const operator = this.previous(); // 返回 + 或者 - 的 Token
+            const right = this.factor();
+            expr = new BinaryExpr(left, operator, right);
+        }
+        return expr;
+    }
+
+    private factor(): BinaryExpr {
+        // TODO
+    }
+
+    private match(...tokenTypes: TokenType[]) {
+        if (this.check(...tokenTypes)) {
+            this.advance();
+            return true;
+        }
+        return false;
+    }
+
+    private check(...tokenTypes: TokenType[]): boolean {
+        if (this.isAtEnd()) {
+            return false;
+        }
+        return tokenTypes.includes(this.current().type);
+    }
+
+    private isAtEnd() {
+        return this.tokens[this.index].type === 'EOF';
+    }
+
+    private advance() {
+        return this.tokens[this.index++];
+    }
+
+    private current() {
+        return this.tokens[this.index];
+    }
+
+    private previous() {
+        return this.tokens[this.index - 1];
+    }
+}
+```
+你可以把上面举的多个例子套进去看看。
+
+同理，我们处理乘性运算也是一样：
+```ts
+2 * 3 / 4
+literal_1 * literal_2 / literal_3
+// literal_1 = 2
+// literal_2 = 3
+// literal_3 = 4
+
+5
+literal_1
+// literal_1 = 5
+```
+代码和加性运算几乎一样：
+```ts
+class Parser {
+    // ...
+    private additive(): BinaryExpr {
+        let expr = this.factor();
+        while (this.match('+', '-')) { // 匹配到 + 或者 -
+            const left = expr;
+            const operator = this.previous(); // 返回 + 或者 - 的 Token
+            const right = this.factor();
+            expr = new BinaryExpr(left, operator, right);
+        }
+        return expr;
+    }
+
+    private factor(): BinaryExpr {
+        let expr = this.literal();
+        while (this.match('*', '/')) { // 匹配到 * 或者 /
+            const left = expr;
+            const operator = this.previous(); // 返回 * 或者 / 的 Token
+            const right = this.literal();
+            expr = new BinaryExpr(left, operator, right);
+        }
+        return expr;
+    }
+
+    private literal(): LiteralExpr() {
+        // TODO
+    }
+    // ...
+}
+```
+最后到只考虑数字的字面量就更简单了：
+```ts
+class Parser {
+    // ...
+    private literal(): LiteralExpr() {
+        if (this.match('number')) {
+            return new LiteralExpr(this.previous().literal as number);
+        }
+
+        throw new ParseError(`Expect expression, but got token: ${this.current().lexeme}.`);
+    }
+    // ...
+}
+```
+如果你看懂了上面，你就看懂了递归下降。现在我们来总结递归下降算法是怎么做的：
+1. 将表达式按照优先级从低到高排列；
+2. 从最低的优先级开始解析，向最高优先级“下降”；
+3. 解析某种优先级的运算时，只“看到”相同优先级的运算符，且操作数都是更高优先级的运算。
+4. “下降”最终会落到无法继续实施表达式展开的字面量上。
+
+上面我们实现了四则运算的递归下降代码，用语法定义来描述这个过程就是：
+```shell
+expression      → additive ;
+additive        → factor ( ( "-" | "+" ) factor )* ;
+factor          → literal ( ( "/" | "*" ) literal )* ;
+literal         → STRING ;
+```
+> 现在去看 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md), 是不是能看懂更多了😂
+
+现在，要实现完整的表达式语法分析，我们先将表达式按照优先级从低到高排列：
+```ts
+// 表达式按照优先级由低到高：
+// logic or:    ||                  左结合
+// logic and:   &&                  左结合
+// equality:    == !=               左结合
+// relation:    < > <= >=           左结合
+// additive:    + -                 左结合
+// factor:      * / %               左结合
+// unary:       !                   右结合
+// primary:     literal group
+```
+注意到吗？`primary: literal group`, `literal` 和 `group` 一个优先级？答案肯定的。而且这两个在一起了，原来叫 `literal` 的函数名字就必须要改了。我们来看看代码吧：
+```ts
+class Parser {
+    // ...
+    private factor(): BinaryExpr {
+        let expr = this.primary();
+        while (this.match('*', '/', '%')) { // 顺带加上对取余运算符的支持
+            const left = expr;
+            const operator = this.previous();
+            const right = this.primary();
+            expr = new BinaryExpr(left, operator, right);
+        }
+        return expr;
+    }
+
+    private primary(): LiteralExpr() {
+        if (this.match('number')) {
+            return new LiteralExpr(this.previous().literal as number);
+        } else if (this.match('true', 'false', 'null')) {
+            const type = this.previous().type;
+            if (type === 'null') {
+                return new LiteralExpr(null);
+            }
+            return new LiteralExpr(type === 'true');
+        } else if (this.match('string')) {
+            return new LiteralExpr(this.previous().lexeme);
+        } else if (this.match('(')) {
+            const expr = this.expression();
+            this.consume(')', 'Expect ")" after expression.');
+            return new GroupExpr(expr);
+        }
+
+        throw new ParseError(`Expect expression, but got token: ${this.current().lexeme}.`);
+    }
+    // ...
+    private consume(tokenType: TokenType, message: string) {
+        if (this.check(tokenType)) {
+            this.advance();
+            return;
+        }
+        throw new ParseError(message);
+    }
+    // ...
+}
+```
+
+下面，逻辑运算，比较运算的代码和加法乘法完全一致，只需要按照优先级顺序编写即可，就不再赘述。最后只剩下一个一元运算符了。这个有点特殊，我们来看一下。
+
+它特殊在那里呢？一元？欧……注意它的结合性，和二元运算都不一样，它是右结合，举个例子：
+```ts
+!!false
+
+// 等价于：
+!(!false)
+
+// 等价于：
+!(!literal_1)
+literal_1 = false
+
+// 等价于：
+!unary_1
+unary_1 = !literal_1
+literal_1 = false
+
+// AST:
+//  ! <- 左起第一个
+//  |
+//  ! <- 左起第二个
+//  |
+//  false
+```
+看到吗，`!` 后面还可以是一个 `!` 表达式，它在递归自己，这就是它与众不同的地方。代码如下：
+```ts
+class Parser {
+    // ...
+    private unary(): UnaryExpr {
+        if (this.match('!')) {
+            const operator = this.previous();
+            const right = this.unary();
+            return new UnaryExpr(operator, right);
+        }
+        return this.primary();
+    }
+    // ...
+```
+
+好了，以上就是 ts 版本的表达式语法分析，完整代码见 [ts-Parser-expression](https://github.com/huanguolin/toc/blob/0f32d4cecf0314e12cd1798293048c2a7e56bfe6/ts-toc/Parser/index.ts#L167)。
 
 #### 2.2.4 执行
 

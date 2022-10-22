@@ -110,7 +110,7 @@ function getCodeBlock(lines, index) {
     let deps = [];
     const markLine = lines[end];
     const hasMarker = markLine.includes('auto_gen');
-    const disabled = hasMarker && markLine.startsWith('> [disable_auto_gen');
+    const disabled = !hasMarker || markLine.startsWith('> [disable_auto_gen');
     if (hasMarker) {
         const arr = markLine.match(/\(.*?\)/g).map(trimPairs);
         if (arr.length !== 2) {
@@ -126,7 +126,7 @@ function getCodeBlock(lines, index) {
         name,
         deps,
         hasMarker,
-        disabled,
+        disabled: disabled || !hasMarker,
     };
 }
 
