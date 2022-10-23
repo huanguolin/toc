@@ -168,8 +168,8 @@ type ParseVarStmt<Tokens extends Token[]> =
 //     EOF]>;
 
 type ParseExprStmt<Tokens extends Token[], R = ParseExpr<Tokens>> =
-    R extends ParseExprSuccess<infer Expr, infer Rest1>
-        ? Rest1 extends Match<TokenLike<';'>, infer Rest2>
-            ? ParseStmtSuccess<BuildExprStmt<Expr>, Rest2>
+    R extends ParseExprSuccess<infer Expr, infer Rest>
+        ? Rest extends Match<TokenLike<';'>, infer Rest>
+            ? ParseStmtSuccess<BuildExprStmt<Expr>, Rest>
             : ParseStmtError<'Expect ";" after expression.'>
         : R; // error

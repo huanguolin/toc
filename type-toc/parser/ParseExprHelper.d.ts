@@ -31,12 +31,12 @@ type ParseAssign<Tokens extends Token[], R = ParseLogicOr<Tokens>> =
         ? ParseAssignBody<Left, Rest>
         : R; // error
 type ParseAssignBody<Left extends Expr, Tokens extends Token[]> =
-Tokens extends Match<TokenLike<'='>, infer Rest1>
-    ? ParseAssign<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
+Tokens extends Match<TokenLike<'='>, infer Rest>
+    ? ParseAssign<Rest> extends ParseExprSuccess<infer Right, infer Rest>
         ? Left extends VariableExpr
-            ? ParseExprSuccess<BuildAssignExpr<Left['name'], Right>, Rest2>
+            ? ParseExprSuccess<BuildAssignExpr<Left['name'], Right>, Rest>
             : ParseExprError<`Invalid assignment target: ${Left['type']}}`>
-        : ParseExprError<`Parse right of assign variable fail: ${Rest1[0]['lexeme']}`>
+        : ParseExprError<`Parse right of assign variable fail: ${Rest[0]['lexeme']}`>
     : ParseExprSuccess<Left, Tokens>;
 
 // logic or part
@@ -45,10 +45,10 @@ type ParseLogicOr<Tokens extends Token[], R = ParseLogicAnd<Tokens>> =
         ? ParseLogicOrBody<Left, Rest>
         : R;
 type ParseLogicOrBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends Match<infer Op extends TokenLike<'||'>, infer Rest1>
-        ? ParseLogicAnd<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
-            ? ParseLogicOrBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
-            : ParseExprError<`Parse logic *or* of right fail: ${Rest1[0]['lexeme']}`>
+    Tokens extends Match<infer Op extends TokenLike<'||'>, infer Rest>
+        ? ParseLogicAnd<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+            ? ParseLogicOrBody<BuildBinaryExpr<Left, Op, Right>, Rest>
+            : ParseExprError<`Parse logic *or* of right fail: ${Rest[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
 // logic and part
@@ -57,10 +57,10 @@ type ParseLogicAnd<Tokens extends Token[], R = ParseEquality<Tokens>> =
         ? ParseLogicAndBody<Left, Rest>
         : R;
 type ParseLogicAndBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends Match<infer Op extends TokenLike<'&&'>, infer Rest1>
-        ? ParseEquality<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
-            ? ParseLogicAndBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
-            : ParseExprError<`Parse logic *and* of right fail: ${Rest1[0]['lexeme']}`>
+    Tokens extends Match<infer Op extends TokenLike<'&&'>, infer Rest>
+        ? ParseEquality<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+            ? ParseLogicAndBody<BuildBinaryExpr<Left, Op, Right>, Rest>
+            : ParseExprError<`Parse logic *and* of right fail: ${Rest[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
 // equality part
@@ -69,10 +69,10 @@ type ParseEquality<Tokens extends Token[], R = ParseRelation<Tokens>> =
         ? ParseEqualityBody<Left, Rest>
         : R;
 type ParseEqualityBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends Match<infer Op extends TokenLike<'==' | '!='>, infer Rest1>
-        ? ParseRelation<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
-            ? ParseEqualityBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
-            : ParseExprError<`Parse equality of right fail: ${Rest1[0]['lexeme']}`>
+    Tokens extends Match<infer Op extends TokenLike<'==' | '!='>, infer Rest>
+        ? ParseRelation<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+            ? ParseEqualityBody<BuildBinaryExpr<Left, Op, Right>, Rest>
+            : ParseExprError<`Parse equality of right fail: ${Rest[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
 // relation part
@@ -81,10 +81,10 @@ type ParseRelation<Tokens extends Token[], R = ParseAdditive<Tokens>> =
         ? ParseRelationBody<Left, Rest>
         : R;
 type ParseRelationBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends Match<infer Op extends TokenLike<'>' | '<' | '>=' | '<='>, infer Rest1>
-        ? ParseAdditive<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
-            ? ParseRelationBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
-            : ParseExprError<`Parse relation of right fail: ${Rest1[0]['lexeme']}`>
+    Tokens extends Match<infer Op extends TokenLike<'>' | '<' | '>=' | '<='>, infer Rest>
+        ? ParseAdditive<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+            ? ParseRelationBody<BuildBinaryExpr<Left, Op, Right>, Rest>
+            : ParseExprError<`Parse relation of right fail: ${Rest[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
 // additive part
@@ -93,10 +93,10 @@ type ParseAdditive<Tokens extends Token[], R = ParseFactor<Tokens>> =
         ? ParseAdditiveBody<Left, Rest>
         : R;
 type ParseAdditiveBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends Match<infer Op extends TokenLike<'+' | '-'>, infer Rest1>
-        ? ParseFactor<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
-            ? ParseAdditiveBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
-            : ParseExprError<`Parse additive of right fail: ${Rest1[0]['lexeme']}`>
+    Tokens extends Match<infer Op extends TokenLike<'+' | '-'>, infer Rest>
+        ? ParseFactor<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+            ? ParseAdditiveBody<BuildBinaryExpr<Left, Op, Right>, Rest>
+            : ParseExprError<`Parse additive of right fail: ${Rest[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
 // factor part
@@ -105,18 +105,18 @@ type ParseFactor<Tokens extends Token[], R = ParseUnary<Tokens>> =
         ? ParseFactorBody<Left, Rest>
         : R;
 type ParseFactorBody<Left extends Expr, Tokens extends Token[]> =
-    Tokens extends Match<infer Op extends TokenLike<'*' | '/' | '%'>, infer Rest1>
-        ? ParseUnary<Rest1> extends ParseExprSuccess<infer Right, infer Rest2>
-            ? ParseFactorBody<BuildBinaryExpr<Left, Op, Right>, Rest2>
-            : ParseExprError<`Parse factor of right fail: ${Rest1[0]['lexeme']}`>
+    Tokens extends Match<infer Op extends TokenLike<'*' | '/' | '%'>, infer Rest>
+        ? ParseUnary<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+            ? ParseFactorBody<BuildBinaryExpr<Left, Op, Right>, Rest>
+            : ParseExprError<`Parse factor of right fail: ${Rest[0]['lexeme']}`>
         : ParseExprSuccess<Left, Tokens>;
 
 
 // unary part
 type ParseUnary<Tokens extends Token[]> =
-    Tokens extends Match<infer Op extends TokenLike<'!'>, infer Rest1>
-        ? ParseUnary<Rest1> extends ParseExprSuccess<infer Expr, infer Rest2>
-            ? ParseExprSuccess<BuildUnaryExpr<Op, Expr>, Rest2>
+    Tokens extends Match<infer Op extends TokenLike<'!'>, infer Rest>
+        ? ParseUnary<Rest> extends ParseExprSuccess<infer Expr, infer Rest>
+            ? ParseExprSuccess<BuildUnaryExpr<Op, Expr>, Rest>
             : ParseExprError<`ParseUnary error after ${Op["lexeme"]}`>
         : ParseCall<Tokens>;
 
