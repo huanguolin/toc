@@ -20,7 +20,12 @@
     - [2.2 解释器](#22-解释器)
       - [2.2.1 Toc 的语法](#221-toc-的语法)
       - [2.2.2 词法分析](#222-词法分析)
+        - [2.2.2.1 分词（ts版）](#2221-分词ts版)
+        - [2.2.2.2 分词（type版）](#2222-分词type版)
       - [2.2.3 语法分析](#223-语法分析)
+        - [2.2.3.1 递归下降](#2231-递归下降)
+        - [2.2.3.2 完整的表达式语法分析(ts版本)](#2232-完整的表达式语法分析ts版本)
+        - [2.2.3.3 完整的表达式语法分析(type版本)](#2233-完整的表达式语法分析type版本)
       - [2.2.4 执行](#224-执行)
       - [2.2.5 var 语句](#225-var-语句)
       - [2.2.6 if 语句](#226-if-语句)
@@ -596,7 +601,11 @@ grouping       → "(" expression ")" ;
 ```
 做这个拆分可以用正则，也可以逐字符来分析。这里我选取后者，不仅是因为 ts 类型系统中没有正则，逐字符分拆的代码也很自然简单，且高效！
 
-不过上面的数组一般不建议直接作为 `Tokens` 输出给语法分析器。常规的做法是定义一个 `Token` 的结构来描述。不仅仅包含原始的词素(`lexeme`)，还应该包含必要信息，比如：是字符串还是数字，是操作符还是关键字等。正常还要包含 `debug` 需要的行号、列号等信息。我们这里为了简单，只包含最主要的信息，没有 `debug` 信息。要定义 `Token`，先要定义它有多少种类：
+##### 2.2.2.1 分词（ts版）
+
+上面的字符串数组一般不建议直接作为 `Tokens` 输出给语法分析器。常规的做法是定义一个 `Token` 的结构来描述。不仅仅包含原始的词素(`lexeme`)，还应该包含必要信息，比如：是字符串还是数字，是操作符还是关键字等。正常还要包含 `debug` 需要的行号、列号等信息。我们这里为了简单，只包含最主要的信息，没有 `debug` 信息。
+
+要定义 `Token`，先要定义它有多少种类：
 ```ts
 type TokenType =
     | 'identifier'
@@ -650,31 +659,6 @@ class Token {
 ```
 
 
-下面是 type 版的：
-```ts
-// TokenType 和 ts 版完全一致，在此省略。
-
-type Token = {
-    type: TokenType,
-    lexeme: string,
-    value: number | null,
-};
-
-// 方便构造 Token 的工具函数
-type BuildToken<
-    Type extends TokenType,
-    Lexeme extends string,
-> = {
-    type: Type,
-    lexeme: Lexeme,
-    value: Eq<Type, 'number'> extends true ? Str2Num<Safe<Lexeme, NumStr>> : null, // Str2Num 怎么实现，在讲四则运算的末尾有提到
-};
-
-// EOF 直接定义出来方便用
-type EOF = BuildToken<'EOF', ''>;
-```
-
-
 接下来我们来逐字符扫描，产生 `Token` 放到 `tokens` 数组。输入是 `source`, 我们用 `index` 来代表当前的扫描位置。`scan` 方法的核心是一个循环，`index` 不断后移并拿到一个字符。然后在 `switch` 中做决断，这个字符是一个什么语法标记？
 ```ts
 class Scanner {
@@ -725,40 +709,44 @@ class Scanner {
 这段代码也不复杂：
 ```ts
 // ...
-case '<':
-case '>':
-    if (this.match('=')) { // match 返回当前位置是否匹配指定的字符，并将 index + 1
-        c += '=';
-    }
-    this.addToken(c as TokenType, c);
-    break;
-case '!':
-    if (this.match('=')) {
-        c += '=';
-    }
-    this.addToken(c as TokenType, c);
-    break;
-case '=':
-    if (this.match('=')) {
-        const r = '==';
-        this.addToken(r, r);
-    } else {
-        this.addToken(c, c);
-    }
-    break;
-case '&':
-    if (this.match('&')) {
-        const r = '&&';
-        this.addToken(r, r);
+switch (c) {
+    // ...
+    case '<':
+    case '>':
+        if (this.match('=')) { // match 返回当前位置是否匹配指定的字符，并将 index + 1
+            c += '=';
+        }
+        this.addToken(c as TokenType, c);
         break;
-    }
-case '|':
-    if (this.match('|')) {
-        const r = '||';
-        this.addToken(r, r);
+    case '!':
+        if (this.match('=')) {
+            c += '=';
+        }
+        this.addToken(c as TokenType, c);
         break;
-    }
-    throw new ScanError("Unknown token at: " + c);
+    case '=':
+        if (this.match('=')) {
+            const r = '==';
+            this.addToken(r, r);
+        } else {
+            this.addToken(c, c);
+        }
+        break;
+    case '&':
+        if (this.match('&')) {
+            const r = '&&';
+            this.addToken(r, r);
+            break;
+        }
+    case '|':
+        if (this.match('|')) {
+            const r = '||';
+            this.addToken(r, r);
+            break;
+        }
+        throw new ScanError("Unknown token at: " + c);
+    // ...
+}
 // ...
 ```
 
@@ -766,51 +754,68 @@ case '|':
 对于空白字符，直接跳过即可：
 ```ts
 // ...
-case '\u0020':
-case '\n':
-case '\t':
-    break;
+switch (c) {
+    // ...
+    case '\u0020':
+    case '\n':
+    case '\t':
+        break;
+    // ...
+}
 // ...
 ```
 
 
 当看到双引号时，认为是字符串，然后“陷入”一个局部循环，不断后移 `index`, 知道找到下一个双引号。不过要考虑转义和到了代码结尾也没找到的情况，编译器要能识别错误代码并报告，而不是奔溃！
 ```ts
-// ...
-case '"':
-    this.addString();
-    break;
-// ...
-private addString() {
-    let s = '';
-    while (!this.isAtEnd() && this.current() !== '"') {
-        if (this.current() === '\\') {
-            this.advance();
-            const c = this.advance();
-            // https://en.wikipedia.org/wiki/Escape_character#:~:text=%5Bedit%5D-,JavaScript,-%5Bedit%5D
-            if (ESCAPE_CHAR_MAP[c]) {
-                s += ESCAPE_CHAR_MAP[c];
-            } else {
-                // \'
-                // \"
-                // \\
-                s += c;
-            }
-        } else {
-            s += this.advance();
+class Scanner {
+    // ...
+
+    scan(): Token[] {
+        // ...
+        switch (c) {
+            // ...
+            case '"':
+                this.addString();
+                break;
+            // ...
         }
+        // ...
     }
 
-    if (this.isAtEnd()) {
-        throw new ScanError('Unterminated string.');
+    private addString() {
+        let s = '';
+        while (!this.isAtEnd() && this.current() !== '"') {
+            if (this.current() === '\\') {
+                this.advance();
+                const c = this.advance();
+                // https://en.wikipedia.org/wiki/Escape_character#:~:text=%5Bedit%5D-,JavaScript,-%5Bedit%5D
+                if (ESCAPE_CHAR_MAP[c]) {
+                    s += ESCAPE_CHAR_MAP[c];
+                } else {
+                    // \'
+                    // \"
+                    // \\
+                    s += c;
+                }
+            } else {
+                s += this.advance();
+            }
+        }
+
+        if (this.isAtEnd()) {
+            throw new ScanError('Unterminated string.');
+        }
+
+        // consume "
+        this.advance();
+
+        this.addToken('string', s);
     }
 
-    // consume "
-    this.advance();
-
-    this.addToken('string', s);
+    //...
 }
-//...
+
 const ESCAPE_CHAR_MAP = {
     n: '\n',
     r: '\r',
@@ -820,22 +825,24 @@ const ESCAPE_CHAR_MAP = {
     v: '\v',
     0: '\0',
 } as const;
-// ...
 ```
 
 
 对于数字和标志符的处理比字符串要简单一些。如果当前字符是一个数字字符，则认为是数字 `Token`，然后找到数字末尾得到完整数字。如果当前字符是一个字母字符或者下划线字符，则认为是标志符 `Token`，然后找到标识符末尾得到完整的标志符。要注意的是标志符从第二个字符以后可以是数字。标志符在构造 `Token` 前，还要判断是不是关键字，是的话构造的就是关键字的 `Token` 了。
 ```ts
 // ...
-default:
-    if (this.isNumberChar(c)) {
-        this.addNumber();
-        break;
-    } else if (this.isAlphaChar(c)) {
-        this.addIdentifier();
-        break;
-    }
-    throw new ScanError("Unknown token at: " + c);
+switch (c) {
+    // ...
+    default:
+        if (this.isNumberChar(c)) {
+            this.addNumber();
+            break;
+        } else if (this.isAlphaChar(c)) {
+            this.addIdentifier();
+            break;
+        }
+        throw new ScanError("Unknown token at: " + c);
+}
 // ...
 ```
 
@@ -843,7 +850,34 @@ default:
 以上就是 ts 版本的分词的全部了。是不是很简单😄。完整代码，请看 [ts-scanner](https://github.com/huanguolin/toc/blob/master/ts-toc/Scanner/index.ts).
 
 
-现在该 type 版了。它也可以逐字符来分析。那么怎么取一个字符呢？
+##### 2.2.2.2 分词（type版）
+
+现在该 type 版了。首先是 `Token` 的定义：
+```ts
+// TokenType 和 ts 版完全一致，在此省略。
+
+interface Token {
+    type: TokenType,
+    lexeme: string,
+    value: number | null,
+}
+
+// 方便构造 Token 的工具函数
+interface BuildToken<
+    Type extends TokenType,
+    Lexeme extends string,
+> extends Token {
+    type: Type,
+    lexeme: Lexeme,
+    value: Eq<Type, 'number'> extends true ? Str2Num<Safe<Lexeme, NumStr>> : null, // Str2Num 怎么实现，在讲四则运算的末尾有提到
+}
+
+// EOF 直接定义出来方便用
+type EOF = BuildToken<'EOF', ''>;
+```
+
+
+它也可以逐字符来分析。那么怎么取一个字符呢？
 ```ts
 type FirstChar<T extends string> =
     T extends `${infer First}${infer Rest}`
@@ -1122,6 +1156,7 @@ class Parser {
 }
 ```
 
+##### 2.2.3.1 递归下降
 
 `expression` 函数怎么实现呢？这就是语法分析的关键了。学过编译原理的同学知道，语法分析有很多算法。但是手写语法分析，简单又实用，必须要掌握的，莫属[递归下降](https://en.wikipedia.org/wiki/Recursive_descent_parser)了。它是[自顶向下语法分析](https://en.wikipedia.org/wiki/Top-down_parsing)的一种。
 
@@ -1315,6 +1350,8 @@ literal         → STRING ;
 ```
 > 现在去看 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md), 是不是能看懂更多了😂
 
+##### 2.2.3.2 完整的表达式语法分析(ts版本)
+
 现在，要实现完整的表达式语法分析，我们先将表达式按照优先级从低到高排列：
 ```ts
 // 表达式按照优先级由低到高：
@@ -1418,6 +1455,216 @@ class Parser {
 
 
 好了，以上就是 ts 版本的表达式语法分析，完整代码见 [ts-Parser-expression](https://github.com/huanguolin/toc/blob/0f32d4cecf0314e12cd1798293048c2a7e56bfe6/ts-toc/Parser/index.ts#L167)。
+
+##### 2.2.3.3 完整的表达式语法分析(type版本)
+
+参照 ts 版本，我们来实现 type 版的表达式语法分析。首先来定义 type 版的表达式类型。其中 `ExprType`, `IExpr` 和 `ValueType`， 二者是完全一致的。可直接看 ts 版的，这里省略。
+```ts
+// `ExprType`, `IExpr` 和 `ValueType` 的定义请直接参考 ts 版的。
+
+interface LiteralExpr extends Expr {
+    type: 'literal';
+    value: ValueType;
+}
+
+interface BuildLiteralExpr<T extends ValueType> extends LiteralExpr {
+    value: T
+}
+
+interface GroupExpr extends Expr {
+    type: 'group';
+    expression: Expr;
+}
+
+interface BuildGroupExpr<E extends Expr> extends GroupExpr {
+    expression: E;
+}
+
+interface BinaryExpr extends Expr {
+    type: 'binary';
+    left: Expr;
+    operator: Token;
+    right: Expr;
+}
+
+interface BuildBinaryExpr<
+    L extends Expr,
+    Op extends Token,
+    R extends Expr,
+> extends BinaryExpr {
+    left: L;
+    operator: Op;
+    right: R;
+}
+
+interface UnaryExpr extends Expr {
+    type: 'unary';
+    operator: Token;
+    expression: Expr;
+}
+
+interface BuildUnaryExpr<
+    Op extends Token,
+    E extends Expr,
+> extends UnaryExpr {
+    operator: Op;
+    expression: E;
+}
+```
+
+
+type 版实现递归下降和 ts 是一致的。所以我们直接上手实现完整版：
+```ts
+// 表达式按照优先级由低到高：
+// logic or:    ||                  左结合
+// logic and:   &&                  左结合
+// equality:    == !=               左结合
+// relation:    < > <= >=           左结合
+// additive:    + -                 左结合
+// factor:      * / %               左结合
+// unary:       !                   右结合
+// primary:     literal group
+```
+
+
+我们先来看架子代码：
+```ts
+// 依然需要 result 包装工具函数。
+type ParseExprError<M extends string> =
+    ErrorResult<`[ParseExprError]: ${M}`>;
+type ParseExprSuccess<
+    R extends Expr,
+    T extends Token[],
+> = SuccessResult<{ expr: R, rest: T }>;
+
+// Parser 的入口方法，它返回 AST.
+type Parse<Tokens extends Token[]> = ParseExpr<Tokens>;
+
+type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
+
+// ...
+```
+
+
+按顺序，首先实现 `ParseLogicOr`。我们把 ts 版本的代码贴在旁边来翻译：
+```ts
+// ts 版本代码，作为翻译对照。
+class Parser {
+    // ...
+
+    private logicOr() {
+        let expr: IExpr = this.logicAnd();
+        while (this.match('||')) {
+            const operator = this.previous();
+            const right = this.logicAnd();
+            expr = new BinaryExpr(expr, operator, right);
+        }
+        return expr;
+    }
+
+    // ...
+}
+```
+
+
+翻译为 type 版本：
+```ts
+type ParseLogicOr<Tokens extends Token[], R = ParseLogicAnd<Tokens>> =
+    R extends ParseExprSuccess<infer Left, infer Rest>
+        ? ParseLogicOrBody<Left, Rest>
+        : R; // error
+type ParseLogicOrBody<Left extends Expr, Tokens extends Token[]> =
+    Tokens extends Match<infer Op extends TokenLike<'||'>, infer Rest>
+        ? ParseLogicAnd<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+            ? ParseLogicOrBody<BuildBinaryExpr<Left, Op, Right>, Rest>
+            : ParseExprError<`Parse logic *or* of right fail: ${Rest[0]['lexeme']}`>
+        : ParseExprSuccess<Left, Tokens>;
+```
+
+这里为了避免函数过长已经缩进过深，多出来一个辅助函数。另外将 `R = ParseLogicAnd<Tokens>` 利用函数默认参数是为了方便，函数内部产生局部常量要麻烦一些:
+```ts
+type ParseLogicOr<Tokens extends Token[]> =
+    ParseLogicAnd<Tokens> extends infer R ?
+        R extends ParseExprSuccess<infer Left, infer Rest>
+            ? ParseLogicOrBody<Left, Rest>
+            : R // error
+        : NoWay<'ParseLogicAnd'>; // 这里用 NoWay 替代 never.
+```
+
+如果不用默认参数，缩进会深一些，因为多了一个无用的分支。这里 `NoWay` 替代 `never` 是为什么呢？如果你写的代码有问题，结果返回了一个 never ...... 当代码量大时，你不知道返回的 `never` 是哪里产生的！别问我是怎么知道的……我不想勾起那痛苦的调试回忆。
+
+那我们为什么不不这样写呢？
+```ts
+type ParseLogicOr<Tokens extends Token[]> =
+    ParseLogicAnd<Tokens> extends ParseExprSuccess<infer Left, infer Rest>
+        ? ParseLogicOrBody<Left, Rest>
+        : ParseExprError<'ParseLogicOr'>; // error
+
+// 或者
+
+type ParseLogicOr<Tokens extends Token[]> =
+    ParseLogicAnd<Tokens> extends ParseExprSuccess<infer Left, infer Rest>
+        ? ParseLogicOrBody<Left, Rest>
+        : ParseLogicAnd<Tokens>; // error
+```
+
+第一个写法，外界无法得到底层的错误，这显然是不太好的。我们的解释器虽然没有提供详尽的错误信息（比如行号等），但是也不能说的太模糊。直接将底层的错误抛出，避免了错误信息越来越模糊。第二个逻辑上是OK的。但是直观上会让 ts 的编译器做更多的事。我不太确定 ts 的编译器有没有对这个情况做优化。如果有的话就是我多虑了。所以我还是保守的选择了函数默认参数或者局部常量的方式。
+
+额，差点忘记了。还有工具函数：
+```ts
+type OpOrKeywordTokenType = Exclude<TokenType, 'number' | 'identifier' | 'EOF'>
+
+type TokenLike<T extends OpOrKeywordTokenType | Partial<Token>> =
+    T extends OpOrKeywordTokenType
+        ? BuildToken<T, T>
+        : T extends Partial<Token>
+            ? Token & T
+            : never;
+
+type Match<T, R extends Token[]> = [T, ...R];
+```
+
+
+剩下的二元操作解析代码，我想我不用说了。我们直接来看 `unary` 和 `primary` 的代码吧：
+```ts
+type ParseUnary<Tokens extends Token[]> =
+    Tokens extends Match<infer Op extends TokenLike<'!'>, infer Rest>
+        ? ParseUnary<Rest> extends ParseExprSuccess<infer Expr, infer Rest>
+            ? ParseExprSuccess<BuildUnaryExpr<Op, Expr>, Rest>
+            : ParseExprError<`ParseUnary error after ${Op["lexeme"]}`>
+        : ParsePrimary<Tokens>;
+
+type ParsePrimary<Tokens extends Token[]> =
+    Tokens extends Match<infer E extends Token, infer R>
+        ? E extends { type: 'number', value: infer V extends number }
+            ? ParseExprSuccess<BuildLiteralExpr<V>, R>
+            : E extends { type: 'string', lexeme: infer V extends string }
+                ? ParseExprSuccess<BuildLiteralExpr<V>, R>
+                : E extends { type: infer B extends keyof Keywords }
+                    ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
+                    : E extends TokenLike<'('>
+                        ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
+                            ? RG extends Match<TokenLike<')'>, infer Rest>
+                                ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
+                                : ParseExprError<`Group not match ')'.`>
+                            : ParseExprError<`Parse Group expression fail.`>
+                        : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
+        : ParseExprError<`ParsePrimary fail`>;
+
+type ToValue<K extends keyof Keywords> = Safe<
+    KeywordValueMapping[Safe<K, keyof KeywordValueMapping>],
+    ValueType>;
+
+type KeywordValueMapping = {
+    true: true;
+    false: false;
+    null: null;
+};
+```
+
+上面解析 `group` 的那段代码，你应该感受到了，语言特性贫瘠带来的代码冗长。这是没办法的事情。后面你会习惯的😂。
+
+好了，以上就是我们语法分析表达式的全部了。关于 `var` 语句, `if` 语句, `block` 语句, 函数, `for` 循环语句等特性，我们会在打通 `执行` 一关后，慢慢加上的。我们已经啃了语法分析最核心的部分了。后续或许代码会更多，核心“科技”却没多多少。
 
 #### 2.2.4 执行
 
