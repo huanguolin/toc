@@ -27,6 +27,7 @@
         - [2.2.3.2 完整的表达式语法分析(ts版本)](#2232-完整的表达式语法分析ts版本)
         - [2.2.3.3 完整的表达式语法分析(type版本)](#2233-完整的表达式语法分析type版本)
       - [2.2.4 执行](#224-执行)
+        - [2.2.4.1 访问者模式](#2241-访问者模式)
       - [2.2.5 var 语句](#225-var-语句)
       - [2.2.6 if 语句](#226-if-语句)
       - [2.2.7 块语句与环境](#227-块语句与环境)
@@ -1597,9 +1598,52 @@ type KeywordValueMapping = {
 ```
 上面解析 `group` 的那段代码，你应该感受到了，语言特性贫瘠带来的代码冗长。这是没办法的事情。后面你会习惯的😂。
 
-好了，以上就是我们语法分析表达式的全部了。关于 `var` 语句, `if` 语句, `block` 语句, 函数, `for` 循环语句等特性，我们会在打通 `执行` 一关后，慢慢加上的。我们已经啃了语法分析最核心的部分了。后续或许代码会更多，核心“科技”却没多多少。
+好了，以上就是我们语法分析表达式的全部了，完整的代码见 [type-ParseExpr](https://github.com/huanguolin/toc/blob/master/type-toc/parser/ParseExprHelper.d.ts#L13)。关于 `var` 语句, `if` 语句, `block` 语句, 函数, `for` 循环语句等特性，我们会在打通 `执行` 一关后，慢慢加上的。我们已经啃了语法分析最核心的部分了。后续或许代码会更多，核心“科技”却没多多少。
+
 
 #### 2.2.4 执行
+终于到最后一个阶段了。完成它，我们就能得到一个完整的解释器，虽然暂时只能支持表达式，但这已经做出了很大成果。
+
+如你所料，这里并不难。不过我们还不能马上开始 ts 版的执行器。前面说过，ts 版要用最自然的方式。使用面向对象来操作 AST，是一个著名的设计模式的经典应用场景。如果你知道 [如何修改C#的表达式树](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/expression-trees/how-to-modify-expression-trees#:~:text=You%20can%20use%20the%20ExpressionVisitor%20class%20to%20traverse%20an%20existing%20expression%20tree%20and%20to%20copy%20each%20node%20that%20it%20visits.)，或者你把玩过 [Roslyn API](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/), 你一定见过像 [SymbolVisitor](https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.symbolvisitor?view=roslyn-dotnet-4.3.0) 类中的那些 `Visit` 开头的 `API`。没错，我说的就是访问者模式。使用它，这里才更“自然”，或者“对味”。
+
+##### 2.2.4.1 访问者模式
+
+如果我们直接开始我们的执行器代码，我们可能写出如下的代码：
+```ts
+if (expr instanceof BinaryExpr) {
+    // ...
+} else if (expr instanceof UnaryExpr) {
+    // ...
+} else if // ...
+
+// 或者
+
+switch (expr.type) {
+    case 'binary':
+        // ...
+    case 'unary':
+        // ...
+}
+
+// 又或者我们直接将对应的操作添加在对应的类中：
+class UnaryExpr implements IExpr {
+    type: ExprType = 'unary';
+    operator: Token;
+    expression: IExpr;
+
+    constructor(operator: Token, expr: IExpr) {
+        this.operator = operator;
+        this.expression = expr;
+    }
+
+    interpret() {
+        // ...
+    }
+}
+```
+诚然，这样的代码是可以工作的。但都不够优雅或者灵活。我们的解释器只有三步：词法分析，语法分析，执行。假如我们未来增加了静态检查的部分。最好是增加一步，放在语法分析与执行之间。如果是使用上面前两种的做法，只需要新写一个类，但冗长的 `if-else` 或者 `switch` 语句又要来一遍。如果是最后一种写法，我们不得不修改每个 `Expr` 类，为它新添加一个方法。或许你觉的这可以接受，但是让一类操作，分散在各个地方。特别是这种类有多达几十上百，甚至上千时，维护起来是很头疼的。
+
+不过我们可以选择更优雅的方案。访问者模式可以很好的解决这些问题。
 
 #### 2.2.5 var 语句
 #### 2.2.6 if 语句
