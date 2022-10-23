@@ -3,18 +3,18 @@ import { ValueType } from "../type";
 
 import { RuntimeError } from "./RuntimeError";
 
-export type Environment = {
-    store: { [Key: string]: ValueType };
+export interface Environment {
+    store: EnvMap;
     outer: Environment | null;
-};
+}
 
-export type BuildEnv<
+export interface BuildEnv<
     Initializer extends EnvMap = {},
     Outer extends Environment | null = null,
-> = {
+> extends Environment {
     store: Initializer;
     outer: Outer;
-};
+}
 
 export type EnvDefine<
     Env extends Environment,
@@ -23,7 +23,7 @@ export type EnvDefine<
     Store extends EnvMap = Env['store']
 > = Has<Store, Key> extends true
     ? RuntimeError<`Variable '${Key}' already defined.`>
-    : BuildEnv<Set<Store, Key, Value>, Env['outer']>;
+    : BuildEnv<MySet<Store, Key, Value>, Env['outer']>;
 
 export type EnvGet<
     Env extends Environment,
@@ -43,7 +43,7 @@ export type EnvAssign<
     Store extends EnvMap = Env['store'],
     Outer extends Environment | null = Env['outer'],
 > = Has<Store, Key> extends true
-    ? BuildEnv<Set<Store, Key, Value>, Outer>
+    ? BuildEnv<MySet<Store, Key, Value>, Outer>
     : Outer extends Environment
         ? EnvAssign<Outer, Key, Value> extends infer NewOuter
             ? NewOuter extends Environment
@@ -54,13 +54,12 @@ export type EnvAssign<
 
 type EnvMap = { [key: string]: ValueType };
 
-// eslint-disable-next-line no-redeclare
-type Set<
+type MySet<
     M extends EnvMap,
     K extends string,
     V extends ValueType,
 > = Omit<M, K> & { [Key in K]: V };
-type tSet = Set<{ a: 5 }, 'a', false>['a'];
+type tSet = MySet<{ a: 5 }, 'a', false>['a'];
 
 type Get<
     M extends EnvMap,

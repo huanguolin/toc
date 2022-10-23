@@ -1,6 +1,8 @@
 import { Token } from "../scanner/Token";
 import { ValueType } from "../type";
 
+import { Identifier } from "./utils";
+
 export type ExprType =
     | 'assign'
     | 'group'
@@ -19,9 +21,17 @@ export interface LiteralExpr extends Expr {
     value: ValueType;
 }
 
+export interface BuildLiteralExpr<T extends ValueType> extends LiteralExpr {
+    value: T
+}
+
 export interface VariableExpr extends Expr {
     type: 'variable';
-    name: Token;
+    name: Identifier;
+}
+
+export interface BuildVariableExpr<T extends Identifier> extends VariableExpr {
+    name: T;
 }
 
 export interface AssignExpr extends Expr {
@@ -30,9 +40,18 @@ export interface AssignExpr extends Expr {
     right: Expr;
 }
 
+export interface BuildAssignExpr<N extends Identifier, E extends Expr> extends AssignExpr {
+    varName: N;
+    right: E;
+}
+
 export interface GroupExpr extends Expr {
     type: 'group';
     expression: Expr;
+}
+
+export interface BuildGroupExpr<E extends Expr> extends GroupExpr {
+    expression: E;
 }
 
 export interface BinaryExpr extends Expr {
@@ -42,10 +61,21 @@ export interface BinaryExpr extends Expr {
     right: Expr;
 }
 
+export interface BuildBinaryExpr<L extends Expr, Op extends Token, R extends Expr> extends BinaryExpr {
+    left: L;
+    operator: Op;
+    right: R;
+}
+
 export interface CallExpr extends Expr {
     type: 'call';
     callee: Expr;
     arguments: Expr[];
+}
+
+export interface BuildCallExpr<Callee extends Expr, Args extends Expr[]> extends CallExpr {
+    callee: Callee;
+    arguments: Args;
 }
 
 export interface UnaryExpr extends Expr {
@@ -54,11 +84,7 @@ export interface UnaryExpr extends Expr {
     expression: Expr;
 }
 
-export type BuildLiteralExpr<V extends ValueType> = { type: 'literal', value: V };
-export type BuildVariableExpr<N extends Token> = { type: 'variable', name: N };
-export type BuildAssignExpr<N extends Token, E extends Expr> = { type: 'assign', varName: N, right: E };
-export type BuildGroupExpr<E extends Expr> = { type: 'group', expression: E };
-export type BuildBinaryExpr<L extends Expr, Op extends Token, R extends Expr> = { type: 'binary', left: L, operator: Op, right: R };
-export type BuildCallExpr<Callee extends Expr, Args extends Expr[]> = { type: 'call', callee: Callee, arguments: Args };
-export type BuildUnaryExpr<Op extends Token, E extends Expr> = { type: 'unary', operator: Op, expression: E };
-
+export interface BuildUnaryExpr<Op extends Token, E extends Expr> extends UnaryExpr {
+    operator: Op;
+    expression: E;
+}

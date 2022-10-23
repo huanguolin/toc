@@ -20,7 +20,7 @@ export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 // equality:    == !=               左结合
 // relation:    < > <= >=           左结合
 // additive:    + -                 左结合
-// factor:      * /                 左结合
+// factor:      * / %               左结合
 // unary:       !                   右结合
 // call:        primary(arg?)       左结合
 // primary:     number boolean null 'identifier' ()
