@@ -332,7 +332,7 @@ type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 #### 1.4.5 First-Class-Function
 在看到上面的限制后，或许你感到有点遗憾（一切都是权衡，没有什么是完美的）。但是不得不告诉你，还有另外一件不幸的事。它没有函数式语言的标志性能力—— [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)。即没有办法传入/传出函数，无法实现高阶函数。不过好在，没有这个能力，并不会影响表达能力。只是麻烦很多😓。
 
-简单来说，使用 `Function(arguments, environment1) => return + environment2` 的方式，可以表达对等的东西。
+简单来说，使用 `Function(argumentsironment1) => return + environment2` 的方式，可以表达对等的东西。
 
 以上就是这门函数式编程语言的介绍。休息一下。我们就要开始编写解释器了😄。
 
@@ -1864,7 +1864,164 @@ function toc(source: string) {
 
 ##### 2.2.4.2 type-Interpreter
 
+接下来实现我们的 type 版本。但是这里没法实现访问者模式，甚至没有 `switch` 可用。我们只能用类似 `if-elseif` 一般的条件判断来实现：
+```ts
+type Interpret<E extends Expr> = InterpretExpr<E>;
 
+type InterpretExpr<E extends Expr> =
+    E extends LiteralExpr
+        ? InterpretExprSuccess<E['value']>
+        : E extends GroupExpr
+            ? InterpretExpr<E['expression']>
+            : E extends UnaryExpr
+                ? EvalUnaryExpr<E>
+                : E extends BinaryExpr
+                    ? EvalBinaryExpr<E>
+                    : RuntimeError<`Unknown expression type: ${E['type']}`>;
+
+type RuntimeError<M extends string> = ErrorResult<`[RuntimeError]: ${M}`>;
+type InterpretExprSuccess<Value extends ValueType > = SuccessResult<{ value: Value }>;
+```
+通过参考 ts 版本，实现 type 也不难。而且对于 `LiteralExpr` 和 `GroupExpr` 的执行，我们并没有另起函数，直接就返回结果了。现在只剩下 `UnaryExpr` 和 `BinaryExpr`。我们先看 `EvalUnaryExpr`:
+```ts
+type EvalUnaryExpr<
+    E extends UnaryExpr,
+    Op extends TokenType = E['operator']['type'],
+    V = InterpretExpr<E['expression']>
+> = Op extends '!'
+    ? V extends InterpretExprSuccess<infer Val>
+        ? InterpretExprSuccess<Inverse<Val>>
+        : V // error
+    : RuntimeError<`Unknown unary operator: ${Op}`>;
+
+type Inverse<T> = IsFalse<T>;
+
+// 判断真值，假值和 js 一致。
+type IsFalse<T> =
+    T extends false | null | undefined | 0 | ''
+        ? true
+        : T extends string
+            ? TrimStart<T> extends ''
+                ? true
+                : false
+            : false;
+```
+
+最后是 `EvalBinaryExpr`，它比较麻烦，但也只是按照操作符类型来调用具体是实现函数。
+```ts
+type EvalBinaryExpr<
+    E extends BinaryExpr,
+    Op extends TokenType = E['operator']['type'],
+    LR = InterpretExpr<E['left']>,
+    Right extends Expr = E['right'], // 不能直接求值 Right, 因为 && || 有短路的效果。
+> =
+    LR extends InterpretExprSuccess<infer LV>
+        ? Op extends '==' | '!='
+            ? EvalEquality<Op, LV, InterpretExpr<Right>>
+            : Op extends '&&' | '||'
+                ? EvalLogicAndOr<Op, LV, Right>
+                : EvalRestBinaryExpr<Op, LV, InterpretExpr<Right>>
+        : LR; // error
+
+
+type EvalLogicAndOr<
+    Op extends '&&' | '||',
+    LV extends ValueType,
+    Right extends Expr,
+> = Op extends '&&'
+    ? IsTrue<LV> extends true
+        ? InterpretExpr<Right>
+        : InterpretExprSuccess<LV>
+    : Op extends '||'
+        ? IsTrue<LV> extends true
+            ? InterpretExprSuccess<LV>
+            : InterpretExpr<Right>
+        : RuntimeError<`EvalLogicAndOr fail when meet: ${Op}`>;
+
+
+type EvalEquality<
+    Op extends '==' | '!=',
+    LV extends ValueType,
+    RR,
+> = RR extends InterpretExprSuccess<infer RV>
+    ? Op extends '=='
+        ? InterpretExprSuccess<Eq<LV, RV>>
+        : Op extends '!='
+            ? InterpretExprSuccess<Inverse<Eq<LV, RV>>>
+            : RuntimeError<`EvalEquality fail when meet: ${Op}`>
+    : RR; // error
+```
+
+剩下的部分也不能像 ts 版一样可以查表，因为 type 中函数不能作为参数和返回值。我们只能用条件判断来做：
+```ts
+type EvalRestBinaryExpr<
+    Op extends TokenType,
+    LV extends ValueType,
+    RR,
+> = RR extends InterpretExprSuccess<infer RV>
+    ? Op extends '+'
+        ? [LV, RV] extends IsNumbers<infer N1, infer N2>
+            ? WrapBinaryResult<Add<N1, N2>>
+            : [LV, RV] extends IsStrings<infer N1, infer N2>
+                ? WrapBinaryResult<`${N1}${N2}`>
+                : RuntimeError<'"+" operator only support both operand is string or number.'>
+        : [LV, RV] extends IsNumbers<infer N1, infer N2>
+            ? EvalMath<Op, N1, N2>
+            : RuntimeError<`EvalRestBinaryExpr fail, Left or Right is not a number: left:${ExtractError<LV>}, right:${ExtractError<RR>}`>
+    : RR; // error
+
+type EvalMath<
+    Op extends TokenType,
+    N1 extends number,
+    N2 extends number,
+> = Op extends '-'
+    ? WrapBinaryResult<Sub<N1, N2>>
+    : Op extends '*'
+        ? WrapBinaryResult<Mul<N1, N2>>
+        : Op extends '/'
+            ? WrapBinaryResult<Div<N1, N2>>
+            : Op extends '%'
+                ? WrapBinaryResult<Mod<N1, N2>>
+                : Op extends '<'
+                    ? WrapBinaryResult<Lt<N1, N2>>
+                    : Op extends '>'
+                        ? WrapBinaryResult<Gt<N1, N2>>
+                        : Op extends '<='
+                            ? WrapBinaryResult<Lte<N1, N2>>
+                            : Op extends '>='
+                                ? WrapBinaryResult<Gte<N1, N2>>
+                                : RuntimeError<`Unknown binary operator: ${Op}`>;
+
+type WrapBinaryResult<V> =
+    V extends ValueType
+        ? InterpretExprSuccess<V>
+        : ExtractError<V>;
+
+type ExtractError<E> =
+    E extends { error: infer M extends string }
+        ? M
+        : Safe<E, string | number | boolean | null | undefined>;
+
+type IsStrings<N1 extends string, N2 extends string> = [N1, N2];
+type IsNumbers<N1 extends number, N2 extends number> = [N1, N2];
+```
+
+虽然很麻烦。但是我们还是做到了！现在把 `Scan`, `Parse` 和 `Interpret` 串起来就大功告成了! 但是并不是你想的那样串起来：
+```ts
+type Toc<Source extends string> =
+    Scan<Source> extends infer Tokens
+        ? Tokens extends Token[]
+            ? Parse<Tokens> extends infer Ast
+                ? Interpret<Ast> extends infer Value
+                    ? Value
+                    : NoWay<'Toc-Interprets'>
+                : NoWay<'Toc-Parse'>
+            : Tokens // error
+        : NoWay<'Toc-Scan'>;
+```
+为什么不是 `type Toc<S extend string> = Interpret<Parse<Scan<S>>>` ? 因为这样错误无法展示出来。ts 中有异常机制，有错误抛出来外面可以捕获。这里没有异常，错误只能用函数返回值层层传递出去。
+
+好了，我们最终还是得到一个完整的 [type-Interpreter](https://github.com/huanguolin/toc/blob/master/type-toc/interpreter/index.d.ts)。
 
 #### 2.2.5 语句
 ##### 2.2.5.1 表达式语句
