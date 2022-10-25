@@ -27,12 +27,20 @@
         - [2.2.3.2 完整的表达式语法分析(ts版本)](#2232-完整的表达式语法分析ts版本)
         - [2.2.3.3 完整的表达式语法分析(type版本)](#2233-完整的表达式语法分析type版本)
       - [2.2.4 执行](#224-执行)
-        - [2.2.4.1 访问者模式](#2241-访问者模式)
-      - [2.2.5 var 语句](#225-var-语句)
-      - [2.2.6 if 语句](#226-if-语句)
-      - [2.2.7 块语句与环境](#227-块语句与环境)
-      - [2.2.8 函数与闭包](#228-函数与闭包)
+        - [2.2.4.1 访问者模式与ts-Interpreter](#2241-访问者模式与ts-interpreter)
+        - [2.2.4.2 type-Interpreter](#2242-type-interpreter)
+      - [2.2.5 语句](#225-语句)
+        - [2.2.5.1 表达式语句](#2251-表达式语句)
+        - [2.2.5.2 var 语句](#2252-var-语句)
+        - [2.2.5.3 变量表达式和赋值表达式](#2253-变量表达式和赋值表达式)
+      - [2.2.6 作用域与环境](#226-作用域与环境)
+        - [2.2.6.1 block 语句](#2261-block-语句)
+        - [2.2.6.2 if 语句](#2262-if-语句)
+        - [2.2.6.3 for 语句](#2263-for-语句)
+      - [2.2.7 函数](#227-函数)
+        - [2.2.7.1 call 表达式](#2271-call-表达式)
       - [2.2.9 未尽事宜](#229-未尽事宜)
+    - [3. 总结](#3-总结)
 
 TypeScript 是 JavaScript 的超集，主要给 JavaScript 添加了静态类型检查，并且与之完全兼容。在运行时，类型完全擦除。正因为如此，TypeScript 类型系统极其强大，这样才能在维持 JavaScript 动态性，做快速开发的同时，做到更多的类型提示与错误检查。
 
@@ -1604,9 +1612,9 @@ type KeywordValueMapping = {
 #### 2.2.4 执行
 终于到最后一个阶段了。完成它，我们就能得到一个完整的解释器，虽然暂时只能支持表达式，但这已经做出了很大成果。
 
-如你所料，这里并不难。不过我们还不能马上开始 ts 版的执行器。前面说过，ts 版要用最自然的方式。使用面向对象来操作 AST，是一个著名的设计模式的经典应用场景。如果你知道 [如何修改C#的表达式树](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/expression-trees/how-to-modify-expression-trees#:~:text=You%20can%20use%20the%20ExpressionVisitor%20class%20to%20traverse%20an%20existing%20expression%20tree%20and%20to%20copy%20each%20node%20that%20it%20visits.)，或者你把玩过 [Roslyn API](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/), 你一定见过像 [SymbolVisitor](https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.symbolvisitor?view=roslyn-dotnet-4.3.0) 类中的那些 `Visit` 开头的 `API`。没错，我说的就是访问者模式。使用它，这里才更“自然”，或者“对味”。
+如你所料，这里并不难。不过我们还不能马上开始 ts 版的执行器。前面说过，ts 版要用最自然的方式。使用面向对象来操作 AST，是一个著名设计模式的经典应用场景。如果你知道 [如何修改C#的表达式树](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/expression-trees/how-to-modify-expression-trees#:~:text=You%20can%20use%20the%20ExpressionVisitor%20class%20to%20traverse%20an%20existing%20expression%20tree%20and%20to%20copy%20each%20node%20that%20it%20visits.)，或者你把玩过 [Roslyn](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/), 你一定见过像 [SymbolVisitor](https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.symbolvisitor?view=roslyn-dotnet-4.3.0) 类中的那些 `Visit` 开头的 `API`。没错，我说的就是访问者模式。使用它，这里才更“自然”，或者“对味”。
 
-##### 2.2.4.1 访问者模式
+##### 2.2.4.1 访问者模式与ts-Interpreter
 
 如果我们直接开始我们的执行器代码，我们可能写出如下的代码：
 ```ts
@@ -1641,12 +1649,237 @@ class UnaryExpr implements IExpr {
     }
 }
 ```
-诚然，这样的代码是可以工作的。但都不够优雅或者灵活。我们的解释器只有三步：词法分析，语法分析，执行。假如我们未来增加了静态检查的部分。最好是增加一步，放在语法分析与执行之间。如果是使用上面前两种的做法，只需要新写一个类，但冗长的 `if-else` 或者 `switch` 语句又要来一遍。如果是最后一种写法，我们不得不修改每个 `Expr` 类，为它新添加一个方法。或许你觉的这可以接受，但是让一类操作，分散在各个地方。特别是这种类有多达几十上百，甚至上千时，维护起来是很头疼的。
+诚然，这样的代码是可以工作的。但都不够优雅或者灵活。我们的解释器只有三步：词法分析，语法分析，执行。假如我们未来增加了静态检查的部分。一般是增加一步，放在语法分析与执行之间。如果是使用上面前两种的做法，只需要新写一个类，但冗长的 `if-else` 或者 `switch` 语句又要来一遍？如果是最后一种写法，那我们不得不修改每个 `Expr` 类，为它新添加一个方法。或许你觉的这可以接受，但是让一类操作，分散在各个地方。特别是这种类有多达几十上百，甚至上千时，维护起来是很头疼的。
 
-不过我们可以选择更优雅的方案。访问者模式可以很好的解决这些问题。
+那我们来看看访问者模式是如何解决这些问题：
 
-#### 2.2.5 var 语句
-#### 2.2.6 if 语句
-#### 2.2.7 块语句与环境
-#### 2.2.8 函数与闭包
+首先我们要新增一个接口，并给 `IExpr` 添加一个方法：
+```ts
+interface IExprVisitor<T> {
+    visitBinaryExpr: (expr: BinaryExpr) => T;
+    visitGroupExpr: (expr: GroupExpr) => T;
+    visitUnaryExpr: (expr: UnaryExpr) => T;
+    visitLiteralExpr: (expr: LiteralExpr) => T;
+}
+
+interface IExpr {
+    type: ExprType;
+
+    // 新增 accept 方法
+    accept: <R>(visitor: IExprVisitor<R>) => R;
+}
+```
+
+然后表达式类需要实现这些 `accept` 方法：
+```ts
+class LiteralExpr implements IExpr {
+    // 其他代码省略……
+    accept<R>(visitor: IExprVisitor<R>): R {
+        return visitor.visitLiteralExpr(this);
+    }
+}
+
+class UnaryExpr implements IExpr {
+    // 其他代码省略……
+    accept<R>(visitor: IExprVisitor<R>): R {
+        return visitor.visitUnaryExpr(this);
+    }
+}
+
+class BinaryExpr implements IExpr {
+    // 其他代码省略……
+    accept<R>(visitor: IExprVisitor<R>): R {
+        return visitor.visitBinaryExpr(this);
+    }
+}
+
+class GroupExpr implements IExpr {
+    // 其他代码省略……
+    accept<R>(visitor: IExprVisitor<R>): R {
+        return visitor.visitGroupExpr(this);
+    }
+}
+```
+每个只需要调用与自己对应的那个方法即可。是不是很容易。
+
+接下来我们就能实现 `Interpreter` 类了：
+```ts
+class Interpreter implements IExprVisitor<unknown> {
+
+    interpret(expr: IExpr): ValueType {
+        return expr.accept(this);
+    }
+
+    visitLiteralExpr(expr: LiteralExpr): ValueType {
+        return expr.value;
+    }
+
+    visitGroupExpr(expr: GroupExpr): ValueType {
+        return expr.expression.accept(this);
+    }
+
+    visitUnaryExpr(expr: UnaryExpr): boolean {
+        const v = expr.expression.accept(this);
+        if (expr.operator.type === '!') {
+            return !v;
+        }
+        throw new RuntimeError('Unknown unary operator: ' + expr.operator.type);
+    }
+
+    visitBinaryExpr(expr: BinaryExpr): ValueType {
+        // TODO
+    }
+}
+```
+简直不敢相信，现在，只要完成 `visitBinaryExpr` 函数，就完工了！
+
+在完成它之前。我们来看看访问者模式是怎么做到的。我们看看如果我选择用 `switch` 来干这个事情：
+```ts
+class Interpreter {
+
+    interpret(expr: IExpr): ValueType {
+        return this.evalExpr(expr);
+    }
+
+    evalExpr(expr: IExpr): ValueType {
+        switch (expr.type) {
+            case 'literal': return this.evalLiteralExpr(expr as LiteralExpr);
+            case 'group': return this.evalGroupExpr(expr as GroupExpr);
+            case 'unary': return this.evalUnaryExpr(expr as UnaryExpr);
+            case 'binary': return this.evalBinaryExpr(expr as BinaryExpr);
+            default:
+                throw new RuntimeError('Unknown expr type: ' + expr.type);
+        }
+    }
+
+    evalLiteralExpr(expr: LiteralExpr): ValueType {
+        return expr.value;
+    }
+
+    evalGroupExpr(expr: GroupExpr): ValueType {
+        return this.evalExpr(expr.expression);
+    }
+
+    evalUnaryExpr(expr: UnaryExpr): boolean {
+        const v = this.evalExpr(expr.expression);
+        if (expr.operator.type === '!') {
+            return !v;
+        }
+        throw new RuntimeError('Unknown unary operator: ' + expr.operator.type);
+    }
+
+    evalBinaryExpr(expr: BinaryExpr): ValueType {
+        // TODO
+    }
+}
+```
+
+或许你会觉得这样写也很好啊，至少好理解。好理解的确是优点。但随着表达式种类增多，`switch` 的 `case` 会越来越长。假如现在要实现一个 `Resolve` 类，它能做静态检查（比如后面加了变量，这里可以检查变量在使用时有没有定义）。这样写的话 `switch` 代码会再来一遍。但是访问者模式就免去了这个部分。这样对比的话，访问者模式实现了特定的 `Expr` 类型会“自动”调用与之配对的方法。哈哈，自动？实际上是每个 `Expr` 类型的 `accept` 方法中调用了那个对应的方法。
+
+我想你已经 `get` 了访问者模式的美妙，现在是时候来完成 `visitBinaryExpr` 方法了。
+```ts
+class Interpreter implements IExprVisitor<unknown> {
+    // ...
+
+    visitBinaryExpr(expr: BinaryExpr): ValueType {
+        const operator = expr.operator;
+        const left = expr.left.accept(this);
+        const right = expr.right.accept(this);
+
+        if (operator.type === '+') {
+            if (isString(left) && isString(right)) {
+                return left + right;
+            } else if (isNumber(left) && isNumber(right)) {
+                return left + right;
+            }
+
+            throw new RuntimeError('"+" operator only support both operand is string or number.');
+        }
+
+        // ...TODO
+    }
+}
+```
+计算两个操作数，然后按照操作符来执行。其中 `+` 比较特殊，既支持数字相加，又支持字符串连接，所以单独处理它。其他的操作符没有分类考虑的情况，直接采用查表：
+```ts
+const BinaryEvalMapping = {
+    '-': [isNumber, (a: number, b: number) => a - b],
+    '*': [isNumber, (a: number, b: number) => a * b],
+    '/': [isNumber, (a: number, b: number) => a / b],
+    '<': [isNumber, (a: number, b: number) => a < b],
+    '>': [isNumber, (a: number, b: number) => a > b],
+    '<=': [isNumber, (a: number, b: number) => a <= b],
+    '>=': [isNumber, (a: number, b: number) => a >= b],
+    '==': [isAny, (a: unknown, b: unknown) => a === b],
+    '!=': [isAny, (a: unknown, b: unknown) => a !== b],
+    '&&': [isAny, (a: unknown, b: unknown) => a && b],
+    '||': [isAny, (a: unknown, b: unknown) => a || b],
+} as const;
+
+
+class Interpreter implements IExprVisitor<unknown> {
+    // ...
+
+    visitBinaryExpr(expr: BinaryExpr): ValueType {
+        // ...
+
+        const mapping = BinaryEvalMapping[operator.type];
+        if (!mapping) {
+            throw new RuntimeError('Unknown operator: ' + operator.lexeme);
+        }
+
+        const [check, evalFn] = mapping;
+        if (check(left) && check(right)) {
+            return evalFn(left, right);
+        } else {
+            throw new RuntimeError(`Check data type failed for operator ${operator.type}: left=${left}, right=${right}`);
+        }
+    }
+}
+
+function isNumber(x: unknown): x is number {
+    return typeof x === 'number';
+}
+
+function isAny(x: unknown): x is any {
+    return true;
+}
+
+function isString(x: unknown): x is string {
+    return typeof x === 'string';
+}
+```
+完整的代码见 [ts-Interpreter](https://github.com/huanguolin/toc/blob/master/ts-toc/Interpreter/index.ts);
+
+我们做完了吗？实际上还差一步，我们还没有把 `Scanner`, `Parser` 和 `Interpreter` 组合到一起：
+```ts
+function toc(source: string) {
+    const scanner = new Scanner(source);
+    const parser = new Parser(scanner.scan());
+    return interpreter.interpret(parser.parse());
+}
+```
+
+好了，我们得到了一个解释执行 `toc` 程序的函数。你可以输入一段代码，查看输出了。
+
+##### 2.2.4.2 type-Interpreter
+
+
+
+#### 2.2.5 语句
+##### 2.2.5.1 表达式语句
+##### 2.2.5.2 var 语句
+##### 2.2.5.3 变量表达式和赋值表达式
+
+#### 2.2.6 作用域与环境
+##### 2.2.6.1 block 语句
+##### 2.2.6.2 if 语句
+##### 2.2.6.3 for 语句
+
+#### 2.2.7 函数
+##### 2.2.7.1 call 表达式
+
 #### 2.2.9 未尽事宜
+`return` 与 `break`
+
+### 3. 总结
