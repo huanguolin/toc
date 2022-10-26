@@ -19,33 +19,6 @@ import { ValueType } from "../type";
 import { Environment } from "./Environment";
 import { RuntimeError } from "./RuntimeError";
 
-const BinaryEvalMapping = {
-    '-': [isNumber, (a: number, b: number) => a - b],
-    '*': [isNumber, (a: number, b: number) => a * b],
-    '/': [isNumber, (a: number, b: number) => a / b],
-    '<': [isNumber, (a: number, b: number) => a < b],
-    '>': [isNumber, (a: number, b: number) => a > b],
-    '<=': [isNumber, (a: number, b: number) => a <= b],
-    '>=': [isNumber, (a: number, b: number) => a >= b],
-    '==': [isAny, (a: unknown, b: unknown) => a === b],
-    '!=': [isAny, (a: unknown, b: unknown) => a !== b],
-    '&&': [isAny, (a: unknown, b: unknown) => a && b],
-    '||': [isAny, (a: unknown, b: unknown) => a || b],
-} as const;
-
-function isNumber(x: unknown): x is number {
-    return typeof x === 'number';
-}
-
-function isAny(x: unknown): x is any {
-    return true;
-}
-
-function isString(x: unknown): x is string {
-    return typeof x === 'string';
-}
-
-
 export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     private environment: Environment;
 
@@ -64,7 +37,7 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
     visitForStmt(stmt: ForStmt): ValueType {
         const previousEnv = this.environment;
         this.environment = new Environment(this.environment);
-        
+
         if (stmt.initializer) {
             stmt.initializer.accept(this);
         }
@@ -153,29 +126,34 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
 
     visitBinaryExpr(expr: BinaryExpr): ValueType {
         const operator = expr.operator;
-        const left = expr.left.accept(this);
-        const right = expr.right.accept(this);
 
-        if (operator.type === '+') {
-            if (isString(left) && isString(right)) {
-                return left + right;
-            } else if (isNumber(left) && isNumber(right)) {
-                return left + right;
-            }
-
-            throw new RuntimeError('"+" operator only support both operand is string or number.');
-        }
-
-        const mapping = BinaryEvalMapping[operator.type];
-        if (!mapping) {
-            throw new RuntimeError('Unknown operator: ' + operator.lexeme);
-        }
-
-        const [check, evalFn] = mapping;
-        if (check(left) && check(right)) {
-            return evalFn(left, right);
+        const leftValue = expr.left.accept(this);
+        // && || 需要考虑短路
+        if (operator.type == '&&') {
+            return leftValue && expr.right.accept(this);
+        } else if (operator.type == '||') {
+            return leftValue || expr.right.accept(this);
         } else {
-            throw new RuntimeError(`Check data type failed for operator ${operator.type}: left=${left}, right=${right}`);
+            // 不需要考虑短路的，可直接求出右值
+            const rightValue = expr.right.accept(this);
+            if (operator.type == '+') {
+                if (this.isString(leftValue) && this.isString(rightValue)) {
+                    return leftValue + rightValue;
+                } else if (this.isNumber(leftValue) && this.isNumber(rightValue)) {
+                    return leftValue + rightValue;
+                }
+                throw new RuntimeError('"+" operator only support both operand is string or number.');
+            } else if (operator.type == '==') {
+                return leftValue == rightValue;
+            } else if (operator.type == '!=') {
+                 return leftValue != rightValue;
+            } else {
+                // 纯数字运算
+                if (this.isNumber(leftValue) && this.isNumber(rightValue)) {
+                    return this.evalMath(operator.type, leftValue, rightValue);
+                }
+                throw new RuntimeError(`Required both operand is number for operator ${operator.type}: left=${leftValue}, right=${rightValue}`);
+            }
         }
     }
 
@@ -203,5 +181,28 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
 
     visitLiteralExpr(expr: LiteralExpr): Exclude<ValueType, FunObject> {
         return expr.value;
+    }
+
+
+    private isNumber(x: unknown): x is number {
+        return typeof x === 'number';
+    }
+
+    private isString(x: unknown): x is string {
+        return typeof x === 'string';
+    }
+
+    private evalMath(op: string, x: number, y: number): number | boolean {
+        switch (op) {
+            case '-': return x - y;
+            case '*': return x * y;
+            case '/': return x / y;
+            case '<': return x < y;
+            case '>': return x > y;
+            case '<=': return x <= y;
+            case '>=': return x >= y;
+            default:
+                throw new RuntimeError('Unknown operator: ' + op);
+        }
     }
 }
