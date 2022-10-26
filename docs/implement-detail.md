@@ -1855,78 +1855,74 @@ class Interpreter implements IExprVisitor<unknown> {
 
     visitBinaryExpr(expr: BinaryExpr): ValueType {
         const operator = expr.operator;
-        const left = expr.left.accept(this);
-        const right = expr.right.accept(this);
 
-        if (operator.type === '+') {
-            if (isString(left) && isString(right)) {
-                return left + right;
-            } else if (isNumber(left) && isNumber(right)) {
-                return left + right;
-            }
-
-            throw new RuntimeError('"+" operator only support both operand is string or number.');
-        }
-
-        // ...TODO
-    }
-}
-```
-
-计算两个操作数，然后按照操作符来执行。其中 `+` 比较特殊，既支持数字相加，又支持字符串连接，所以单独处理它。其他的操作符没有分类考虑的情况，直接采用查表：
-```ts
-const BinaryEvalMapping = {
-    '-': [isNumber, (a: number, b: number) => a - b],
-    '*': [isNumber, (a: number, b: number) => a * b],
-    '/': [isNumber, (a: number, b: number) => a / b],
-    '<': [isNumber, (a: number, b: number) => a < b],
-    '>': [isNumber, (a: number, b: number) => a > b],
-    '<=': [isNumber, (a: number, b: number) => a <= b],
-    '>=': [isNumber, (a: number, b: number) => a >= b],
-    '==': [isAny, (a: unknown, b: unknown) => a === b],
-    '!=': [isAny, (a: unknown, b: unknown) => a !== b],
-    '&&': [isAny, (a: unknown, b: unknown) => a && b],
-    '||': [isAny, (a: unknown, b: unknown) => a || b],
-} as const;
-
-
-class Interpreter implements IExprVisitor<unknown> {
-    // ...
-
-    visitBinaryExpr(expr: BinaryExpr): ValueType {
-        // ...
-
-        const mapping = BinaryEvalMapping[operator.type];
-        if (!mapping) {
-            throw new RuntimeError('Unknown operator: ' + operator.lexeme);
-        }
-
-        const [check, evalFn] = mapping;
-        if (check(left) && check(right)) {
-            return evalFn(left, right);
+        const leftValue = expr.left.accept(this);
+        // && || 需要考虑短路
+        if (operator.type == '&&') {
+            return leftValue && expr.right.accept(this);
+        } else if (operator.type == '||') {
+            return leftValue || expr.right.accept(this);
         } else {
-            throw new RuntimeError(`Check data type failed for operator ${operator.type}: left=${left}, right=${right}`);
+            // 不需要考虑短路的，可直接求出右值
+            const rightValue = expr.right.accept(this);
+            if (operator.type == '+') {
+                if (this.isString(leftValue) && this.isString(rightValue)) {
+                    return leftValue + rightValue;
+                } else if (this.isNumber(leftValue) && this.isNumber(rightValue)) {
+                    return leftValue + rightValue;
+                }
+                throw new RuntimeError('"+" operator only support both operand is string or number.');
+            } else if (operator.type == '==') {
+                return leftValue == rightValue;
+            } else if (operator.type == '!=') {
+                 return leftValue != rightValue;
+            } else {
+                // 纯数字运算
+                if (this.isNumber(leftValue) && this.isNumber(rightValue)) {
+                    return this.evalMath(operator.type, leftValue, rightValue);
+                }
+                throw new RuntimeError(`Required both operand is number for operator ${operator.type}: left=${leftValue}, right=${rightValue}`);
+            }
         }
     }
 }
-
-function isNumber(x: unknown): x is number {
-    return typeof x === 'number';
-}
-
-function isAny(x: unknown): x is any {
-    return true;
-}
-
-function isString(x: unknown): x is string {
-    return typeof x === 'string';
-}
 ```
 
-完整的代码见 [ts-Interpreter](https://github.com/huanguolin/toc/blob/master/ts-toc/Interpreter/index.ts);
+上面特别要注意的是，`&&` 和 `||` 具有短路效果，不能先把右操作数求出来。目前你还感觉不到差异，有了变量和函数之后，就可以看到效果了。另外一个要注意的是，我们的 `+` 可以支持字符串连接和数字相加，要分别处理，但是不允许混合。完整的代码见 [ts-Interpreter](https://github.com/huanguolin/toc/blob/master/ts-toc/Interpreter/index.ts);
 
-我们做完了吗？实际上还差一步，我们还没有把 `Scanner`, `Parser` 和 `Interpreter` 组合到一起：
+我们做完了吗？实际上还差一步，我们还没有把 `Scanner`, `Parser` 和 `Interpreter` 组合到一起。如果是 `node.js` 环境，可以写一个 `REPL`([Read–eval–print loop](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop))：
 ```ts
+import { Interpreter } from './Interpreter';
+import { Parser } from './Parser';
+import { Scanner } from './Scanner';
+
+const readline = require('readline');
+const interpreter = new Interpreter();
+
+main();
+
+function main() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: false
+    });
+
+    process.stdout.write('> ');
+    rl.on('line', function (line) {
+        try {
+            console.log('=', toc(line));
+        } catch (e) {
+            let errMsg = e;
+            if (e instanceof Error) {
+                errMsg = e.message;
+            }
+            console.error('Error: ', errMsg);
+        }
+        process.stdout.write('> ');
+    });
+}
+
 function toc(source: string) {
     const scanner = new Scanner(source);
     const parser = new Parser(scanner.scan());
@@ -1935,7 +1931,7 @@ function toc(source: string) {
 ```
 
 
-好了，我们得到了一个解释执行 `toc` 程序的函数。你可以输入一段代码，查看输出了。
+好了，我们得到了一个可以执行 `toc` 程序的程序。你可以输入一段代码，并查看输出了😄。
 
 ##### 2.2.4.2 type-Interpreter
 
@@ -1984,7 +1980,7 @@ type IsFalse<T> =
 ```
 
 
-最后是 `EvalBinaryExpr`，它比较麻烦，但也只是按照操作符类型来调用具体是实现函数。
+最后是 `EvalBinaryExpr`，它比较麻烦，但也只是按照操作符类型来调用具体的实现函数。
 ```ts
 type EvalBinaryExpr<
     E extends BinaryExpr,
@@ -2027,11 +2023,7 @@ type EvalEquality<
             ? InterpretExprSuccess<Inverse<Eq<LV, RV>>>
             : RuntimeError<`EvalEquality fail when meet: ${Op}`>
     : RR; // error
-```
 
-
-剩下的部分也不能像 ts 版一样可以查表，因为 type 中函数不能作为参数和返回值。我们只能用条件判断来做：
-```ts
 type EvalRestBinaryExpr<
     Op extends TokenType,
     LV extends ValueType,
@@ -2099,9 +2091,11 @@ type Toc<Source extends string> =
         : NoWay<'Toc-Scan'>;
 ```
 
-为什么不是 `type Toc<S extend string> = Interpret<Parse<Scan<S>>>` ? 因为这样错误无法展示出来。ts 中有异常机制，有错误抛出来外面可以捕获。这里没有异常，错误只能用函数返回值层层传递出去。
+为什么不是 `type Toc<S extend string> = Interpret<Parse<Scan<S>>>` ? 因为错误无法展示出来。ts 中有异常机制，有错误抛出来外面可以捕获。这里没有异常，错误只能用函数返回值层层传递出去。
 
 好了，我们最终还是得到一个完整的 [type-Interpreter](https://github.com/huanguolin/toc/blob/master/type-toc/interpreter/index.d.ts)。
+
+现在终于从 0 到 1 了。过程或许艰难痛苦，但是结果甚是喜人——我们预期的都实现了。也验证了 ts 类型系统是图灵完备的。后面我们还会继续“攀登”一个一个的“小山峰”，你会看到在这个“贫瘠”的语言土壤下，也可以结出丰硕的“特性”果实。
 
 #### 2.2.5 语句
 ##### 2.2.5.1 表达式语句
