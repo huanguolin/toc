@@ -6,7 +6,7 @@ import { Identifier } from "./utils";
 
 export type StmtType =
     | 'expression'
-    | 'varDeclaration'
+    | 'var'
     | 'block'
     | 'if'
     | 'for'
@@ -26,7 +26,7 @@ export interface BuildExprStmt<E extends Expr> extends ExprStmt {
 }
 
 export interface VarStmt extends Stmt {
-    type: 'varDeclaration';
+    type: 'var';
     name: Identifier;
     initializer: Expr | null;
 }
