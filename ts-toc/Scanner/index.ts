@@ -192,7 +192,7 @@ export class Scanner {
     }
 }
 
-const ESCAPE_CHAR_MAP = {
+const ESCAPE_CHAR_MAP: { [key: string]: string } = {
     n: '\n',
     r: '\r',
     t: '\t',
@@ -200,4 +200,4 @@ const ESCAPE_CHAR_MAP = {
     f: '\f',
     v: '\v',
     0: '\0',
-} as const;
+};

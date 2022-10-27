@@ -78,7 +78,7 @@ export class Parser {
         return new VarStmt(name, initializer);
     }
 
-    private statement() {
+    private statement(): IStmt {
         if (this.match('{')) {
             return this.blockStatement();
         } else if (this.match('if')) {

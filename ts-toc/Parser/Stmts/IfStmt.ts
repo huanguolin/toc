@@ -3,7 +3,7 @@ import { IStmt } from "./IStmt";
 import { IStmtVisitor } from "./IStmtVisitor";
 
 export class IfStmt implements IStmt {
-    type: 'if';
+    type: 'if' = 'if';
     condition: IExpr;
     ifClause: IStmt;
     elseClause: IStmt | null;

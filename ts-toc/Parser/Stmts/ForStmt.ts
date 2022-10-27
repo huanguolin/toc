@@ -5,7 +5,7 @@ import { IStmt } from "./IStmt";
 import { IStmtVisitor } from "./IStmtVisitor";
 
 export class ForStmt implements IStmt {
-    type: 'for';
+    type: 'for' = 'for';
     initializer: IStmt | null;
     condition: IExpr | null;
     increment: IExpr | null;

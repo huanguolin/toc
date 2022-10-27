@@ -4,7 +4,7 @@ import { IStmt } from "./IStmt";
 import { IStmtVisitor } from "./IStmtVisitor";
 
 export class VarStmt implements IStmt {
-    type: 'varDeclaration';
+    type: 'var' = 'var';
     name: Token;
     initializer: IExpr | null;
 

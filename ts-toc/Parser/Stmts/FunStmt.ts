@@ -4,7 +4,7 @@ import { IStmt } from "./IStmt";
 import { IStmtVisitor } from "./IStmtVisitor";
 
 export class FunStmt implements IStmt {
-    type: 'fun';
+    type: 'fun' = 'fun';
     name: Token;
     parameters: Token[];
     body: BlockStmt;

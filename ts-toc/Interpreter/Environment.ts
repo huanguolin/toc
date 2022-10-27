@@ -6,7 +6,7 @@ export class Environment {
     private store: Map<string, ValueType>;
     private outer: Environment | null;
 
-    constructor(outer: Environment) {
+    constructor(outer: Environment | null) {
         this.store = new Map<string, ValueType>();
         this.outer = outer;
     }

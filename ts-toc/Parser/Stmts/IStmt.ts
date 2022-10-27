@@ -2,7 +2,7 @@ import { IStmtVisitor } from "./IStmtVisitor";
 
 export type StmtType =
     | 'expression'
-    | 'varDeclaration'
+    | 'var'
     | 'block'
     | 'if'
     | 'fun'

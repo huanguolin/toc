@@ -15,7 +15,7 @@ function main() {
     });
 
     process.stdout.write('> ');
-    rl.on('line', function (line) {
+    rl.on('line', function (line: string) {
         try {
             const result = toc(line);
             const printVal = result && typeof result === 'object' ? result.toString() : result;
