@@ -31,8 +31,8 @@
         - [2.2.4.2 type-Interpreter](#2242-type-interpreter)
       - [2.2.5 语句](#225-语句)
         - [2.2.5.1 表达式语句](#2251-表达式语句)
-        - [2.2.5.2 环境](#2252-环境)
-        - [2.2.5.3 var 语句](#2253-var-语句)
+        - [2.2.5.2 var 语句](#2252-var-语句)
+        - [2.2.5.3 环境](#2253-环境)
         - [2.2.5.4 变量表达式和赋值表达式](#2254-变量表达式和赋值表达式)
         - [2.2.5.5 作用域](#2255-作用域)
         - [2.2.5.6 block 语句](#2256-block-语句)
@@ -2099,10 +2099,359 @@ type Toc<Source extends string> =
 
 现在终于从 0 到 1 了。过程或许艰难痛苦，但是结果甚是喜人——我们预期的都实现了。也验证了 ts 类型系统是图灵完备的。后面我们还会继续“攀登”一个一个的“小山峰”，你会看到在这个“贫瘠”的语言土壤下，也可以结出丰硕的“特性”果实。
 
+
 #### 2.2.5 语句
+我们有了表达式，但还没有语句。现在可以搭建支持语句的“世界”了。这里有变量声明语句，条件语句，循环语句，块语句，当然还有表达式语句。我们用不支持变量和循环的语言可以打造支持变量和循环的语言！
+我们的词法分析已经包含了整个语言所需的词素。后续的特性添加只需从语法分析开始。我们先来看看语句的语法表述:
+```shell
+# declarations
+declaration    → funDecl
+               | varDecl
+               | statement ;
+
+funDecl        → "fun" function ;
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
+function       → IDENTIFIER "(" parameters? ")" block ;
+parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+
+
+# statements
+statement      → exprStmt
+               | forStmt
+               | ifStmt
+               | block ;
+
+exprStmt       → expression ";" ;
+forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+                           expression? ";"
+                           expression? ")" statement ;
+ifStmt         → "if" "(" expression ")" statement
+                 ( "else" statement )? ;
+block          → "{" declaration* "}" ;
+```
+额，为什么最上面是 `declaration`? 别担心，这只是更细致的划分。 从实现上，我们都当作语句来看待。
+先从最简单的语句——表达式语句开始。
+
 ##### 2.2.5.1 表达式语句
-##### 2.2.5.2 环境
-##### 2.2.5.3 var 语句
+
+类似表达式，我们需要先定义语句的类型。
+```ts
+type StmtType =
+    | 'fun'
+    | 'var'
+    | 'if'
+    | 'for'
+    | 'block'
+    | 'expression';
+
+interface IStmt {
+    type: StmtType;
+    accept: <R>(visitor: IStmtVisitor<R>) => R;
+}
+
+interface IStmtVisitor<T> {
+    visitFunStmt: (stmt: FunStmt) => T;
+    visitVarStmt: (stmt: VarStmt) => T;
+    visitIfStmt: (stmt: IfStmt) => T;
+    visitForStmt: (stmt: ForStmt) => T;
+    visitBlockStmt: (stmt: BlockStmt) => T;
+    visitExprStmt: (stmt: ExprStmt) => T;
+}
+```
+
+这次我们要一并把执行阶段需要的访问者模式的接口等都准备好。接着是定义 `ExprStmt`:
+```ts
+class ExprStmt implements IStmt {
+    type: 'expression' = 'expression';
+    expression: IExpr;
+
+    constructor(expr: IExpr) {
+        this.expression = expr;
+    }
+
+    accept<R>(visitor: IStmtVisitor<R>): R {
+        return visitor.visitExprStmt(this);
+    }
+}
+```
+
+
+然后，我们要修改 `parse` 函数了：
+```ts
+class Parser {
+    // ...
+
+    parse(): IStmt[] {
+        const stmts: IStmt[] = [];
+        while (!this.isAtEnd()) {
+            stmts.push(this.statement());
+        }
+        return stmts;
+    }
+
+    private statement(): IStmt {
+        // TODO
+    }
+
+    // ...
+}
+```
+
+`parse` 函数的输出从表达式变成了语句的数组。`statement` 函数在一个一个解析语句。那我们加入表达式语句：
+
+```ts
+class Parser {
+    // ...
+
+    private statement(): IStmt {
+        return this.expressionStatement();
+    }
+
+    private expressionStatement() {
+        const expr = this.expression();
+        this.consume(';', 'Expect ";" after expression.');
+        return new ExprStmt(expr);
+    }
+
+    private consume(tokenType: TokenType, message: string) {
+        if (this.check(tokenType)) {
+            this.advance();
+            return;
+        }
+        throw new ParseError(message);
+    }
+
+    // ...
+}
+```
+
+😄很简单吧！
+
+我们再来看 type 版。先从语句定义开始，`StmtType` 完全一致，其他的如下：
+```ts
+interface Stmt {
+    type: StmtType;
+}
+
+interface ExprStmt extends Stmt {
+    type: 'expression';
+    expression: Expr;
+}
+
+interface BuildExprStmt<E extends Expr> extends ExprStmt {
+    expression: E;
+}
+```
+
+
+同样的要修改 `Parse` 函数：
+```ts
+type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
+    Tokens extends [EOF]
+        ? Stmts
+        : ParseStmt<Tokens> extends infer Result
+            ? Result extends ParseStmtSuccess<infer R, infer Rest>
+                ? Parse<Rest, Push<Stmts, R>>
+                : Result // error
+            : NoWay<'Parse'>;
+
+type ParseStmtError<M extends string> =
+    ErrorResult<`[ParseStmtError]: ${M}`>;
+type ParseStmtSuccess<R extends Stmt, T extends Token[]> =
+    SuccessResult<{ stmt: R, rest: T }>;
+```
+
+
+`ParseStmt` 和 `ParseExprStmt` 也同样简单：
+```ts
+type ParseStmt<Tokens extends Token[]> = ParseExprStmt<Tokens>;
+
+type ParseExprStmt<Tokens extends Token[], R = ParseExpr<Tokens>> =
+    R extends ParseExprSuccess<infer Expr, infer Rest>
+        ? Rest extends Match<TokenLike<';'>, infer Rest>
+            ? ParseStmtSuccess<BuildExprStmt<Expr>, Rest>
+            : ParseStmtError<'Expect ";" after expression.'>
+        : R; // error
+```
+
+以上我们完成了表达式语句的语法分析部分，这是一个简单愉快的开始。接下来要让它能执行起来。
+
+说起执行，有一个问题，语句是没有值的。对于表达式，我们执行的结果是一个值。对于语句往往是其他副作用（比如修改变量，操作IO等），并不会像表达式一样得到一个值作为结果。当然这只是通常意义的语句效果。在我们这里，情况特殊，我们想要语句像表达式一样，最终会得到一个值的结果。为什么要这样呢？主要是考虑到 ts type 中并没有什么能操作 IO 这样能带来副作用的能力。我们无法通过类似 `console.log` 的方式“看”到程序执行带来的“变量”等的变化。可以观察程序执行效果的唯一的方式是返回值。
+* 表达式语句的返回值是表达式的值；
+* 多个语句的值是最后一个语句的值；
+* var 语句的值是变量的值；
+* if 语句的值是其为真对应语句的值，没有对应语句或者空语句时值为 `null`;
+* for 语句的值是其循环块对应语句最后一次执行的值；
+* 块语句的值是其内部最后一个语句的值，空块的值是 `null`；
+* 空语句的值是 `null`;
+* 函数定义语句的值是函数；
+* 函数执行的返回值是最后执行语句的值（是的，没有 `return` 也有返回值）。
+
+现在我们开始实现执行。首先需要调整 `interpret` 函数，它的入参从表达式变成了语句数组。`Interpreter` 类还要实现 `IStmtVisitor<unknown>` 接口。
+```ts
+class Interpreter implements IExprVisitor<unknown>,
+                             IStmtVisitor<unknown> {
+    // ...
+
+    interpret(stmts: IStmt[]): ValueType {
+        let lastResult: ValueType = null;
+        for (const stmt of stmts) {
+            lastResult = stmt.accept(this);
+        }
+        return lastResult;
+    }
+
+    // ...
+}
+```
+
+
+对 `visitExprStmt` 函数的实现，异常简单😄：
+```ts
+class Interpreter implements IExprVisitor<unknown>,
+                             IStmtVisitor<unknown> {
+    // ...
+
+    visitExprStmt(stmt: ExprStmt): ValueType {
+        return stmt.expression.accept(this);
+    }
+
+    // ...
+}
+```
+
+这就搞定了？😄没错！
+
+那么，type 版会有这么简单吗？我们来看看：
+```ts
+type Interpret<
+    Stmts extends Stmt[],
+    LastResult extends ValueType | null = null,
+> = Stmts extends [infer S extends Stmt, ...infer Rest extends Stmt[]]
+        ? InterpretStmt<S> extends infer R
+            ? R extends InterpretStmtSuccess<infer Result>
+                ? Interpret<Rest, Result>
+                : R // error
+            : NoWay<'Interpret'>
+        : LastResult;
+
+type InterpretStmtError<M extends string> =
+    ErrorResult<`[InterpretStmtError]: ${M}`>;
+type InterpretStmtSuccess<Value extends ValueType> = 
+    SuccessResult<{ value: Value }>;
+```
+
+这套路和 `Parse` 一样。`InterpretStmt` 和 `InterpretExprStmt` 也是一样的简单：
+
+```ts
+type InterpretStmt<S extends Stmt> =
+    S extends ExprStmt
+        ? InterpretExprStmt<S>
+        : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretExprStmt<
+    S extends ExprStmt,
+    R = InterpretExpr<S['expression']>
+> =
+    R extends InterpretExprSuccess<infer V>
+        ? InterpretStmtSuccess<V>
+        : R; // error
+```
+
+😄大功告成！
+
+
+##### 2.2.5.2 var 语句
+
+现在我们来支持很关键的特性——变量。首先是声明变量的语句。先看语句类型定义：
+```ts
+class VarStmt implements IStmt {
+    type: 'var' = 'var';
+    name: Token;
+    initializer: IExpr | null;
+
+    constructor(token: Token, initializer: IExpr | null) {
+        this.name = token;
+        this.initializer = initializer;
+    }
+
+    accept<R>(visitor: IStmtVisitor<R>): R {
+        return visitor.visitVarStmt(this);
+    }
+}
+```
+
+声明变量时，初始化是可选的。语法分析时，只有“看”到 `=` 后，才会解析初始化表达式：
+```ts
+class Parser {
+    // ...
+
+    private statement(): IStmt {
+        if (this.match('var')) {
+            return this.varDeclaration();
+        }
+        return this.expressionStatement();
+    }
+
+    private varDeclaration() {
+        this.consume('identifier', `Expect var name.`);
+        const name = this.previous();
+        let initializer = null;
+        if (this.match('=')) {
+            initializer = this.expression();
+        }
+        this.consume(';', `Expect ';' after var declaration.`);
+        return new VarStmt(name, initializer);
+    }
+
+    // ...
+}
+```
+
+有了表达式的历练，现在这些看起来都很简单，对吧😂。
+
+再来看 type 版的语法分析, 还是先定义语句类型：
+```ts
+interface VarStmt extends Stmt {
+    type: 'var';
+    name: Identifier;
+    initializer: Expr | null;
+}
+
+interface BuildVarStmt<N extends Identifier, E extends Expr | null> extends VarStmt {
+    name: N;
+    initializer: E;
+}
+```
+
+接下来是 `ParseStmt` 和 `ParseVarStmt` 函数：
+```ts
+type ParseStmt<Tokens extends Token[]> =
+    Tokens extends Match<TokenLike<'var'>, infer Rest>
+        ? ParseVarStmt<Rest>
+        : ParseExprStmt<Tokens>;
+
+type ParseVarStmt<Tokens extends Token[]> =
+    Tokens extends Match<infer VarName extends Identifier, infer Rest>
+        ? Rest extends Match<TokenLike<';'>, infer Rest>
+            ? ParseStmtSuccess<BuildVarStmt<VarName, null>, Rest>
+            : Rest extends Match<TokenLike<'='>, infer Rest>
+                ? ParseExpr<Rest> extends ParseExprSuccess<infer Exp, infer Rest>
+                    ? Rest extends Match<TokenLike<';'>, infer Rest>
+                        ? ParseStmtSuccess<BuildVarStmt<VarName, Exp>, Rest>
+                        : ParseStmtError<'Expect ";" after var initializer expression.'>
+                    : ParseStmtError<'Parse var initializer expression failed.'>
+                : ParseStmtError<'Expect ";" or "=" after var name.'>
+        : ParseStmtError<'Expect var name.'>;
+```
+
+`ParseVarStmt` 看起来很麻烦，但是它是按照 ts 版翻译过来的。由于 type 系统的语法糖少，写起来有些啰嗦。不过，还是能完成任务的。
+
+我们完成了，语法分析。该实现执行了。但是试想一下 `var a = 1; a + 2;`, 这个结果我们都知道是 3，因为 a 代表的值是 1。但表达式在执行时，是如何知道 a 代表的值是 1 呢？我们需要将这个映射存下来，然后表达式执行的时候，就能查到了。那么保存这个映射关系的就是环境。
+
+##### 2.2.5.3 环境
+
 ##### 2.2.5.4 变量表达式和赋值表达式
 ##### 2.2.5.5 作用域
 ##### 2.2.5.6 block 语句
