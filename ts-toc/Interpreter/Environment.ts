@@ -11,6 +11,14 @@ export class Environment {
         this.outer = outer;
     }
 
+    define(name: Token, value: ValueType) {
+        if (this.store.has(name.lexeme)) {
+            throw new RuntimeError(`Variable '${name.lexeme}' is already defined.`);
+        }
+
+        this.store.set(name.lexeme, value);
+    }
+
     get(name: Token): ValueType {
         let v = this.store.get(name.lexeme);
         if (v === undefined && this.outer) {
@@ -22,14 +30,6 @@ export class Environment {
         }
 
         return v;
-    }
-
-    define(name: Token, value: ValueType) {
-        if (this.store.has(name.lexeme)) {
-            throw new RuntimeError(`Variable '${name.lexeme}' is already defined.`);
-        }
-
-        this.store.set(name.lexeme, value);
     }
 
     assign(name: Token, value: ValueType) {
