@@ -95,8 +95,8 @@ type InterpretBlockStmt<
     Stmts extends Stmt[],
     NewEnv extends Environment,
     LastResult extends ValueType = null
-> = Stmts extends [infer S1 extends Stmt, ...infer Rest extends Stmt[]]
-    ? InterpretBlockStmtBody<InterpretStmt<S1, NewEnv>, Rest>
+> = Stmts extends [infer S extends Stmt, ...infer Rest extends Stmt[]]
+    ? InterpretBlockStmtBody<InterpretStmt<S, NewEnv>, Rest>
     : InterpretStmtSuccess<LastResult, Safe<NewEnv['outer'], Environment>>;
 type InterpretBlockStmtBody<
     RV,
