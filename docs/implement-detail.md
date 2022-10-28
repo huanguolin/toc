@@ -3129,7 +3129,7 @@ type ParseBlockStmt<
     Tokens extends Token[],
     Stmts extends Stmt[] = [],
 > = Tokens extends [EOF]
-    ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Tokens>
+    ? ParseStmtError<'Expect "}" close block statement.'>
     : Tokens extends Match<TokenLike<'}'>, infer Rest>
         ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Rest>
         : ParseBlockStmtBody<ParseStmt<Tokens>, Stmts>;
@@ -3141,6 +3141,62 @@ type ParseBlockStmtBody<SR, Stmts extends Stmt[]> =
 ```
 
 
+语法分析搞定。再来写执行阶段。对于 ts 版，就是实现 `visitBlockStmt`。在执行块内语句之前，要产生一个新环境，执行完之后，还要恢复到之前的环境。
+```ts
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    // ...
+
+    visitBlockStmt(blockStmt: BlockStmt): ValueType {
+        const previousEnv = this.environment;
+
+        try {
+            this.environment = new Environment(previousEnv);
+
+            let lastResult: ValueType = null;
+            for (const stmt of blockStmt.stmts) {
+                lastResult = stmt.accept(this);
+            }
+            return lastResult;
+        } finally {
+            this.environment = previousEnv;
+        }
+    }
+
+    // ...
+}
+```
+
+
+下面该 type 版。看这里如何保证执行块语句用新环境，执行完后用旧环境。这里又个陷阱。你不能按照 ts 版本的代码来翻译。二者从语言层面有重大差异，这里没有变量，无法修改已有的环境。举个例子，在块语句中修改了外部环境的某个变量，那么块语句执行完后，虽然恢复到之前的环境。但对于 ts 版本来说，恢复的环境和原来还完全一样吗？当然不一样了，里面的那个变量的值变了。所以说恢复，仅仅是引用恢复。那么对于 type 版，该怎么处理呢？按照这个例子，修改外部环境后，type 版中的 `Env` 要新生成一个，`outer` 指向的外部环境也是新生成的，它包含了变量的新值。所以在执行完块语句后，要“恢复”的外部环境就是 `Env['outer']`。
+```ts
+type InterpretStmt<S extends Stmt, Env extends Environment> =
+    S extends VarStmt
+        ? InterpretVarStmt<S, Env>
+        : S extends ExprStmt
+            ? InterpretExprStmt<S, Env>
+            : S extends BlockStmt
+                ? InterpretBlockStmt<S['stmts'], BuildEnv<{}, Env>>
+                : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretBlockStmt<
+    Stmts extends Stmt[],
+    NewEnv extends Environment,
+    LastResult extends ValueType = null
+> = Stmts extends [infer S extends Stmt, ...infer Rest extends Stmt[]]
+    ? InterpretBlockStmtBody<InterpretStmt<S, NewEnv>, Rest>
+    : InterpretStmtSuccess<LastResult, Safe<NewEnv['outer'], Environment>>;
+
+type InterpretBlockStmtBody<
+    RV,
+    Rest extends Stmt[],
+> =
+    RV extends InterpretStmtSuccess<infer V, infer NewEnv>
+        ? InterpretBlockStmt<Rest, NewEnv, V>
+        : RV; // error
+```
+
+
+啊！我们完成块语句了。着前进了一大步，后续的 `if` 语句，`for` 语句，还有函数都需要它。
 
 ##### 2.2.5.7 if 语句
 ##### 2.2.5.8 for 语句
