@@ -2,14 +2,16 @@ import { NoWay } from "../Result";
 import { ValueType } from "../type";
 
 import { RuntimeError } from "./RuntimeError";
+import { TocMap, MapHas, MapSet, MapGet } from "./map";
+
 
 export interface Environment {
-    store: EnvMap;
+    store: TocMap;
     outer: Environment | null;
 }
 
 export interface BuildEnv<
-    Initializer extends EnvMap = {},
+    Initializer extends TocMap = {},
     Outer extends Environment | null = null,
 > extends Environment {
     store: Initializer;
@@ -20,18 +22,18 @@ export type EnvDefine<
     Env extends Environment,
     Key extends string,
     Value extends ValueType,
-    Store extends EnvMap = Env['store']
-> = Has<Store, Key> extends true
+    Store extends TocMap = Env['store']
+> = MapHas<Store, Key> extends true
     ? RuntimeError<`Variable '${Key}' already defined.`>
-    : BuildEnv<MySet<Store, Key, Value>, Env['outer']>;
+    : BuildEnv<MapSet<Store, Key, Value>, Env['outer']>;
 
 export type EnvGet<
     Env extends Environment,
     Key extends string,
-    Store extends EnvMap = Env['store'],
+    Store extends TocMap = Env['store'],
     Outer = Env['outer'],
-> = Has<Store, Key> extends true
-    ? Get<Store, Key>
+> = MapHas<Store, Key> extends true
+    ? MapGet<Store, Key>
     : Outer extends Environment
         ? EnvGet<Outer, Key>
         : RuntimeError<`Undefined variable '${Key}'.`>;
@@ -40,10 +42,10 @@ export type EnvAssign<
     Env extends Environment,
     Key extends string,
     Value extends ValueType,
-    Store extends EnvMap = Env['store'],
+    Store extends TocMap = Env['store'],
     Outer extends Environment | null = Env['outer'],
-> = Has<Store, Key> extends true
-    ? BuildEnv<MySet<Store, Key, Value>, Outer>
+> = MapHas<Store, Key> extends true
+    ? BuildEnv<MapSet<Store, Key, Value>, Outer>
     : Outer extends Environment
         ? EnvAssign<Outer, Key, Value> extends infer NewOuter
             ? NewOuter extends Environment
@@ -52,23 +54,3 @@ export type EnvAssign<
             : NoWay<'EnvAssign'>
         : RuntimeError<`Undefined variable '${Key}'.`>;
 
-type EnvMap = { [key: string]: ValueType };
-
-type MySet<
-    M extends EnvMap,
-    K extends string,
-    V extends ValueType,
-> = Omit<M, K> & { [Key in K]: V };
-type tSet = MySet<{ a: 5 }, 'a', false>['a'];
-
-type Get<
-    M extends EnvMap,
-    K extends string,
-> = M[K];
-type tGet = Get<{ a: null }, 'b'>;
-
-type Has<
-    M extends EnvMap,
-    K extends string,
-> = K extends keyof M ? true : false;
-type tHas = Has<{ a: 9, b: false, c: null}, 'd'>;
