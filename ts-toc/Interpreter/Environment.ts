@@ -40,6 +40,7 @@ export class Environment {
 
         if (this.outer) {
             this.outer.assign(name, value);
+            return;
         }
 
         throw new RuntimeError(`Undefined variable '${name.lexeme}'.`);
