@@ -2136,8 +2136,49 @@ ifStmt         → "if" "(" expression ")" statement
                  ( "else" statement )? ;
 block          → "{" declaration* "}" ;
 ```
-额，为什么最上面是 `declaration`? 别担心，这只是更细致的划分。 从实现上，我们都当作语句来看待。
-先从最简单的语句——表达式语句开始。
+额，为什么最上面是 `declaration`?
+难到不都是语句吗?
+都划到 `statement` 下不行吗？像下面这样：
+```shell
+# statements
+statement      → funDecl
+               | varDecl
+               | exprStmt
+               | forStmt
+               | ifStmt
+               | block ;
+
+funDecl        → "fun" function ;
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
+function       → IDENTIFIER "(" parameters? ")" block ;
+parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+
+exprStmt       → expression ";" ;
+forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+                           expression? ";"
+                           expression? ")" statement ;
+ifStmt         → "if" "(" expression ")" statement
+                 ( "else" statement )? ;
+block          → "{" statement* "}" ;
+
+```
+
+我先回答第二个问题，的确，他们都是语句。
+然后回答第三个问题，作为语言设计者，我可以允许自己认为可行的语法方案。如果我想都划到 `statement` 下，那当然也可以。可是这里我不想，回答了我为什么不想，也就回答了第一个问题。
+这两种所允许的语法是不太一样的。如果都统一到 `statement` 下，它就允许下面的写法：
+```ts
+if (x > 10) var a = 0;
+```
+
+这回造成什么问题呢？`a` 定义与否只有在运行时才能得知，如果 `x > 10` 的条件成立，则 `a` 定义了，否则是为定义。这样在这个语句之后，让使用变量 `a` 变得很困难。这种问题同样存在于 `for` 与 `fun` 的组合：
+```ts
+for (; false ;) fun test() {}
+```
+
+所以我拒绝这种让人困惑不已的语法。我们选取有 `declaration` 的那一套语法规则。它将能产生变量（函数名也是变量哟）划为 `declaration`，然后可以递归下降到 `statement`。`if`, `for` 等语句下的从句只能是 `statement`。`block` 语句内部可以是 `declaration`。
+
+好了，搞清楚这些问题，我们对处理语句进行支持了。先从最简单的语句——表达式语句开始。
 
 ##### 2.2.5.1 表达式语句
 
@@ -2388,17 +2429,25 @@ class VarStmt implements IStmt {
 }
 ```
 
-
-语法分析时，和表达式那边有优先级不同。这里要进入变量表达式的解析函数，需要前看是否是 `var` 关键字，如果是的话必然是变量声明。
+`var` 属于 `declaration`，所以又要修改 `parse` 了。另外语法分析时，和表达式那边有优先级不同。这里要进入变量表达式的解析函数，需要前看是否是 `var` 关键字，如果是的话必然是变量声明。
 ```ts
 class Parser {
     // ...
 
-    private statement(): IStmt {
+    parse(): IStmt[] {
+        const stmts: IStmt[] = [];
+        while (!this.isAtEnd()) {
+            stmts.push(this.declaration()); // <-- 变动
+        }
+        return stmts;
+    }
+
+    private declaration() {
         if (this.match('var')) {
             return this.varDeclaration();
         }
-        return this.expressionStatement();
+
+        return this.statement();
     }
 
     private varDeclaration() {
@@ -2449,10 +2498,19 @@ interface BuildVarStmt<N extends Identifier, E extends Expr | null> extends VarS
 
 接下来是 `ParseStmt` 和 `ParseVarStmt` 函数：
 ```ts
-type ParseStmt<Tokens extends Token[]> =
+type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
+    Tokens extends [EOF]
+        ? Stmts
+        : ParseDecl<Tokens> extends infer Result // <-- 变动
+            ? Result extends ParseStmtSuccess<infer R, infer Rest>
+                ? Parse<Rest, Push<Stmts, R>>
+                : Result // error
+            : NoWay<'Parse'>;
+
+type ParseDecl<Tokens extends Token[]> =
     Tokens extends Match<TokenLike<'var'>, infer Rest>
         ? ParseVarStmt<Rest>
-        : ParseExprStmt<Tokens>;
+        : ParseStmt<Tokens>;
 
 type ParseVarStmt<Tokens extends Token[]> =
     Tokens extends Match<infer VarName extends Identifier, infer Rest>
@@ -3090,18 +3148,19 @@ class Parser {
     // ...
 
     private statement(): IStmt {
-        if (this.match('var')) {
-            return this.varDeclaration();
-        } else if (this.match('{')) {
+        // 新增开始
+        if (this.match('{')) {
             return this.blockStatement();
         }
+        // 新增结束
+
         return this.expressionStatement();
     }
 
     private blockStatement(): BlockStmt {
         const stmts: IStmt[] = [];
         while(!this.isAtEnd() && !this.match('}')) {
-            stmts.push(this.statement());
+            stmts.push(this.declaration());
         }
 
         if (this.previous().type !== '}') {
@@ -3119,11 +3178,11 @@ class Parser {
 type 版：
 ```ts
 type ParseStmt<Tokens extends Token[]> =
-    Tokens extends Match<TokenLike<'var'>, infer Rest>
-        ? ParseVarStmt<Rest>
-        : Tokens extends Match<TokenLike<'{'>, infer Rest>
-            ? ParseBlockStmt<Rest>
-            : ParseExprStmt<Tokens>;
+    // 新增开始
+    Tokens extends Match<TokenLike<'{'>, infer Rest>
+        ? ParseBlockStmt<Rest>
+        // 新增结束
+        : ParseExprStmt<Tokens>;
 
 type ParseBlockStmt<
     Tokens extends Token[],
@@ -3132,7 +3191,7 @@ type ParseBlockStmt<
     ? ParseStmtError<'Expect "}" close block statement.'>
     : Tokens extends Match<TokenLike<'}'>, infer Rest>
         ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Rest>
-        : ParseBlockStmtBody<ParseStmt<Tokens>, Stmts>;
+        : ParseBlockStmtBody<ParseDecl<Tokens>, Stmts>;
 
 type ParseBlockStmtBody<SR, Stmts extends Stmt[]> =
     SR extends ParseStmtSuccess<infer S, infer R>
@@ -3199,6 +3258,205 @@ type InterpretBlockStmtBody<
 啊！我们完成块语句了。着前进了一大步，后续的 `if` 语句，`for` 语句，还有函数都需要它。
 
 ##### 2.2.5.7 if 语句
+
+说到对条件控制的支持，我们目前的 `Toc` 就已经有了。没错，就是逻辑与和逻辑或。通过它们的短路能力，你已经可以实现类似 `if-else` 语句的能力了。但是我想你在实现 type 版的 `Toc` 时，已经深深感觉到，缺“糖”的语法写起来有多么啰嗦和枯燥。所以我们还是要实现 `if` 语句。
+
+还是一样，先定义语句的类型：
+```ts
+class IfStmt implements IStmt {
+    type: 'if' = 'if';
+    condition: IExpr;
+    ifClause: IStmt;
+    elseClause: IStmt | null;
+
+    constructor(
+        cond: IExpr,
+        ifClause: IStmt,
+        elseClause: IStmt | null = null) {
+        this.condition = cond;
+        this.ifClause = ifClause;
+        this.elseClause = elseClause;
+    }
+
+    accept<R>(visitor: IStmtVisitor<R>): R {
+        return visitor.visitIfStmt(this);
+    }
+}
+```
+
+
+type 版本：
+```ts
+interface IfStmt extends Stmt {
+    type: 'if';
+    condition: Expr;
+    ifClause: Stmt;
+    elseClause: Stmt | null;
+}
+
+interface BuildIfStmt<
+    Condition extends Expr,
+    IfClause extends Stmt,
+    ElseClause extends Stmt | null = null
+> extends IfStmt {
+    condition: Condition;
+    ifClause: IfClause;
+    elseClause: ElseClause;
+}
+```
+
+
+现在开始语法分析。
+```ts
+class Parser {
+    // ...
+
+    private statement(): IStmt {
+        if (this.match('{')) {
+            return this.blockStatement();
+        // 新增开始
+        } else if (this.match('if')) {
+            return this.ifStatement();
+        // 新增结束
+        }
+
+        return this.expressionStatement();
+    }
+
+    private ifStatement(): IfStmt {
+        this.consume('(', 'Expect "(" before if condition.');
+        const condition = this.expression();
+        this.consume(')', 'Expect ")" after if condition.');
+        const ifClause = this.statement();
+        let elseClause = null;
+        if (this.match('else')) {
+            elseClause = this.statement();
+        }
+        return new IfStmt(condition, ifClause, elseClause);
+    }
+
+    // ...
+}
+```
+
+不知道你有没有意识到一个问题。就是 `if-else` 配对问题。比如代码：
+```ts
+var a = 1;
+if (a > 1) if (a == 1) a = 0; else a = 10;
+a; // ?
+```
+
+你认为 `a` 值因该是什么呢？我们列出两种结果对应的配对：
+```ts
+// a = 1 对应如下：
+if (a > 1) {
+    if (a == 1) {
+        a = 0;
+    } else {
+        a = 10;
+    }
+}
+
+// a = 10 对应如下：
+if (a > 1) {
+    if (a == 1) {
+        a = 0;
+    }
+} else {
+    a = 10;
+}
+```
+
+哪个是对的呢？哦，我们是语言设计者，或许应该说，我们要哪个？我的答案是和常见的语言一致。也就是采取第一种。常见的语言都是采用，将 `else` 与最接近 `if` 配对。这样的话，我们的代码就不用修改了，它已经是如此！
+
+好了，该实现 type 版了：
+```ts
+type ParseStmt<Tokens extends Token[]> =
+    Tokens extends Match<TokenLike<'{'>, infer Rest>
+        ? ParseBlockStmt<Rest>
+        // 新增开始
+        : Tokens extends Match<TokenLike<'if'>, infer Rest>
+            ? ParseIfStmt<Rest>
+        // 新增结束
+            : ParseExprStmt<Tokens>;
+
+type ParseIfStmt<
+    Tokens extends Token[],
+> = Tokens extends Match<TokenLike<'('>, infer Rest>
+    ? ParseExpr<Rest> extends infer ER
+        ? ER extends ParseExprSuccess<infer Condition, infer Rest>
+            ? Rest extends Match<TokenLike<')'>, infer Rest>
+                ? ParseStmt<Rest> extends infer IfSR
+                    ? IfSR extends ParseStmtSuccess<infer IfClause, infer Rest>
+                        ? Rest extends Match<TokenLike<'else'>, infer Rest>
+                            ? ParseStmt<Rest> extends infer ElseSR
+                                ? ElseSR extends ParseStmtSuccess<infer ElseClause, infer Rest>
+                                    ? ParseStmtSuccess<BuildIfStmt<Condition, IfClause, ElseClause>, Rest>
+                                    : ElseSR // error
+                                : NoWay<'ParseIfStmt-ParseStmt-else'>
+                            : ParseStmtSuccess<BuildIfStmt<Condition, IfClause, null>, Rest>
+                        : IfSR // error
+                    : NoWay<'ParseIfStmt-ParseStmt-if'>
+                : ParseStmtError<'Expect ")" after if condition.'>
+            : ER // error
+        : NoWay<'ParseIfStmt-ParseExpr'>
+    : ParseStmtError<'Expect "(" before if condition.'>;
+```
+
+`ParseIfStmt` 看起来是目前 type 版中最复杂的函数了。主要原因是，语法细节一旦增多，在 type 下描述起来就啰嗦。后面的 `for` 和 `fun` 更是如此。
+
+现在来看执行阶段。ts 版仍然是实现对应的“访问”函数：
+```ts
+class Interpreter {
+    // ...
+
+    visitIfStmt(stmt: IfStmt): ValueType {
+        const cond = stmt.condition.accept(this);
+        if (cond) {
+            return stmt.ifClause.accept(this);
+        } else if (stmt.elseClause) {
+            return stmt.elseClause.accept(this);
+        }
+        return null;
+    }
+
+    // ...
+}
+```
+
+很简洁吧。
+
+现在看看 type 版：
+```ts
+type InterpretStmt<S extends Stmt, Env extends Environment> =
+    S extends VarStmt
+        ? InterpretVarStmt<S, Env>
+        : S extends ExprStmt
+            ? InterpretExprStmt<S, Env>
+            : S extends BlockStmt
+                ? InterpretBlockStmt<S['stmts'], BuildEnv<{}, Env>>
+                : S extends IfStmt
+                    ? InterpretIfStmt<S, Env>
+                    : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+
+type InterpretIfStmt<
+    S extends IfStmt,
+    Env extends Environment,
+> = InterpretExpr<S['condition'], Env> extends infer CR
+    ? CR extends InterpretExprSuccess<infer C, infer Env>
+        ? IsTrue<C> extends true
+            ? InterpretStmt<S['ifClause'], Env>
+            : S['elseClause'] extends Stmt
+                ? InterpretStmt<S['elseClause'], Env>
+                : InterpretStmtSuccess<null, Env>
+        : CR // error
+    : NoWay<'InterpretIfStmt'>;
+```
+
+还好，type 版也算简洁。
+
+
 ##### 2.2.5.8 for 语句
 
 #### 2.2.6 函数
