@@ -2251,7 +2251,7 @@ type Interpret<
 
 type InterpretStmtError<M extends string> =
     ErrorResult<`[InterpretStmtError]: ${M}`>;
-type InterpretStmtSuccess<Value extends ValueType> = 
+type InterpretStmtSuccess<Value extends ValueType> =
     SuccessResult<{ value: Value }>;
 ```
 这套路和 `Parse` 一样。`InterpretStmt` 和 `InterpretExprStmt` 也是一样的简单：
@@ -2355,9 +2355,232 @@ type ParseVarStmt<Tokens extends Token[]> =
 ```
 `ParseVarStmt` 看起来很麻烦，但是它是按照 ts 版翻译过来的。由于 type 系统的语法糖少，写起来有些啰嗦。不过，还是能完成任务的。
 
-我们完成了，语法分析。该实现执行了。但是试想一下 `var a = 1; a + 2;`, 这个结果我们都知道是 3，因为 a 代表的值是 1。但表达式在执行时，是如何知道 a 代表的值是 1 呢？我们需要将这个映射存下来，然后表达式执行的时候，就能查到了。那么保存这个映射关系的就是环境。
+我们完成了语法分析。该实现执行了。试想一下 `var a = 1; a + 2;`, 这个结果我们都知道是 3，因为 a 代表的值是 1。但表达式在执行时，是如何知道 a 代表的值是 1 呢？这就需要保存这个映射关系，然后表达式执行的时候，就能查到了。那么保存这个映射关系的就是环境。
 
 ##### 2.2.5.3 环境
+
+环境可以存储当前变量对应的值。另外为了方便使用，我们建一个新类 `Environment`，并提供方便变量定义，查询以及赋值的接口。内部用 `Map` 来做存储。需要注意的是，定义变量时，如果已经存在就要提示已经定义的错误；查询时，没找到变量，要提示未定义的错误；赋值也是考虑未定义错误。
+```ts
+class Environment {
+    private store: Map<string, ValueType>;
+
+    constructor() {
+        this.store = new Map<string, ValueType>();
+    }
+
+    define(name: Token, value: ValueType) {
+        if (this.store.has(name.lexeme)) {
+            throw new RuntimeError(`Variable '${name.lexeme}' is already defined.`);
+        }
+
+        this.store.set(name.lexeme, value);
+    }
+
+    get(name: Token): ValueType {
+        let v = this.store.get(name.lexeme);
+
+        if (v === undefined) {
+            throw new RuntimeError(`Undefined variable '${name.lexeme}'.`);
+        }
+
+        return v;
+    }
+
+    assign(name: Token, value: ValueType) {
+        if (this.store.has(name.lexeme)) {
+            this.store.set(name.lexeme, value);
+            return;
+        }
+
+        throw new RuntimeError(`Undefined variable '${name.lexeme}'.`);
+    }
+}
+```
+
+哈哈，ts 版本的 `Environment` 很容易实现。type 版本呢？
+
+首先，没有变量，意味着没法修改。这样我们只能返回一个新的 `Environment`。存储我们用对象, `set` 时就是替换对象属性，并返回新对象。替换对象属性的代码如下：
+```ts
+type ReplaceObjProp<O extends {}, K extends string, V extends unknown> = Omit<O, K> & { [Key in K]: V };
+```
+掌握这个方法后，可以很方便的实现一个 `Map` 供 type 版的 `Environment`使用：
+```ts
+// 为了避免和 js 原生的 Map 重名，取名为 TocMap
+type TocMap = { [key: string]: ValueType };
+
+type MapSet<
+    M extends TocMap,
+    K extends string,
+    V extends ValueType,
+> = Omit<M, K> & { [Key in K]: V };
+
+type MapGet<
+    M extends TocMap,
+    K extends string,
+> = M[K];
+
+type MapHas<
+    M extends TocMap,
+    K extends string,
+> = K extends keyof M ? true : false;
+```
+接下来，实现 `Environment` 就容易了：
+```ts
+interface Environment {
+    store: TocMap;
+}
+
+interface BuildEnv<
+    Initializer extends TocMap = {},
+> extends Environment {
+    store: Initializer;
+}
+
+type EnvDefine<
+    Env extends Environment,
+    Key extends string,
+    Value extends ValueType,
+    Store extends TocMap = Env['store']
+> = MapHas<Store, Key> extends true
+    ? RuntimeError<`Variable '${Key}' already defined.`>
+    : BuildEnv<MapSet<Store, Key, Value>>;
+
+type EnvGet<
+    Env extends Environment,
+    Key extends string,
+    Store extends TocMap = Env['store'],
+> = MapHas<Store, Key> extends true
+    ? MapGet<Store, Key>
+    : RuntimeError<`Undefined variable '${Key}'.`>;
+
+type EnvAssign<
+    Env extends Environment,
+    Key extends string,
+    Value extends ValueType,
+    Store extends TocMap = Env['store'],
+> = MapHas<Store, Key> extends true
+    ? BuildEnv<MapSet<Store, Key, Value>>
+    : RuntimeError<`Undefined variable '${Key}'.`>;
+```
+
+type 版的 `Environment` 也准备好了。我们现在回头来实现 `var` 语句的执行部分，先是 ts 版。
+
+解释器初始化时，就默认产生了一个环境。所以对 `Interpreter` 类做一点调整：
+```ts
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    private environment: Environment;
+
+    constructor() {
+        this.environment = new Environment();
+    }
+    // ...
+}
+```
+
+接下来就是实现 `visitVarStmt` 了，要注意的是，`Toc` 对没有初始化的变量一律给 `null` 作为默认初始值：
+```ts
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    // ...
+
+    visitVarStmt(stmt: VarStmt): ValueType {
+        let initializer = null;
+        if (stmt.initializer) {
+            initializer = stmt.initializer.accept(this);
+        }
+        this.environment.define(stmt.name, initializer);
+        return initializer;
+    }
+
+    // ...
+}
+```
+😄很顺利！
+
+再来实现 type 版。同样初始要有一个环境：
+```ts
+type Interpret<
+    Stmts extends Stmt[],
+    Env extends Environment = BuildEnv<{}>, // 添加 Env 入参
+    LastResult extends ValueType | null = null,
+> = Stmts extends [infer S extends Stmt, ...infer Rest extends Stmt[]]
+        ? InterpretStmt<S, Env> extends infer R // InterpretStmt 也要携带参数 Env 😂
+            ? R extends InterpretStmtSuccess<infer Result, infer Env> // 还要从结果中把 Env 取出来 🤦‍
+                ? Interpret<Rest, Env, Result> // 携带参数 Env
+                : R // error
+            : NoWay<'Interpret'>
+        : LastResult;
+```
+相信你感受到了，加 Env 不是那么容易的。我们要修改很多地方 😂。为什么呢？因为没有变量！我们无法修改全局，或者能访问的某个局部变量。所以一旦有修改 Env 的情况时，必须返回一个新的 Env。这样的话，某个函数怎么知道，它拿到的是最新的 Env 呢？🤷 只能在每个需要的函数上加一个入参 Env, 在调用它时传给它最新的 Env。😂在这里，我真的很想念变量啊！没办法，我们还要继续前行。我们只能绕。现在来总结一下，要加 Env, 要做哪些事情呢？简单来说就是：
+
+**需要 Env 的函数，必须有 Env 的入参，返回值也必须包含 Env。**
+
+到底我们需要修改多少函数呢？—— 可以说是 `Interpret` 相关的几乎所有函数😂。这里我们先贴一下关于 `Result` 的工具函数：
+```ts
+type InterpretStmtSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
+type InterpretExprSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
+```
+
+然后是 `InterpretStmt` 和 `InterpretExpr`:
+```ts
+type InterpretStmt<S extends Stmt, Env extends Environment> =
+    S extends ExprStmt
+        ? InterpretExprStmt<S, Env>
+        : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretExpr<E extends Expr, Env extends Environment> =
+    E extends LiteralExpr
+        ? InterpretExprSuccess<E['value'], Env>
+        : E extends GroupExpr
+            ? InterpretExpr<E['expression'], Env>
+            : E extends UnaryExpr
+                ? EvalUnaryExpr<E, Env>
+                : E extends BinaryExpr
+                    ? EvalBinaryExpr<E, Env>
+                    : RuntimeError<`Unknown expression type: ${E['type']}`>;
+```
+
+`InterpretExprStmt`:
+```ts
+type InterpretExprStmt<
+    S extends ExprStmt,
+    Env extends Environment,
+    R = InterpretExpr<S['expression'], Env>
+> =
+    R extends InterpretExprSuccess<infer V, infer Env>
+        ? InterpretStmtSuccess<V, Env>
+        : R; // error
+```
+
+参考以上，其他函数的修改你应该不会有问题了。接下来我们就来完成 type 版的 `VarStmt` 执行函数：
+```ts
+type InterpretVarStmt<
+    S extends VarStmt,
+    Env extends Environment,
+    Initializer = S['initializer']
+> = Initializer extends Expr
+    ? InterpretExpr<Initializer, Env> extends infer EV
+        ? EV extends InterpretExprSuccess<infer V, infer Env>
+            ? WrapVarStmtResult<V, EnvDefine<Env, S['name']['lexeme'], V>>
+            : EV // error
+        : NoWay<'InterpretVarStmt'>
+    : WrapVarStmtResult<null, EnvDefine<Env, S['name']['lexeme'], null>>;
+
+type WrapVarStmtResult<V extends ValueType, Env> = Env extends Environment
+    ? InterpretStmtSuccess<V, Env>
+    : Env; // error
+```
+
+当然别忘记了，`InterpretStmt` 要修改一下，调用 `InterpretVarStmt`:
+```ts
+type InterpretStmt<S extends Stmt, Env extends Environment> =
+    S extends VarStmt
+        ? InterpretVarStmt<S, Env>
+        : S extends ExprStmt
+            ? InterpretExprStmt<S, Env>
+            : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+```
+终于完成了声明变量的执行代码了😀。可是现在我们还不能跑起来耍耍，因为没有使用变量的地方，我们看不到效果，除非 debug。对于 ts 版还好说，type 版是没法 debug 的。所以接下来我们就来完成对变量赋值以及表达式中引用变量的支持。
+
 
 ##### 2.2.5.4 变量表达式和赋值表达式
 ##### 2.2.5.5 作用域
