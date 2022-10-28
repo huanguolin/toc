@@ -10,18 +10,22 @@ import { Identifier, Match, TokenLike } from "./utils";
 export type ParseStmtError<M extends string> = ErrorResult<`[ParseStmtError]: ${M}`>;
 export type ParseStmtSuccess<R extends Stmt, T extends Token[]> = SuccessResult<{ stmt: R, rest: T }>;
 
-export type ParseStmt<Tokens extends Token[]> =
+
+export type ParseDecl<Tokens extends Token[]> =
     Tokens extends Match<TokenLike<'var'>, infer Rest>
         ? ParseVarStmt<Rest>
-        : Tokens extends Match<TokenLike<'{'>, infer Rest>
-            ? ParseBlockStmt<Rest>
-            : Tokens extends Match<TokenLike<'if'>, infer Rest>
-                ? ParseIfStmt<Rest>
-                : Tokens extends Match<TokenLike<'fun'>, infer Rest>
-                    ? ParseFunStmt<Rest>
-                    : Tokens extends Match<TokenLike<'for'>, infer Rest>
-                        ? ParseForStmt<Rest>
-                        : ParseExprStmt<Tokens>;
+        : Tokens extends Match<TokenLike<'fun'>, infer Rest>
+            ? ParseFunStmt<Rest>
+            : ParseStmt<Tokens>;
+
+type ParseStmt<Tokens extends Token[]> =
+    Tokens extends Match<TokenLike<'{'>, infer Rest>
+        ? ParseBlockStmt<Rest>
+        : Tokens extends Match<TokenLike<'if'>, infer Rest>
+            ? ParseIfStmt<Rest>
+            : Tokens extends Match<TokenLike<'for'>, infer Rest>
+                ? ParseForStmt<Rest>
+                : ParseExprStmt<Tokens>;
 
 type ParseForStmt<
     Tokens extends Token[],
@@ -141,7 +145,7 @@ type ParseBlockStmt<
     ? ParseStmtError<'Expect "}" close block statement.'>
     : Tokens extends Match<TokenLike<'}'>, infer Rest>
         ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Rest>
-        : ParseBlockStmtBody<ParseStmt<Tokens>, Stmts>;
+        : ParseBlockStmtBody<ParseDecl<Tokens>, Stmts>;
 type ParseBlockStmtBody<SR, Stmts extends Stmt[]> =
     SR extends ParseStmtSuccess<infer S, infer R>
         ? ParseBlockStmt<R, Push<Stmts, S>>
