@@ -2589,6 +2589,201 @@ type InterpretStmt<S extends Stmt, Env extends Environment> =
 
 
 ##### 2.2.5.4 变量表达式和赋值表达式
+
+前面我们做表达式的语法分析时，有一个优先级列表。现在我们加入这两种新的表达式：
+```ts
+// 表达式按照优先级由低到高：
+// assign:      =                   右结合            <-- 新增
+// logic or:    ||                  左结合
+// logic and:   &&                  左结合
+// equality:    == !=               左结合
+// relation:    < > <= >=           左结合
+// additive:    + -                 左结合
+// factor:      * / %               左结合
+// unary:       !                   右结合
+// primary:     literal group identifier             <-- 新增 identifier
+```
+
+有了它我们直接按照之前套路来就可以了。我们先来看变量表达式。哈，变量表达式就是表达式是一个变量。举例 `var a = 2; a;`, 这里第二个语句的表达式就是一个变量表达式。
+
+先定义类型：
+```ts
+type ExprType =
+    | 'group'
+    | 'binary'
+    | 'unary'
+    | 'literal'
+    | 'assign' // <-- 新增
+    | 'variable'; // <-- 新增
+
+interface IExprVisitor<T> {
+    // ...
+    visitAssignExpr: (expr: AssignExpr) => T; // <-- 新增
+    visitVariableExpr: (expr: VariableExpr) => T; // <-- 新增
+}
+
+class VariableExpr implements IExpr {
+    type: ExprType = 'variable';
+    name: Token;
+
+    constructor(name: Token) {
+        this.name = name;
+    }
+
+    accept<R>(visitor: IExprVisitor<R>): R {
+        return visitor.visitVariableExpr(this);
+    }
+}
+```
+
+同步定义 type 版：
+```ts
+// ExprType 和 ts 版一样
+
+interface VariableExpr extends Expr {
+    type: 'variable';
+    name: Identifier;
+}
+
+interface BuildVariableExpr<T extends Identifier> extends VariableExpr {
+    name: T;
+}
+```
+
+接下来是语法分析，先 ts 版：
+```ts
+class Parser {
+    // ...
+
+    private primary(): LiteralExpr() {
+        if (this.match('number')) {
+            return new LiteralExpr(this.previous().literal as number);
+        } else if (this.match('true', 'false', 'null')) {
+            const type = this.previous().type;
+            if (type === 'null') {
+                return new LiteralExpr(null);
+            }
+            return new LiteralExpr(type === 'true');
+        } else if (this.match('string')) {
+            return new LiteralExpr(this.previous().lexeme);
+        } else if (this.match('identifier')) { // <-- 新增
+            return new VariableExpr(this.previous()); // <-- 新增
+        } else if (this.match('(')) {
+            const expr = this.expression(); // 注意这里递归调用了 expression()
+            this.consume(')', 'Expect ")" after expression.');
+            return new GroupExpr(expr);
+        }
+
+        throw new ParseError(`Expect expression, but got token: ${this.current().lexeme}.`);
+    }
+
+    // ...
+}
+```
+
+type 版：
+```ts
+type ParsePrimary<Tokens extends Token[]> =
+    Tokens extends Match<infer E extends Token, infer R>
+        ? E extends { type: 'number', value: infer V extends number }
+            ? ParseExprSuccess<BuildLiteralExpr<V>, R>
+            : E extends { type: 'string', lexeme: infer V extends string }
+                ? ParseExprSuccess<BuildLiteralExpr<V>, R>
+                : E extends { type: infer B extends keyof Keywords }
+                    ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
+                    : E extends Identifier // <-- 新增
+                        ? ParseExprSuccess<BuildVariableExpr<E>, R> // <-- 新增
+                        : E extends TokenLike<'('>
+                            ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
+                                ? RG extends Match<TokenLike<')'>, infer Rest>
+                                    ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
+                                    : ParseExprError<`Group not match ')'.`>
+                                : ParseExprError<`Parse Group expression fail.`>
+                            : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
+        : ParseExprError<`ParsePrimary fail`>;
+```
+
+好了，现在来支持赋值表达式。先定义类型，
+ts 版本：
+```ts
+class AssignExpr implements IExpr {
+    type: ExprType = 'assign';
+    varName: Token;
+    right: IExpr;
+
+    constructor(varName: Token, right: IExpr) {
+        this.varName = varName;
+        this.right = right;
+    }
+
+    accept<R>(visitor: IExprVisitor<R>): R {
+        return visitor.visitAssignExpr(this);
+    }
+}
+```
+type 版本：
+```ts
+interface AssignExpr extends Expr {
+    type: 'assign';
+    varName: Token;
+    right: Expr;
+}
+
+interface BuildAssignExpr<N extends Identifier, E extends Expr> extends AssignExpr {
+    varName: N;
+    right: E;
+}
+```
+
+下面进行语法分析。它的优先级最低，所以表达式起始就调用它，它再调用逻辑或函数。它的结合性是右结合，和逻辑反 `!` 一样，所以可以直接抄代码😀：
+```ts
+class Parser {
+    // ...
+
+    private expression(): IExpr {
+        return this.assign();
+    }
+
+    private assign(): IExpr {
+        const left = this.logicOr();
+        if (this.match('=')) {
+            const right = this.assign();
+
+            if (left instanceof VariableExpr) {
+                return new AssignExpr(left.name, right);
+            }
+
+            throw new ParseError('Invalid assignment target.');
+        }
+        return left;
+    }
+
+    // ...
+}
+```
+
+同理，type 版的代码：
+```ts
+type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
+
+type ParseAssign<Tokens extends Token[], R = ParseLogicOr<Tokens>> =
+    R extends ParseExprSuccess<infer Left, infer Rest>
+        ? ParseAssignBody<Left, Rest>
+        : R; // error
+
+type ParseAssignBody<Left extends Expr, Tokens extends Token[]> =
+Tokens extends Match<TokenLike<'='>, infer Rest>
+    ? ParseAssign<Rest> extends ParseExprSuccess<infer Right, infer Rest>
+        ? Left extends VariableExpr
+            ? ParseExprSuccess<BuildAssignExpr<Left['name'], Right>, Rest>
+            : ParseExprError<`Invalid assignment target: ${Left['type']}}`>
+        : ParseExprError<`Parse right of assign variable fail: ${Rest[0]['lexeme']}`>
+    : ParseExprSuccess<Left, Tokens>;
+```
+
+哈！现在可以开始"耍"(玩)变量了😀。
+
+
 ##### 2.2.5.5 作用域
 ##### 2.2.5.6 block 语句
 ##### 2.2.5.7 if 语句
