@@ -324,7 +324,9 @@ type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 > [auto_gen()]()
 
 尾递归与非尾递归的区别就是函数返回时，是直接一个函数调用，还是函数调用夹在一个表达式中。
-[尾递归优化](https://stackoverflow.com/questions/310974/what-is-tail-call-optimization)，是通过复用一个函数调用栈来避免爆栈。在 ts 中也是有这样的优化。你跳到上面的在线体验示例，会发现 `? [V, ...PreOrderTraverse<L>, ...PreOrderTraverse<R>]` 这一行，ts 有 error 提示：`Type instantiation is excessively deep and possibly infinite.(2589)`
+[尾递归优化](https://stackoverflow.com/questions/310974/what-is-tail-call-optimization)，是通过复用一个函数调用栈来避免爆栈。在 ts 中也是有这样的优化。你跳到上面的在线体验示例，会发现 `? [V, ...PreOrderTraverse<L>, ...PreOrderTraverse<R>]` 这一行，ts 有 error 提示：
+
+`Type instantiation is excessively deep and possibly infinite.(2589)`
 
 为什么呢？就如提示所说：类型实例化的深度过大，可能是无限的。ts 需要在我们写代码时，进行实时代码提示和纠错。过于复杂的类型势必会拖累这个过程，造成不可接受的用户体验下降。所以 ts 不仅要避免爆栈，而且还要计算速度。早期版本对递归深度的限制是 50 层。在 [4.5](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5/#tailrec-conditional) 时做了优化，提高到 100 层，如果是尾递归则提高到 1000 层。基于此，我们可以实现比以前更复杂的体操。
 
@@ -416,7 +418,11 @@ type test_mul_3 = Mul<9, 0>; // 0
 ```
 > [auto_gen(Mul_beta)](Add)
 
-不过 `Add<A, N1>` 这里提示 `Type 'Add<A, N1>' does not satisfy the constraint 'number'.(2344)`。意思是它的结果不是永远都能得到 `number`, 所以不安全。这里应该是可能输出 `never` 或者 `any` 的情况，这很极端，我们一般使用一个类似断言的工具函数来处理这个问题：
+不过 `Add<A, N1>` 这里提示:
+
+`Type 'Add<A, N1>' does not satisfy the constraint 'number'.(2344)`。
+
+意思是它的结果不是永远都能得到 `number`, 所以不安全。这里应该是可能输出 `never` 或者 `any` 的情况，这很极端，我们一般使用一个类似断言的工具函数来处理这个问题：
 
 ```ts
 type Safe<T, Type, Default extends Type = Type> = T extends Type ? T : Default;
@@ -442,7 +448,7 @@ type test_mul_1 = Mul<11, 3>; // 33
 type test_mul_2 = Mul<8, 9>; // 72
 type test_mul_3 = Mul<9, 0>; // 0
 ```
-> [auto_gen(Mul)](Add, Safe)
+> [auto_gen(Mul)](Add,Safe)
 
 接下来该除法了。思路是类似的，直接看代码：
 ```ts
@@ -462,7 +468,7 @@ type test_div_1 = Div<12, 3>; // 4
 type test_div_2 = Div<8, 9>; // 0
 type test_div_3 = Div<100, 33>; // 3
 ```
-> [auto_gen(Div_beta)](Sub, Safe, Add)
+> [auto_gen(Div_beta)](Sub,Safe,Add)
 
 跑起来看看，啊！`test2`, `test3` 的值怎么是 `1` 和 `4`， 不是我们期待的 `0` 和 `3`。原因在于像，`8 / 9` 这种情况，我们无法分辨出 `8 - 9` 和 `8 - 8` 这样的区别。如果能分辨大小就好办了。
 
