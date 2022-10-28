@@ -2388,7 +2388,8 @@ class VarStmt implements IStmt {
 }
 ```
 
-声明变量时，初始化是可选的。语法分析时，只有“看”到 `=` 后，才会解析初始化表达式：
+
+语法分析时，和表达式那边有优先级不同。这里要进入变量表达式的解析函数，需要前看是否是 `var` 关键字，如果是的话必然是变量声明。
 ```ts
 class Parser {
     // ...
@@ -2399,6 +2400,20 @@ class Parser {
         }
         return this.expressionStatement();
     }
+
+    private varDeclaration() {
+        // TODO
+    }
+
+    // ...
+}
+```
+
+
+再看 `varDeclaration`的具体实现。声明变量时，初始化是可选的。只有“看”到 `=` 后，才会解析初始化表达式：
+```ts
+class Parser {
+    // ...
 
     private varDeclaration() {
         this.consume('identifier', `Expect var name.`);
@@ -2414,6 +2429,7 @@ class Parser {
     // ...
 }
 ```
+
 
 有了表达式的历练，现在这些看起来都很简单，对吧😂。
 
@@ -2774,8 +2790,10 @@ class Parser {
             return new LiteralExpr(type === 'true');
         } else if (this.match('string')) {
             return new LiteralExpr(this.previous().lexeme);
-        } else if (this.match('identifier')) { // <-- 新增
-            return new VariableExpr(this.previous()); // <-- 新增
+        // 新增开始
+        } else if (this.match('identifier')) {
+            return new VariableExpr(this.previous());
+        // 新增结束
         } else if (this.match('(')) {
             const expr = this.expression(); // 注意这里递归调用了 expression()
             this.consume(')', 'Expect ")" after expression.');
@@ -2800,8 +2818,10 @@ type ParsePrimary<Tokens extends Token[]> =
                 ? ParseExprSuccess<BuildLiteralExpr<V>, R>
                 : E extends { type: infer B extends keyof Keywords }
                     ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
-                    : E extends Identifier // <-- 新增
-                        ? ParseExprSuccess<BuildVariableExpr<E>, R> // <-- 新增
+                    // 新增开始
+                    : E extends Identifier
+                        ? ParseExprSuccess<BuildVariableExpr<E>, R>
+                    // 新增结束
                         : E extends TokenLike<'('>
                             ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
                                 ? RG extends Match<TokenLike<')'>, infer Rest>
@@ -2899,7 +2919,229 @@ Tokens extends Match<TokenLike<'='>, infer Rest>
 
 
 ##### 2.2.5.5 作用域
+
+我们下一个要实现的是块语句。它有一个重要的特点就是变量覆盖。什么意思呢？请看下面的例子：
+```ts
+var a = 1;
+{
+    var a = "abc";
+    a; // "abc"
+
+    {
+        var a = false;
+        a; // false
+
+        a = 6;
+        a; // 6
+    }
+
+    a; // "abc"
+}
+a; // 1
+```
+
+上面的代码大家已经司空见惯了。变量覆盖就是子作用域的变量屏蔽了父作用域的同名变量。那怎么实现这个效果呢？每个语句块都是一个新的作用域，作用域的实现其实就是环境。
+
+只不过当前，我们的 `Environment` 没有父子嵌套的情况。现在我们就来支持它，只需要添加一个指向父环境的变量即可。最外面的环境的父环境为 `null`, 这里我把指向父环境的变量命名为 `outer`（我把父环境称为外部环境而已😀）:
+```ts
+class Environment {
+    private store: Map<string, ValueType>;
+    private outer: Environment | null;
+
+    constructor(env: Environment | null) {
+        this.store = new Map<string, ValueType>();
+        this.outer = env;
+    }
+
+    // ...
+}
+```
+
+
+同时，对外提供的 api 都要做一些调整。但 `define` 不用，因为定义只用关注当前作用域。`get` 在当前作用域找不到，就向外环境找。`assign` 也是一样：
+```ts
+class Environment {
+    // ...
+
+    get(name: Token): ValueType {
+        let v = this.store.get(name.lexeme);
+        // 新增开始
+        if (v === undefined && this.outer) {
+            v = this.outer.get(name);
+        }
+        // 新增结束
+
+        if (v === undefined) {
+            throw new RuntimeError(`Undefined variable '${name.lexeme}'.`);
+        }
+
+        return v;
+    }
+
+    assign(name: Token, value: ValueType) {
+        if (this.store.has(name.lexeme)) {
+            this.store.set(name.lexeme, value);
+            return;
+        }
+
+        // 新增开始
+        if (this.outer) {
+            this.outer.assign(name, value);
+            return;
+        }
+        // 新增结束
+
+        throw new RuntimeError(`Undefined variable '${name.lexeme}'.`);
+    }
+}
+```
+
+
+type 版， 也是一样。先添加指向外围环境的常量：
+```ts
+interface Environment {
+    store: TocMap;
+    outer: Environment | null; // <-- 新增
+}
+
+export interface BuildEnv<
+    Initializer extends TocMap = {},
+    Outer extends Environment | null = null, // <-- 新增
+> extends Environment {
+    store: Initializer;
+    outer: Outer; // <-- 新增
+}
+```
+
+
+再修改 `EnvGet` 和 `EnvAssign` 的实现：
+```ts
+type EnvGet<
+    Env extends Environment,
+    Key extends string,
+    Store extends TocMap = Env['store'],
+    Outer = Env['outer'],
+> = MapHas<Store, Key> extends true
+    ? MapGet<Store, Key>
+    // 新增开始
+    : Outer extends Environment
+        ? EnvGet<Outer, Key>
+    // 新增结束
+        : RuntimeError<`Undefined variable '${Key}'.`>;
+
+type EnvAssign<
+    Env extends Environment,
+    Key extends string,
+    Value extends ValueType,
+    Store extends TocMap = Env['store'],
+    Outer extends Environment | null = Env['outer'],
+> = MapHas<Store, Key> extends true
+    ? BuildEnv<MapSet<Store, Key, Value>, Outer>
+    // 新增开始
+    : Outer extends Environment
+        ? EnvAssign<Outer, Key, Value> extends infer NewOuter
+            ? NewOuter extends Environment
+                ? BuildEnv<Store, NewOuter>
+                : NewOuter // error
+            : NoWay<'EnvAssign'>
+    // 新增结束
+        : RuntimeError<`Undefined variable '${Key}'.`>;
+```
+
+
+最后别忘了，创建修改初始 `Environment` 时，需要传一个 `outer` 参数，由于是最外层，所以直接给 `null` 值。
+
+
 ##### 2.2.5.6 block 语句
+
+现在我们可以开始实现块语句的语法分析了。首先来定义类型, ts 版：
+```ts
+class BlockStmt implements IStmt {
+    type: 'block' = 'block';
+    stmts: IStmt[];
+
+    constructor(stmts: IStmt[]) {
+        this.stmts = stmts;
+    }
+
+    accept<R>(visitor: IStmtVisitor<R>): R {
+        return visitor.visitBlockStmt(this);
+    }
+}
+```
+
+
+type 版：
+```ts
+interface BlockStmt extends Stmt {
+    type: 'block';
+    stmts: Stmt[];
+}
+
+interface BuildBlockStmt<Stmts extends Stmt[]> extends BlockStmt {
+    stmts: Stmts;
+}
+```
+
+
+现在来看语法分析代码。ts 版：
+```ts
+class Parser {
+    // ...
+
+    private statement(): IStmt {
+        if (this.match('var')) {
+            return this.varDeclaration();
+        } else if (this.match('{')) {
+            return this.blockStatement();
+        }
+        return this.expressionStatement();
+    }
+
+    private blockStatement(): BlockStmt {
+        const stmts: IStmt[] = [];
+        while(!this.isAtEnd() && !this.match('}')) {
+            stmts.push(this.statement());
+        }
+
+        if (this.previous().type !== '}') {
+            throw new ParseError('Expect "}" end the block.');
+        }
+
+        return new BlockStmt(stmts);
+    }
+
+    // ...
+}
+```
+
+
+type 版：
+```ts
+type ParseStmt<Tokens extends Token[]> =
+    Tokens extends Match<TokenLike<'var'>, infer Rest>
+        ? ParseVarStmt<Rest>
+        : Tokens extends Match<TokenLike<'{'>, infer Rest>
+            ? ParseBlockStmt<Rest>
+            : ParseExprStmt<Tokens>;
+
+type ParseBlockStmt<
+    Tokens extends Token[],
+    Stmts extends Stmt[] = [],
+> = Tokens extends [EOF]
+    ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Tokens>
+    : Tokens extends Match<TokenLike<'}'>, infer Rest>
+        ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Rest>
+        : ParseBlockStmtBody<ParseStmt<Tokens>, Stmts>;
+
+type ParseBlockStmtBody<SR, Stmts extends Stmt[]> =
+    SR extends ParseStmtSuccess<infer S, infer R>
+        ? ParseBlockStmt<R, Push<Stmts, S>>
+        : SR; // error
+```
+
+
+
 ##### 2.2.5.7 if 语句
 ##### 2.2.5.8 for 语句
 
