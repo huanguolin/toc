@@ -138,7 +138,7 @@ type ParseBlockStmt<
     Tokens extends Token[],
     Stmts extends Stmt[] = [],
 > = Tokens extends [EOF]
-    ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Tokens>
+    ? ParseStmtError<'Expect "}" close block statement.'>
     : Tokens extends Match<TokenLike<'}'>, infer Rest>
         ? ParseStmtSuccess<BuildBlockStmt<Stmts>, Rest>
         : ParseBlockStmtBody<ParseStmt<Tokens>, Stmts>;

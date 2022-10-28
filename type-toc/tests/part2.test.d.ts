@@ -21,6 +21,8 @@ type cases = [
         var c = b + 12;
     `>, 16>>,
     Expect<Equal<Toc<`{}`>, null>>,
+    // @ts-expect-error require '}' to close block statement.
+    Expect<Equal<Toc<`{`>, null>>,
 
     // if statement
     Expect<Equal<Toc<`
