@@ -3323,6 +3323,290 @@ type InterpretIfStmt<
 
 ##### 2.2.5.8 for 语句
 
+`for` 语句有着比 `if` 语句更多语法细节。这意味着，它在语法分析时会更麻烦一些。我们先来看看类型定义：
+```ts
+class ForStmt implements IStmt {
+    type: 'for' = 'for';
+    initializer: IStmt | null;
+    condition: IExpr | null;
+    increment: IExpr | null;
+    body: IStmt;
+
+    constructor(
+        initializer: IStmt | null,
+        condition: IExpr | null,
+        increment: IExpr | null,
+        body: IStmt) {
+        this.initializer = initializer;
+        this.condition = condition;
+        this.increment = increment;
+        this.body = body;
+    }
+
+    accept<R>(visitor: IStmtVisitor<R>): R {
+        return visitor.visitForStmt(this);
+    }
+}
+```
+
+type 版：
+```ts
+interface ForStmt extends Stmt {
+    type: 'for';
+    initializer: Stmt | null;
+    condition: Expr | null;
+    increment: Expr | null;
+    body: Stmt;
+}
+
+interface BuildForStmt<
+    Initializer extends Stmt | null,
+    Condition extends Expr | null,
+    Increment extends Expr | null,
+    Body extends Stmt,
+> extends ForStmt {
+    initializer: Initializer;
+    condition: Condition;
+    increment: Increment;
+    body: Body;
+}
+```
+
+接下来是语法分析：
+```ts
+class Parser {
+    // ...
+
+    private statement(): IStmt {
+        if (this.match('{')) {
+            return this.blockStatement();
+        } else if (this.match('if')) {
+            return this.ifStatement();
+        // 新增开始
+        } else if (this.match('for')) {
+            return this.forStatement();
+        // 新增结束
+        }
+        return this.expressionStatement();
+    }
+
+    private forStatement() {
+        this.consume('(', 'Expect "(" after for keyword.');
+
+        let initializer: IStmt | null;
+        if (this.match(';')) {
+            initializer = null;
+        } else if (this.match('var')) {
+            initializer = this.varDeclaration();
+        } else {
+            initializer = this.expressionStatement();
+        }
+
+        let condition: IExpr | null;
+        if (this.match(';')) {
+            condition = null;
+        } else {
+            condition = this.expression();
+            this.consume(';', 'Expect ";" after for condition.');
+        }
+
+        let increment: IExpr | null;
+        if (this.match(')')) {
+            increment = null;
+        } else {
+            increment = this.expression();
+            this.consume(')', 'Expect ")" after for increment.');
+        }
+
+        const body = this.statement();
+        return new ForStmt(initializer, condition, increment, body);
+    }
+
+    // ...
+}
+```
+
+我们可以看到，这个比 `if` 语句要长一些。可以预见 type 版本会比较长。好在这里比较好拆分为更小的函数，这样看起来不至于很“爆炸”：
+```ts
+type ParseStmt<Tokens extends Token[]> =
+    Tokens extends Match<TokenLike<'{'>, infer Rest>
+        ? ParseBlockStmt<Rest>
+        : Tokens extends Match<TokenLike<'if'>, infer Rest>
+            ? ParseIfStmt<Rest>
+            // 新增开始
+            : Tokens extends Match<TokenLike<'for'>, infer Rest>
+                ? ParseForStmt<Rest>
+                // 新增结束
+                : ParseExprStmt<Tokens>;
+
+
+type ParseForStmt<
+    Tokens extends Token[],
+> = Tokens extends Match<TokenLike<'('>, infer Rest>
+    ? Rest extends Match<TokenLike<';'>, infer Rest>
+        ? ParseForStmtFromCondition<Rest, null>
+        : Rest extends Match<TokenLike<'var'>, infer Rest>
+            ? ParseForStmtFromInitializerResult<ParseVarStmt<Rest>>
+            : ParseForStmtFromInitializerResult<ParseExprStmt<Rest>>
+    : ParseStmtError<'Expect "(" after for keyword.'>;
+
+type ParseForStmtFromInitializerResult<IR> =
+    IR extends ParseStmtSuccess<infer Initializer, infer Rest>
+        ? ParseForStmtFromCondition<Rest, Initializer>
+        : IR; // error
+
+type ParseForStmtFromCondition<
+    Tokens extends Token[],
+    Initializer extends Stmt | null,
+> = Tokens extends Match<TokenLike<';'>, infer Rest>
+    ? ParseForStmtFromIncrement<Rest, Initializer, null>
+    : ParseExpr<Tokens> extends infer CR
+        ? CR extends ParseExprSuccess<infer Condition, infer Rest>
+            ? Rest extends Match<TokenLike<';'>, infer Rest>
+                ? ParseForStmtFromIncrement<Rest, Initializer, Condition>
+                : ParseStmtError<'Expect ";" after for condition.'>
+            : CR // error
+        : NoWay<'ParseForStmtFromCondition'>
+
+type ParseForStmtFromIncrement<
+    Tokens extends Token[],
+    Initializer extends Stmt | null,
+    Condition extends Expr | null,
+> = Tokens extends Match<TokenLike<')'>, infer Rest>
+    ? ParseForStmtFromBody<Rest, Initializer, Condition, null>
+    : ParseExpr<Tokens> extends infer IR
+        ? IR extends ParseExprSuccess<infer Increment, infer Rest>
+            ? Rest extends Match<TokenLike<')'>, infer Rest>
+                ? ParseForStmtFromBody<Rest, Initializer, Condition, Increment>
+                : ParseStmtError<'Expect ")" after for increment.'>
+            : IR // error
+        : NoWay<'ParseForStmtFromIncrement'>;
+
+type ParseForStmtFromBody<
+    Tokens extends Token[],
+    Initializer extends Stmt | null,
+    Condition extends Expr | null,
+    Increment extends Expr | null,
+    BR = ParseStmt<Tokens>,
+> = BR extends ParseStmtSuccess<infer Body, infer Rest>
+    ? ParseStmtSuccess<BuildForStmt<Initializer, Condition, Increment, Body>, Rest>
+    : BR; // error
+```
+
+现在开始编写执行代码：
+```ts
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    // ...
+
+    visitForStmt(stmt: ForStmt): ValueType {
+        const previousEnv = this.environment;
+        this.environment = new Environment(this.environment);
+
+        if (stmt.initializer) {
+            stmt.initializer.accept(this);
+        }
+
+        let conditionResult: ValueType = true;
+        if (stmt.condition) {
+            conditionResult = stmt.condition.accept(this);
+        }
+
+        let result: ValueType = null;
+        while (conditionResult) {
+            result = stmt.body.accept(this);
+            if (stmt.increment) {
+                stmt.increment.accept(this);
+            }
+            if (stmt.condition) {
+                conditionResult = stmt.condition.accept(this);
+            }
+        }
+
+        this.environment = previousEnv;
+        return result;
+    }
+
+    // ...
+}
+```
+`for` 语句有类似 `block` 语句需要新建环境的问题。所以在 type 版本中，要注意这方面的正确处理：
+```ts
+type InterpretStmt<S extends Stmt, Env extends Environment> =
+    S extends VarStmt
+        ? InterpretVarStmt<S, Env>
+        : S extends ExprStmt
+            ? InterpretExprStmt<S, Env>
+            : S extends BlockStmt
+                ? InterpretBlockStmt<S['stmts'], BuildEnv<{}, Env>>
+                : S extends IfStmt
+                    ? InterpretIfStmt<S, Env>
+                    // 新增开始
+                    : S extends ForStmt
+                        ? InterpretForStmt<S, BuildEnv<{}, Env>>
+                        // 新增结束
+                        : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretForStmt<
+    S extends ForStmt,
+    NewEnv extends Environment,
+> = S['initializer'] extends Stmt
+    ? InterpretStmt<S['initializer'], NewEnv> extends infer IR
+        ? IR extends InterpretStmtSuccess<infer IV, infer NewEnv>
+            ? InterpretForStmtFromCondition<S, NewEnv>
+            : IR // error
+        : NoWay<'InterpretForStmt'>
+    : InterpretForStmtFromCondition<S, NewEnv>;
+
+type InterpretForStmtFromCondition<
+    S extends ForStmt,
+    NewEnv extends Environment,
+    BV extends ValueType = null,
+> = S['condition'] extends Expr
+    ? InterpretExpr<S['condition'], NewEnv> extends infer CR
+        ? CR extends InterpretExprSuccess<infer CV, infer NewEnv>
+            ? InterpretForStmtFromConditionValue<S, NewEnv, CV, BV>
+            : CR // error
+        : NoWay<'InterpretForStmtFromCondition-InterpretExpr'>
+    : InterpretForStmtFromConditionValue<S, NewEnv, true, BV>;
+
+type InterpretForStmtFromConditionValue<
+    S extends ForStmt,
+    NewEnv extends Environment,
+    CV extends ValueType,
+    BV extends ValueType = null,
+> = IsTrue<CV> extends true
+    ?  InterpretStmt<S['body'], NewEnv> extends infer BR
+        ? BR extends InterpretStmtSuccess<infer BV, infer NewEnv>
+            ? S['increment'] extends Expr
+                ? InterpretExpr<S['increment'], NewEnv> extends infer IR
+                    ? IR extends InterpretExprSuccess<infer IV, infer NewEnv>
+                        ? InterpretForStmtFromCondition<S, NewEnv, BV>
+                        : IR // error
+                    : NoWay<'InterpretForStmtFromConditionValue-Increment'>
+                : InterpretForStmtFromCondition<S, NewEnv, BV>
+            : BR // error
+        : NoWay<'InterpretForStmtFromConditionValue-Body'>
+    : InterpretStmtSuccess<BV, Safe<NewEnv['outer'], Environment>>;
+```
+哈！我们艰难的完成 `for` 语句。至此我们的 `Toc` 解释器已经[图灵完备](https://en.wikipedia.org/wiki/Turing_completeness)了。拥有了分支和循环，我们的 `Toc` 程序从理论上就可求解任何[可计算问题](https://en.wikipedia.org/wiki/Computable_function)。现实的情况是，`ts-toc` 的确可以。但 `type-toc` 却不行。为什么呢？我在前面讲类型系统中的递归时，提到过，类型系统中的递归是有最大深度限制的。这意味者一个比较耗时的计算问题，是无法在这种有限的“时间”下完成的。现在你可以去试试，`type-toc` 写的 `for` 循环能循环多少次？我自己编写了一个简单的测试，如下：
+```ts
+type Result = Toc<`
+    var x = 0;
+    var i = 1;
+    for (; i < 5; i=i+1)
+        x = x + i;
+`>
+```
+
+当我把 `i < 5` 改为 `i < 6` 就会提示：
+
+`Type instantiation is excessively deep and possibly infinite.ts(2589)`
+
+😂确实很遗憾！不过我们至少验证了我们的想法——ts 的类型系统是可以实现解释器的。或许在未来，随着 ts 编译器的不断改善，这种限制会逐渐减小。或者作为的读者的你，有什么好的优化方法能改善当前的局面，也请随时告诉我，我很想知道😊！
+
+好了，我们修整后，就向本次的终点——函数出发。
+
+
 #### 2.2.6 函数
 ##### 2.2.6.1 函数语句
 ##### 2.2.6.2 call 表达式
