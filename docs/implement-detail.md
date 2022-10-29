@@ -42,7 +42,8 @@
         - [2.2.6.1 函数语句](#2261-函数语句)
         - [2.2.6.2 call 表达式](#2262-call-表达式)
       - [2.2.7 未尽事宜](#227-未尽事宜)
-    - [3. 总结](#3-总结)
+  - [3. 总结](#3-总结)
+  - [4. 参考](#4-参考)
 
 TypeScript 是 JavaScript 的超集，主要给 JavaScript 添加了静态类型检查，并且与之完全兼容。在运行时，类型完全擦除。正因为如此，TypeScript 类型系统极其强大，这样才能在维持 JavaScript 动态性，做快速开发的同时，做到更多的类型提示与错误检查。
 
@@ -3747,14 +3748,727 @@ type Result = Toc<`
 
 😂确实很遗憾！不过我们至少验证了我们的想法——ts 的类型系统是可以实现解释器的。或许在未来，随着 ts 编译器的不断改善，这种限制会逐渐减小。或者作为的读者的你，有什么好的优化方法能改善当前的局面，也请随时告诉我，我很想知道😊！
 
-好了，我们修整后，就向本次的终点——函数出发。
+好了，我们休整后，就向本次的终点——函数出发。
 
 
 #### 2.2.6 函数
+
+在此之前，虽然可以顺利编写程序，但却没办法复用代码。软件工程的核心之一就是 [Don't repeat yourself](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)。我把 `Toc` 的函数设计成 [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)，希望它有较强的抽象和表达能力。
+
 ##### 2.2.6.1 函数语句
+
+和前面一样，我们先来定义函数语句类型：
+```ts
+class FunStmt implements IStmt {
+    type: 'fun' = 'fun';
+    name: Token;
+    parameters: Token[];
+    body: BlockStmt;
+
+    constructor(name: Token, parameters: Token[], body: BlockStmt) {
+        this.name = name;
+        this.parameters = parameters;
+        this.body = body;
+    }
+
+    accept<R>(visitor: IStmtVisitor<R>): R {
+        return visitor.visitFunStmt(this);
+    }
+}
+```
+
+
+type 版：
+```ts
+interface FunStmt extends Stmt {
+    type: 'fun';
+    name: Token;
+    parameters: Token[];
+    body: BlockStmt;
+}
+
+interface BuildFunStmt<
+    Name extends Identifier,
+    Parameters extends Identifier[],
+    Body extends BlockStmt,
+> extends FunStmt {
+    name: Name;
+    parameters: Parameters;
+    body: Body;
+}
+```
+
+
+接下来是语法分析：
+```ts
+class Parser {
+    // ...
+
+    private declaration() {
+        if (this.match('var')) {
+            return this.varDeclaration();
+        } else if (this.match('fun')) {
+            return this.funDeclaration();
+        }
+
+        return this.statement();
+    }
+
+    private funDeclaration() {
+        this.consume('identifier', `Expect function name.`);
+        const name = this.previous();
+        this.consume('(', `Expect '(' after function name.`);
+        let params: Token[] = [];
+        if (!this.match(')')) {
+            params = this.parameters();
+            this.consume(')', `Expect ')' after function parameters.`);
+        }
+        this.consume('{', `Expect '{' before function body.`);
+        const body = this.blockStatement();
+        return new FunStmt(name, params, body);
+    }
+
+    private parameters(): Token[] {
+        const params: Token[] = [];
+        do {
+            this.consume('identifier', 'Expect parameter name.');
+            params.push(this.previous());
+        } while(this.match(','))
+        return params;
+    }
+
+    // ...
+}
+```
+
+
+type 版，由于函数的语法复杂一点，所以这里代码就要长不少：
+```ts
+type ParseDecl<Tokens extends Token[]> =
+    Tokens extends Match<TokenLike<'var'>, infer Rest>
+        ? ParseVarStmt<Rest>
+        // 新增开始
+        : Tokens extends Match<TokenLike<'fun'>, infer Rest>
+            ? ParseFunStmt<Rest>
+            // 新增结束
+            : ParseStmt<Tokens>;
+
+
+type ParseFunStmt<
+    Tokens extends Token[],
+> = Tokens extends Match<infer Name extends Identifier, infer Rest>
+    ? ParseFunParams<Rest> extends infer PR
+        ? PR extends Match<infer Params extends Identifier[], infer Rest>
+            ? Rest extends Match<TokenLike<'{'>, infer Rest>
+                ? ParseBlockStmt<Rest> extends infer BR
+                    ? BR extends ParseStmtSuccess<infer Body extends BlockStmt, infer Rest>
+                        ? ParseStmtSuccess<BuildFunStmt<Name, Params, Body>, Rest>
+                        : BR // error
+                    : NoWay<'ParseFunStmt-ParseBlockStmt'>
+                : PR // error
+            : ParseStmtError<`Expect '{' before function body.`>
+        : NoWay<'ParseFunStmt-ParseFunParams'>
+    : ParseStmtError<`Expect function name, but got: ${Tokens[0]['type']}`>;
+
+type ParseFunParams<
+    Tokens extends Token[],
+> = Tokens extends Match<TokenLike<'('>, infer Rest>
+    ? Rest extends Match<TokenLike<')'>, infer Rest>
+        ? [[], ...Rest]
+        : ParseFunParamsCore<Rest> extends infer PR
+            ? PR extends Match<infer Params extends Identifier[], infer Rest>
+                ? Rest extends Match<TokenLike<')'>, infer Rest>
+                    ? [Params, ...Rest]
+                    : ParseStmtError<`Expect ')', but got: ${Rest[0]['type']}`>
+                : PR // error
+            : NoWay<'ParseFunParams-ParseFunParamsCore'>
+    : ParseStmtError<`Expect '(', but got: ${Tokens[0]['type']}`>;
+
+type ParseFunParamsCore<
+    Tokens extends Token[],
+    Params extends Identifier[] = [],
+> = Tokens extends Match<infer P extends Identifier, infer Rest>
+    ? Rest extends Match<TokenLike<','>, infer Rest>
+        ? ParseFunParamsCore<Rest, Push<Params, P>>
+        : [Push<Params, P>, ...Rest]
+    : ParseStmtError<`Expect param name, but got: ${Tokens[0]['type']}`>;
+```
+
+
+该执行阶段了。前面的表达式计算或者其他语句执行，最终的结果都是基础数据类型。现在声明一个函数，那么赋给函数名这个变量的，将不再是一个基础类型了，而是一个函数对象。这个函数对象包含什么呢？首先，必然包含了 `FunStmt`， 因为 `FunStmt` 记录了函数的参数、函数体，没有这些信息就无法在函数调用时执行。这样就够了吗？我们的函数支持闭包，请看下面的例子：
+```ts
+var inc3;
+{
+    var n = 3;
+    fun inc(x) {
+        x + n;
+    }
+    inc3 = inc;
+}
+
+inc3(2);
+```
+
+`inc3(2)` 执行的结果是5, 它其实是调用的 `inc` 函数，`inc` 函数记住了它所处环境中变量 `n` 的值，或者说 `inc` 函数记住了它的环境。所以函数对象还应该包含一个函数所处的环境。
+
+```ts
+class FunObject {
+    private declaration: FunStmt;
+    private environment: Environment;
+
+    constructor(declaration: FunStmt, env: Environment) {
+        this.declaration = declaration;
+        this.environment = env;
+    }
+}
+```
+
+
+type 版：
+```ts
+type FunObject = {
+    declaration: FunStmt;
+    environment: Environment;
+};
+
+export type BuildFunObj<
+    D extends FunStmt,
+    E extends Environment,
+> = {
+    declaration: D,
+    environment: E,
+};
+```
+
+
+`FunObject` 已经定义出来了。但是还有个问题，我们刚说这个对象要赋给变量，那么我们需要修改 `ValueType` 了，就是说变量的值类型增加了，表达式中也可以包含函数对象类型来运算了：
+```ts
+type ValueType =
+    | FunObject
+    | string
+    | number
+    | boolean
+    | null;
+```
+
+这样和 `literal` 有关的两个地方需要修改，下面只列举 ts 版：
+```ts
+class LiteralExpr implements IExpr {
+    type: ExprType = 'literal';
+    value: Exclude<ValueType, FunObject>; // 修改
+
+    constructor(value: Exclude<ValueType, FunObject>) { // 修改
+        this.value = value;
+    }
+}
+
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    // ...
+
+    visitLiteralExpr(expr: LiteralExpr): Exclude<ValueType, FunObject> { // 修改
+        return expr.value;
+    }
+
+    // ...
+}
+```
+
+
+好了，现在我们来实现 `visitFunStmt` 函数：
+```ts
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    // ...
+
+    visitFunStmt(stmt: FunStmt): FunObject {
+        const funObj = new FunObject(stmt, this.environment);
+        this.environment.define(stmt.name, funObj);
+        return funObj;
+    }
+
+    // ...
+}
+```
+
+是不是很简单！在来看 type 版：
+
+```ts
+type InterpretStmt<S extends Stmt, Env extends Environment> =
+    S extends VarStmt
+        ? InterpretVarStmt<S, Env>
+        : S extends ExprStmt
+            ? InterpretExprStmt<S, Env>
+            : S extends BlockStmt
+                ? InterpretBlockStmt<S['stmts'], BuildEnv<{}, Env>>
+                : S extends IfStmt
+                    ? InterpretIfStmt<S, Env>
+                    // 新增开始
+                    : S extends FunStmt
+                        ? InterpretFunStmt<S, Env>
+                        // 新增结束
+                        : S extends ForStmt
+                            ? InterpretForStmt<S, BuildEnv<{}, Env>>
+                            : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
+
+type InterpretFunStmt<
+    S extends FunStmt,
+    Env extends Environment,
+    F extends FunObject = BuildFunObj<S, Env>,
+> = EnvDefine<Env, S['name']['lexeme'], F> extends infer NewEnv
+    ? NewEnv extends Environment
+        ? InterpretStmtSuccess<F, NewEnv>
+        : NewEnv // error
+    : NoWay<'InterpretFunStmt'>;
+```
+
+也很简单对不对！
+
+不过还有个问题，请看下面的代码：
+```ts
+fun a() {}
+a; // 这里输出什么呢？
+```
+
+你或许说输出函数对象呀！是的没错。但是给人“看”这个对象恐怕不太好，需要显示成一个便于人阅读的形式。所以要添加一个 `toString` 的函数，用来显示这是一个函数，包含它的名字和参数名列表。
+```ts
+class FunObject {
+    // ...
+
+    toString() {
+        const { name, parameters } = this.declaration;
+        const params = parameters.map(t => t.lexeme).join(', ');
+        return `<fun ${name.lexeme}(${params})>`;
+    }
+}
+```
+
+这样以后， ts-toc 输出到控制台时，就会自动调用 `toString` 方法。
+
+再来看看 type 版，也是添加一个 `toString` 方法：
+```ts
+type FunObjToString<
+    F extends FunObject,
+    D extends FunStmt = F['declaration']
+> = `<fun ${GetFunName<F>}(${ParamsToString<D['parameters']>})>`;
+
+type GetFunName<F extends FunObject> = F['declaration']['name']['lexeme'];
+
+type ParamsToString<
+    Params extends Token[],
+    Result extends string = '',
+> = Params extends [infer T extends Token, ...infer R extends Token[]]
+    ? ParamsToString<R, Combine<Result, T['lexeme']>>
+    : Result;
+type Combine<
+    A extends string,
+    B extends string,
+> = A extends ''
+    ? B
+    : `${A}, ${B}`;
+```
+
+这里要注意的是，type-toc 并不会自动调用这个函数，所以我们要修改 `Toc` 函数：
+```ts
+type Toc<Source extends string> =
+    Scan<Source> extends infer Tokens
+        ? Tokens extends Token[]
+            ? Parse<Tokens> extends infer Stmts
+                ? Stmts extends Stmt[]
+                    // 修改开始
+                    ? Interpret<Stmts> extends infer Value
+                        ? Value extends FunObject
+                            ? FunObjToString<Value>
+                            : Value
+                        : NoWay<'Toc-Interprets'>
+                        // 修改结束
+                    : Stmts // error
+                : NoWay<'Toc-Parse'>
+            : Tokens // error
+        : NoWay<'Toc-Scan'>;
+```
+
+
+好了，以上我们就完成了函数的声明语句。现在还差最后一步——函数调用。函数调用是一个表达式，接下来就来处理它。
+
+
 ##### 2.2.6.2 call 表达式
 
-#### 2.2.7 未尽事宜
-`return` 与 `break`
+要支持函数表达式，首先要加入这个类型：
+```ts
+type ExprType =
+    // ...
+    | 'call'; // <-- 新增
+```
 
-### 3. 总结
+
+函数调用时，主要有被调用者和函数参数（当然可空）。依此我们定义表达式类型：
+```ts
+class CallExpr implements IExpr {
+    type: ExprType = 'call';
+    callee: IExpr;
+    args: IExpr[];
+
+    constructor(callee: IExpr, args: IExpr[]) {
+        this.callee = callee;
+        this.args = args;
+    }
+
+    accept<R>(visitor: IExprVisitor<R>): R {
+        return visitor.visitCallExpr(this);
+    }
+}
+```
+
+
+type 版：
+```ts
+interface CallExpr extends Expr {
+    type: 'call';
+    callee: Expr;
+    arguments: Expr[];
+}
+
+interface BuildCallExpr<Callee extends Expr, Args extends Expr[]> extends CallExpr {
+    callee: Callee;
+    arguments: Args;
+}
+```
+
+
+接下来我们把函数调用加入到表达式优先级列表中：
+```ts
+// 表达式按照优先级由低到高：
+// logic or:    ||                  左结合
+// logic and:   &&                  左结合
+// equality:    == !=               左结合
+// relation:    < > <= >=           左结合
+// additive:    + -                 左结合
+// factor:      * / %               左结合
+// unary:       !                   右结合
+// call:        primary(arg?)       左结合        〈=== 新增
+// primary:     literal group
+```
+
+
+有了它，我就可以开始写语法分析的套路代码：
+```ts
+class Parser {
+    // ...
+
+    private unary(): IExpr {
+        if (this.match('!')) {
+            const operator = this.previous();
+            const expr = this.unary(); // 右结合
+            return new UnaryExpr(operator, expr);
+        }
+        return this.call(); // 替换一行
+    }
+
+    private call(): IExpr {
+        let expr = this.primary();
+        while (this.match('(')) {
+            let args: IExpr[] = [];
+            if (!this.match(')')) {
+                args = this.arguments();
+                this.consume(')', 'Expect ")" end fun call.');
+            }
+            expr = new CallExpr(expr, args);
+        }
+        return expr;
+    }
+
+    private arguments(): IExpr[] {
+        const args: IExpr[] = [];
+        do {
+            args.push(this.expression());
+        } while(this.match(','));
+        return args;
+    }
+
+    // ...
+}
+```
+
+
+下面是 type 版：
+```ts
+type ParseCall<Tokens extends Token[], CR = ParsePrimary<Tokens>> =
+    CR extends ParseExprSuccess<infer Callee, infer Rest>
+        ? Rest extends Match<TokenLike<'('>, infer Rest>
+            ? Rest extends Match<TokenLike<')'>, infer Rest>
+                ? ParseCall<Rest, ParseExprSuccess<BuildCallExpr<Callee, []>, Rest>>
+                : ParseArgs<Rest> extends infer AR
+                    ? AR extends ParseArgsSuccess<infer Args, infer Rest>
+                        ? Rest extends Match<TokenLike<')'>, infer Rest>
+                            ? ParseCall<Rest, ParseExprSuccess<BuildCallExpr<Callee, Args>, Rest>>
+                            : ParseExprError<'Expect ")" after call.'>
+                        : AR // error
+                    : NoWay<'ParseCall-ParseArgs'>
+            : CR // not match more '('
+        : CR; // error
+
+type ParseArgsSuccess<R extends Expr[], T extends Token[]> = SuccessResult<{ args: R, rest: T }>;
+type ParseArgs<Tokens extends Token[], Args extends Expr[] = []> =
+    ParseExpr<Tokens> extends infer AE
+        ? AE extends ParseExprSuccess<infer Arg, infer Rest>
+            ? Rest extends Match<TokenLike<','>, infer Rest>
+                ? ParseArgs<Rest, Push<Args, Arg>>
+                : ParseArgsSuccess<Push<Args, Arg>, Rest>
+            : AE // error
+        : NoWay<'ParseArgs-ParseExpr'>;
+```
+
+
+下面该处理执行了。`call` 表达式执行时，先要对参数进行求值，因为参数也是表达式。参数求值的过程中，环境是 `call` 表达式所处的环境。函数体执行的时候，新建了一个环境。要注意的是，这个新建环境的外部环境不是 `call` 表达式所处的环境，而是函数对象生成时所处的环境。这个环境存储在函数对象中。另外实参与形参的绑定，就是在新环境中。即按照形参列表来定义变量，变量的值是实参的值。函数体执行完成之后，环境要回到 `call` 表达式所处的环境。
+
+函数体执行的代码和块语句执行的代码高度相似，所以抽出一个 `executeBlock` 函数来复用：
+```ts
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    // ...
+
+    visitBlockStmt(blockStmt: BlockStmt): ValueType {
+        const result = this.executeBlock(blockStmt, new Environment(this.environment));
+        return result;
+    }
+
+    executeBlock(blockStmt: BlockStmt, env: Environment): ValueType {
+        const previousEnv = this.environment;
+
+        try {
+            this.environment = env;
+
+            let lastResult: ValueType = null;
+            for (const stmt of blockStmt.stmts) {
+                lastResult = stmt.accept(this);
+            }
+            return lastResult;
+        } finally {
+            this.environment = previousEnv;
+        }
+    }
+
+    // ...
+}
+```
+
+
+另外我们把函数执行的核心代码抽一个函数 `execute`， 放到 `FunObject` 中去，这样 `visitFunStmt` 就很简单了：
+```ts
+class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+    // ...
+
+    visitCallExpr(expr: CallExpr): ValueType {
+        const callee = expr.callee.accept(this);
+
+        // 只有函数对象才能被调用
+        if (callee instanceof FunObject) {
+            return callee.execute(expr.args, this);
+        }
+
+        throw new RuntimeError(`Callee must be a 'FunObject', but got: ${callee}(${typeof callee})`);
+    }
+
+    // ...
+}
+```
+
+
+最后我们看看 `execute` 的实现：
+```ts
+class FunObject {
+    // ...
+
+    execute(args: IExpr[], interpreter: Interpreter): ValueType {
+        if (args.length !== this.declaration.parameters.length) {
+            throw new RuntimeError('Arguments length not match parameters.');
+        }
+
+        const env = new Environment(this.environment);
+        const parameters = this.declaration.parameters;
+        for (let i = 0; i < args.length; i++) {
+            const argValue = args[i].accept(interpreter);
+            const param = parameters[i];
+            env.define(param, argValue);
+        }
+
+        return interpreter.executeBlock(this.declaration.body, env);
+    }
+
+    // ...
+}
+```
+
+
+以上，ts-toc 就完成了。
+
+下面来看 type 版, 先要修改 `InterpretExpr`:
+```ts
+type InterpretExpr<E extends Expr, Env extends Environment> =
+                        // ...
+                        : E extends AssignExpr
+                            ? EvalAssignExpr<E, Env>
+                            // 新增开始
+                            : E extends CallExpr
+                                ? EvalCallExpr<E, Env>
+                                // 新增结束
+                                : RuntimeError<`Unknown expression type: ${E['type']}`>;
+
+```
+
+`EvalCallExpr` 函数的实现并不容易，特别是环境的处理：
+```ts
+type EvalCallExpr<
+    E extends CallExpr,
+    Env extends Environment,
+    CV = InterpretExpr<E['callee'], Env>
+> = CV extends InterpretExprSuccess<infer Callee, infer Env>
+    ? Callee extends FunObject
+        ? GetParamsLength<Callee> extends E['arguments']['length']
+            ? InjectArgsToEnv<GetParams<Callee>, E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
+                ? EE extends InjectArgsToEnvSuccess<infer CallerEnv, infer FunScopeEnv>
+                    ? InterpretBlockStmt<GetBodyStmts<Callee>, FunScopeEnv> extends infer BR
+                        ? BR extends InterpretStmtSuccess<infer BV, infer Env>
+                            ? InterpretStmtSuccess<BV, CallerEnv> // 函数body执行完要回到CallerEnv
+                            : BR // error
+                        : NoWay<'EvalCallExpr-InterpretBlockStmt'>
+                    : EE // error
+                : NoWay<'EvalCallExpr-InjectArgsToEnv'>
+            : RuntimeError<'Arguments length not match parameters.'>
+        : RuntimeError<`Callee must be a 'FunObject', but got: ${Safe<Callee, Exclude<ValueType, FunObject>>}`>
+    : CV; // error
+
+type GetParams<Callee extends FunObject> = Callee['declaration']['parameters'];
+type GetParamsLength<Callee extends FunObject> = GetParams<Callee>['length'];
+type GetBodyStmts<Callee extends FunObject> = Callee['declaration']['body']['stmts'];
+```
+
+其中要注意的不仅有注释写的 "函数body执行完要回到CallerEnv"。还要注意到最终要返回的 `CallerEnv` 是从哪里来的？它是从 `InjectArgsToEnv` 函数执行的结果中拿到的。为什么呢？前面说过，type 中没有变量，我们不能像 ts 版中，保留一个引用就可以了。环境在发生变化后，总是产生一个新的值。函数的实参是在 `InjectArgsToEnv` 中求值的，求值过程中有可能修改 `CallerEnv`，所以要返回它。为什么有可能修改 `CallerEnv`？因为实参中的表达式有可能包含赋值表达式。`InjectArgsToEnv` 返回的另一个环境是 `FunScopeEnv`，这个正是函数体执行需要的环境，它里面包含了形参变量对应的值（实参）。
+```ts
+
+type InjectArgsToEnv<
+    Params extends Token[],
+    Args extends Expr[],
+    CallerEnv extends Environment,
+    FunScopeEnv extends Environment,
+> = Params extends [infer P1 extends TokenLike<{ type: 'identifier'}>, ...infer RestParams extends Token[]]
+        ? Args extends [infer A1 extends Expr, ...infer RestArgs extends Expr[]]
+            ? InterpretExpr<A1, CallerEnv> extends infer PV
+                ? PV extends InterpretExprSuccess<infer V, infer CallerEnv>
+                    ? EnvDefine<FunScopeEnv, P1['lexeme'], V> extends infer FunScopeEnv
+                        ? FunScopeEnv extends Environment
+                            ? InjectArgsToEnv<RestParams, RestArgs, CallerEnv, FunScopeEnv>
+                            : FunScopeEnv // error
+                        : NoWay<'InjectArgsToEnv-EnvDefine'>
+                    : PV // error
+                : NoWay<'InjectArgsToEnv-InterpretExpr'>
+            : RuntimeError<'No way here, params and args must match here!'>
+        : InjectArgsToEnvSuccess<CallerEnv, FunScopeEnv>;
+type InjectArgsToEnvSuccess<
+    CallerEnv extends Environment,
+    FunScopeEnv extends Environment,
+> = SuccessResult<{ callerEnv: CallerEnv, funScopeEnv: FunScopeEnv }>;
+```
+
+
+以上我们完成了函数调用！但是如果你用下面的代码去检验，却发现无法得到期待的结果：
+```ts
+fun fib(n) {
+    if (n >= 2) {
+        fib(n - 1) + fib(n - 2);
+    } else {
+        1;
+    }
+}
+
+fib(3);
+```
+
+它并不是提示： `Type instantiation is excessively deep and possibly infinite.`
+
+它的输出是： `[RuntimeError]: Undefined variable 'fib'."`
+
+🤔❓怎么会这样？如果你多次实验，你会发现，我们实现的 `type-toc` 无法支持函数递归！！问题出在哪里呢？
+
+问题出在 `FunScopeEnv` 上，它里面没有包含 `fib` 变量。所以递归的时候找不到自己。为什么会不包含自己呢？我们回到函数声明的执行函数：
+```ts
+type InterpretFunStmt<
+    S extends FunStmt,
+    Env extends Environment,
+    F extends FunObject = BuildFunObj<S, Env>, // <--这里构建了 FunObject, 这里的 Env 没有包含函数对应的变量
+> = EnvDefine<Env, S['name']['lexeme'], F> extends infer NewEnv // <--这里用构建好的 FunObject 产生了新的环境
+    ? NewEnv extends Environment
+        ? InterpretStmtSuccess<F, NewEnv>
+        : NewEnv // error
+    : NoWay<'InterpretFunStmt'>;
+```
+
+通过上面的代码，你会发现这个问题似乎无解：构建函数需要一个包含该函数的 Env 。没有变量的确是做不到的。这就是为什么相同的代码，`ts-toc` 没有这个问题。说到这里，`ts-toc` 和 `type-toc` 在这里有较大的差异，不仅仅是 `type-toc` 无法递归。请看下面的代码：
+```ts
+var a = 1;
+fun test() { a + b; }
+var b = 10;
+test();
+```
+
+这段代码，`ts-toc` 执行的结果是 11；而 `type-toc` 报错说 `[RuntimeError]: Undefined variable 'b'."`。从这个行为来看也不能说谁对谁错，关键取决于语言设计者希望是哪个结果。类似上面的代码在 `js` 中会得到和 `ts-toc` 一样的[结果](https://www.typescriptlang.org/play?#code/DYUwLgBAhhC8EEYDcAoAZgVwHYGMwEsB7LCMEAZzAAoBKCAbwgCdwMmSYBqCAIyQgC+KUJB5xEABlQ5i5QqAB0wQgHMqZSrRpIgA)；但在 `C#` 中却是类似 `type-toc` 的[结果](https://dotnetfiddle.net/TAPdr5)。
+
+我在这里更倾向于 `type-toc` 的行为。因为这样的代码更好理解和维护。但我不打算处理 `ts-toc` 在这里的不一致😂。我们还是回到 `type-toc` 无法递归的问题上。真的就实现不了递归了吗？
+
+其实，我们可以在执行这边下功夫。执行函数体的时候，`FunScopeEnv` "注入"了函数的参数变量。我们在这个时候注入函数变量不行吗？当然是可以的。我们只需要将下面这句
+
+```ts
+? InjectArgsToEnv<GetParams<Callee>, E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
+```
+
+
+替换为
+```ts
+? InjectArgsToEnv<GetParams<Callee>, E['arguments'], Env, BuildEnv<{ [k in GetFunName<Callee>]: Callee }, Callee['environment']>> extends infer EE
+```
+
+
+关键就是：
+```ts
+BuildEnv<{ [k in GetFunName<Callee>]: Callee }, Callee['environment']>
+```
+
+
+在构建函数体执行环境时，直接将函数的变量绑定进去。
+
+的确，这样就实现了递归。可是改成这样以后，写很多简单且不递归的函数都会出现 `Type instantiation is excessively deep and possibly infinite.`，更别说递归的函数了。去掉递归支持后这些简单不递归的函数又都能正常执行了。我尝试了多种修改来支持递归，得到的效果一样。所以最后在 `toc` 仓库的[代码](https://github.com/huanguolin/toc/blob/9acb2e989a861620346d19d4b0f1779000ff0ccf/type-toc/interpreter/InterpretExpr.d.ts#L42)中，我把支持递归的代码注释掉了。如果你知道怎么解决这个问题，请务必告诉我，或者直接提 `pr`。
+
+好了，虽然有些许遗憾，但我们最终完成了这个艰难的任务。我们用 TypeScript 的类型系统成功实现了一个 Toc 语言的解释器！这个类型体操终于谢幕，谢谢！
+
+#### 2.2.7 未尽事宜
+
+到最后，我们不仅有递归无法良好支持的遗憾。还有一些其他的未尽事宜。比如，函数没有 `return` 语句的支持，循环也不支持 `break`。如果要让这个语言更完善，这是一定要支持的。否则无法提前结束函数，或者循环，只能靠条件分支来绕，会很痛苦。它们是可以实现的，就是麻烦，需要像环境一样到处都带着，还要在一些关键路径去判断。
+
+另外对错误的支持也很粗略，连行号信息也没有，程序长一点，就不好找到错误了。还有一个就是，没有复合数据类型，没有对象（或者至少有个 `struct`），数组这些现代语言的必须品。不过作为一次尝试，以现在的结果可以说明问题就可以。若真的要自己实现一个可玩的语言，应该不要选择 TypeScript 的类型系统 😂。
+
+好了，如果你感兴趣去实现这些，欢迎提 `pr`。
+
+
+## 3. 总结
+
+最后，我们来总结一下。
+首先我们围绕着 TypeScript 的类型系统是一门函数式语言，讨论了它提供的语言特性：
+
+* 没有变量，有全局常量和局部常量。
+* 有条件分支，还有模式匹配。
+* 有函数，泛型参数就是函数入参，函数参数还支持限定类型和默认值。但函数不是 [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)。
+* 没有循环，但可以通过函数的递归实现等价的效果。
+
+接着我们围绕用 TypeScript 的类型系统实现 `Toc` 语言的解释器：
+* 首先讨论了用 TypeScript 的类型系统怎么实现四则算术运算和比较运算。
+* 接着实现解释器，按照词法分析、语法分析、执行三个阶段展开。为了方便理解，每次先用 TypeScript 来实现，之后再“翻译”为类型系统的实现。语法分析阶段，介绍了递归下降算法。执行阶段介绍了访问者模式。在实现中，我们掌握了表达式和语句的语法分析方法，作用域如何实现，函数以及闭包的实现方法。通过两种“语言”的对比实现，也了解到型系统作为语言来用时的不足。
+
+好了，以上就是我要说的全部内容。希望你能喜欢。
+
+> 由于自身的认知有限，以及时间上的仓促，其中还有很多的不足，甚至错误。欢迎大家讨论指正。
+
+
+## 4. 参考
+
+1. [*Crafting Interpreters*](http://craftinginterpreters.com/contents.html)
+2. [TypeScript 类型体操天花板，用类型运算写一个 Lisp 解释器](https://zhuanlan.zhihu.com/p/427309936?utm_campaign=shareopn&utm_medium=social&utm_oi=639544332005281792&utm_psn=1549037572080553985&utm_source=wechat_session)
+3. [Implementing Arithmetic Within TypeScript’s Type System](https://itnext.io/implementing-arithmetic-within-typescripts-type-system-a1ef140a6f6f)
+4. [How to Troubleshoot Types?](https://www.reddit.com/r/typescript/comments/sglwk6/how_to_troubleshoot_types/)
