@@ -13,4 +13,5 @@ A toy interpreter implemented with TypeScript's type system (see `type-toc` fold
 > see [类型体操之实现一个类C风格语言的解释器](./docs/implement-detail.md)
 
 # License
-MIT
+- Code: [MIT](https://opensource.org/licenses/MIT)
+- Note: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
