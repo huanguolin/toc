@@ -25,6 +25,11 @@ type cases = [
     Expect<Equal<Toc<`{`>, null>>,
 
     // if statement
+    // @ts-expect-error if 从句下面不能直接放声明语句
+    Expect<Equal<Toc<`
+        if (true) var b = 1;
+        else var b = false;
+    `>, 1>>,
     Expect<Equal<Toc<`
         var b = 4;
         if (b > 3) b = 1995;
@@ -38,10 +43,6 @@ type cases = [
         if (b > 3) b = 1995;
         else b = false;
     `>, false>>,
-    Expect<Equal<Toc<`
-        if (true) var b = 1;
-        else var b = false;
-    `>, 1>>,
     Expect<Equal<Toc<`
         var a = 0;
         if (true) { var a = null; }

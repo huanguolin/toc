@@ -38,12 +38,12 @@ type EvalCallExpr<
     CV = InterpretExpr<E['callee'], Env>
 > = CV extends InterpretExprSuccess<infer Callee, infer Env>
     ? Callee extends FunObject
-        ? Callee['declaration']['parameters']['length'] extends E['arguments']['length']
+        ? GetParamsLength<Callee> extends E['arguments']['length']
             // 下面这句用来支持函数的递归调用，但是会变的更容易出现：Type instantiation is excessively deep and possibly infinite.ts(2589)
-            // ? InjectArgsToEnv<Callee['declaration']['parameters'], E['arguments'], Env, BuildEnv<{ [k in GetFunName<Callee>]: Callee }, Callee['environment']>> extends infer EE
-            ? InjectArgsToEnv<Callee['declaration']['parameters'], E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
+            // ? InjectArgsToEnv<GetParams<Callee>, E['arguments'], Env, BuildEnv<{ [k in GetFunName<Callee>]: Callee }, Callee['environment']>> extends infer EE
+            ? InjectArgsToEnv<GetParams<Callee>, E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
                 ? EE extends InjectArgsToEnvSuccess<infer CallerEnv, infer FunScopeEnv>
-                    ? InterpretBlockStmt<Callee['declaration']['body']['stmts'], FunScopeEnv> extends infer BR
+                    ? InterpretBlockStmt<GetBodyStmts<Callee>, FunScopeEnv> extends infer BR
                         ? BR extends InterpretStmtSuccess<infer BV, infer Env>
                             ? InterpretStmtSuccess<BV, CallerEnv> // 函数body执行完要回到CallerEnv
                             : BR // error
@@ -53,6 +53,10 @@ type EvalCallExpr<
             : RuntimeError<'Arguments length not match parameters.'>
         : RuntimeError<`Callee must be a 'FunObject', but got: ${Safe<Callee, Exclude<ValueType, FunObject>>}`>
     : CV; // error
+
+type GetParams<Callee extends FunObject> = Callee['declaration']['parameters'];
+type GetParamsLength<Callee extends FunObject> = GetParams<Callee>['length'];
+type GetBodyStmts<Callee extends FunObject> = Callee['declaration']['body']['stmts'];
 
 type InjectArgsToEnv<
     Params extends Token[],

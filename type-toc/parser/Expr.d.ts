@@ -1,3 +1,4 @@
+import { FunObject } from "../FunObject";
 import { Token } from "../scanner/Token";
 import { ValueType } from "../type";
 
@@ -18,10 +19,10 @@ export interface Expr {
 
 export interface LiteralExpr extends Expr {
     type: 'literal';
-    value: ValueType;
+    value: Exclude<ValueType, FunObject>;
 }
 
-export interface BuildLiteralExpr<T extends ValueType> extends LiteralExpr {
+export interface BuildLiteralExpr<T extends Exclude<ValueType, FunObject>> extends LiteralExpr {
     value: T
 }
 
