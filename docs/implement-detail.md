@@ -952,8 +952,8 @@ type NoWay<Name extends string> = `[${Name}] impossible here!`;
 
 再来看 `ScanSuccess` 和 `ScanError`：
 ```ts
-export type ScanError<M extends string> = ErrorResult<`[ScanError]: ${M}`>;
-export type ScanSuccess<T extends Token, R extends string> = SuccessResult<{ token: T, rest: R }>;
+type ScanError<M extends string> = ErrorResult<`[ScanError]: ${M}`>;
+type ScanSuccess<T extends Token, R extends string> = SuccessResult<{ token: T, rest: R }>;
 ```
 
 
@@ -3063,7 +3063,7 @@ interface Environment {
     outer: Environment | null; // <-- 新增
 }
 
-export interface BuildEnv<
+interface BuildEnv<
     Initializer extends TocMap = {},
     Outer extends Environment | null = null, // <-- 新增
 > extends Environment {
@@ -3931,7 +3931,7 @@ type FunObject = {
     environment: Environment;
 };
 
-export type BuildFunObj<
+type BuildFunObj<
     D extends FunStmt,
     E extends Environment,
 > = {
