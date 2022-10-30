@@ -6,7 +6,7 @@ A toy interpreter implemented with TypeScript's type system (see `type-toc` fold
 
 ![type-toc-example](./docs/imgs/type-toc-example.png)
 
-# Language Grammar of the Interpreter
+# Language Grammar of Toc
 > see [Toc Grammar](./docs/grammar.md)
 
 # Implement Detail
