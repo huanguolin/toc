@@ -2,7 +2,7 @@ name: Update ts playground link
 
 on:
   push:
-    branches: [ master, expr ]
+    branches: [ main, expr ]
 
 jobs:
   build:
