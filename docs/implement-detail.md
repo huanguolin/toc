@@ -865,7 +865,7 @@ switch (c) {
 ```
 
 
-以上就是 ts 版本的分词的全部了。是不是很简单😄。完整代码，请看 [ts-scanner](https://github.com/huanguolin/toc/blob/master/ts-toc/Scanner/index.ts).
+以上就是 ts 版本的分词的全部了。是不是很简单😄。完整代码，请看 [ts-scanner](https://github.com/huanguolin/toc/blob/expr/ts-toc/Scanner/index.ts).
 
 
 ##### 2.2.2.2 分词（type版）
@@ -1017,7 +1017,7 @@ type OpOr<C1 extends '|', C2 extends '|', R extends string> = `${C1}${C2}${R}`;
 ```
 
 
-`ScanIdentifier` 和 `ScanString` 也是类似的，就不再贴代码了，完整版请看 [type-Scanner](https://github.com/huanguolin/toc/blob/master/type-toc/scanner/index.d.ts)。
+`ScanIdentifier` 和 `ScanString` 也是类似的，就不再贴代码了，完整版请看 [type-Scanner](https://github.com/huanguolin/toc/blob/expr/type-toc/scanner/index.d.ts)。
 
 至此，我们的词法分析已经全部完成。是不是渐入佳境😊。接下来，就让我们“攀登”本次最高的“山峰”——语法分析！
 
@@ -1556,7 +1556,10 @@ type ParseExprSuccess<
 > = SuccessResult<{ expr: R, rest: T }>;
 
 // Parser 的入口方法，它返回 AST.
-type Parse<Tokens extends Token[]> = ParseExpr<Tokens>;
+type Parse<Tokens extends Token[], R = ParseExpr<Tokens>> =
+    R extends ParseExprSuccess<infer E, infer Rest>
+        ? E
+        : R; // error
 
 type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
 
@@ -1682,7 +1685,7 @@ type KeywordValueMapping = {
 
 上面解析 `group` 的那段代码，你应该感受到了，语言特性贫瘠带来的代码冗长。这是没办法的事情。后面你会习惯的😂。
 
-好了，以上就是我们语法分析表达式的全部了，完整的代码见 [type-ParseExpr](https://github.com/huanguolin/toc/blob/master/type-toc/parser/ParseExprHelper.d.ts#L13)。关于 `var` 语句, `if` 语句, `block` 语句, 函数, `for` 循环语句等特性，我们会在打通 `执行` 一关后，慢慢加上的。我们已经啃了语法分析最核心的部分了。后续或许代码会更多，核心“科技”却没多多少。
+好了，以上就是我们语法分析表达式的全部了，完整的代码见 [type-ParseExpr](https://github.com/huanguolin/toc/blob/expr/type-toc/parser/ParseExprHelper.d.ts)。关于 `var` 语句, `if` 语句, `block` 语句, 函数, `for` 循环语句等特性，我们会在打通 `执行` 一关后，慢慢加上的。我们已经啃了语法分析最核心的部分了。后续或许代码会更多，核心“科技”却没多多少。
 
 
 #### 2.2.4 执行
@@ -1897,7 +1900,7 @@ class Interpreter implements IExprVisitor<unknown> {
 }
 ```
 
-上面特别要注意的是，`&&` 和 `||` 具有短路效果，不能先把右操作数求出来。目前你还感觉不到差异，有了变量和函数之后，就可以看到效果了。另外一个要注意的是，我们的 `+` 可以支持字符串连接和数字相加，要分别处理，但是不允许混合。完整的代码见 [ts-Interpreter](https://github.com/huanguolin/toc/blob/master/ts-toc/Interpreter/index.ts);
+上面特别要注意的是，`&&` 和 `||` 具有短路效果，不能先把右操作数求出来。目前你还感觉不到差异，有了变量和函数之后，就可以看到效果了。另外一个要注意的是，我们的 `+` 可以支持字符串连接和数字相加，要分别处理，但是不允许混合。完整的代码见 [ts-Interpreter](https://github.com/huanguolin/toc/blob/expr/ts-toc/Interpreter/index.ts);
 
 我们做完了吗？实际上还差一步，我们还没有把 `Scanner`, `Parser` 和 `Interpreter` 组合到一起。如果是 `node.js` 环境，可以写一个 `REPL`([Read–eval–print loop](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop))：
 ```ts
@@ -1946,7 +1949,10 @@ function toc(source: string) {
 
 接下来实现我们的 type 版本。但是这里没法实现访问者模式，甚至没有 `switch` 可用。我们只能用类似 `if-elseif` 一般的条件判断来实现：
 ```ts
-type Interpret<E extends Expr> = InterpretExpr<E>;
+type Interpret<E extends Expr, R = InterpretExpr<E>> =
+    R extends InterpretExprSuccess<infer V>
+        ? V
+        : R; // error
 
 type InterpretExpr<E extends Expr> =
     E extends LiteralExpr
@@ -2085,16 +2091,17 @@ type IsStrings<N1 extends string, N2 extends string> = [N1, N2];
 type IsNumbers<N1 extends number, N2 extends number> = [N1, N2];
 ```
 
+虽然很麻烦。但是我们还是做到了！[完整代码](https://github.com/huanguolin/toc/blob/expr/type-toc/interpreter/InterpretExpr.d.ts)。
 
-虽然很麻烦。但是我们还是做到了！现在把 `Scan`, `Parse` 和 `Interpret` 串起来就大功告成了! 但是并不是你想的那样串起来：
+现在把 `Scan`, `Parse` 和 `Interpret` 串起来就大功告成了! 但是并不是你想的那样串起来：
 ```ts
 type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
         ? Tokens extends Token[]
             ? Parse<Tokens> extends infer Ast
-                ? Interpret<Ast> extends infer Value
-                    ? Value
-                    : NoWay<'Toc-Interprets'>
+                ? Ast extends Expr
+                    ? Interpret<Ast>
+                    : Ast // error
                 : NoWay<'Toc-Parse'>
             : Tokens // error
         : NoWay<'Toc-Scan'>;
@@ -2102,7 +2109,7 @@ type Toc<Source extends string> =
 
 为什么不是 `type Toc<S extend string> = Interpret<Parse<Scan<S>>>` ? 因为错误无法展示出来。ts 中有异常机制，有错误抛出来外面可以捕获。这里没有异常，错误只能用函数返回值层层传递出去。
 
-好了，我们最终还是得到一个完整的 [type-Interpreter](https://github.com/huanguolin/toc/blob/master/type-toc/interpreter/index.d.ts)。
+好了，我们最终还是得到一个完整的 [type-Interpreter](https://github.com/huanguolin/toc/blob/expr/type-toc/index.d.ts)。
 
 现在终于从 0 到 1 了。过程或许艰难痛苦，但是结果甚是喜人——我们预期的都实现了。也验证了 ts 类型系统是图灵完备的。后面我们还会继续“攀登”一个一个的“小山峰”，你会看到在这个“贫瘠”的语言土壤下，也可以结出丰硕的“特性”果实。
 
