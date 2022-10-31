@@ -1,16 +1,8 @@
-import { NoWay } from "../Result";
 import { Token } from "../scanner/Token";
-import { EOF } from "../scanner/Token";
-import { Push } from "../utils/array";
 
-import { ParseDecl, ParseStmtSuccess } from "./ParseStmtHelper";
-import { Stmt } from "./Stmt";
+import { ParseExpr, ParseExprSuccess } from "./ParseExprHelper";
 
-export type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
-    Tokens extends [EOF]
-        ? Stmts
-        : ParseDecl<Tokens> extends infer Result
-            ? Result extends ParseStmtSuccess<infer R, infer Rest>
-                ? Parse<Rest, Push<Stmts, R>>
-                : Result // error
-            : NoWay<'Parse'>;
+export type Parse<Tokens extends Token[], R = ParseExpr<Tokens>> =
+    R extends ParseExprSuccess<infer E, infer Rest>
+        ? E
+        : R; // error

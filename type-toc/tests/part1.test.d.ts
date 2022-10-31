@@ -82,28 +82,17 @@ type cases = [
     Expect<Equal<Toc<'9 && 10;'>, 10>>,
     Expect<Equal<Toc<'0 && 10;'>, 0>>,
     Expect<Equal<Toc<'true && false;'>, false>>,
-    Expect<Equal<Toc<'var a = 0; a && (a = 5); a;'>, 0>>,
-    Expect<Equal<Toc<'var a = 1; a && (a = 5); a;'>, 5>>,
     // ||
     Expect<Equal<Toc<'9 || 10;'>, 9>>,
     Expect<Equal<Toc<'0 || 10;'>, 10>>,
     Expect<Equal<Toc<'true || false;'>, true>>,
-    Expect<Equal<Toc<'var a = 0; a || (a = 5); a;'>, 5>>,
-    Expect<Equal<Toc<'var a = 1; a || (a = 5); a;'>, 1>>,
 
     // other
     Expect<Equal<Toc<'123 % 100 + 15 - 12 / 3 / ( 5 -3);'>, 36>>,
     Expect<Equal<Toc<'(5 -3 ) * 6 || 7 - ( 9 / 3 );'>, 12>>,
 
-
     // space
     Expect<Equal<Toc<'1+10;'>, 11>>,
     Expect<Equal<Toc<'    1 +10  ;  '>, 11>>,
     Expect<Equal<Toc<'\t  \n1 +\t10  ;  '>, 11>>,
-
-    // var
-    Expect<Equal<Toc<'var a; a;'>, null>>,
-    Expect<Equal<Toc<'var a; a = !!a; a;'>, false>>,
-    Expect<Equal<Toc<'var a = 3 + 9 % 5;'>, 7>>,
-    Expect<Equal<Toc<'var a = 3 + 9 % 5; var b = a = 4 * 5 - 12 / 3;'>, 16>>,
 ];

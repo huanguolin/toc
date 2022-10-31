@@ -1,18 +1,8 @@
-import { NoWay } from "../Result";
-import { Stmt } from "../parser/Stmt";
-import { ValueType } from "../type";
+import { Expr } from "../parser/Expr";
 
-import { BuildEnv, Environment } from "./Environment";
-import { InterpretStmt, InterpretStmtSuccess } from "./InterpretStmt";
+import { InterpretExpr, InterpretExprSuccess } from "./InterpretExpr";
 
-export type Interpret<
-    Stmts extends Stmt[],
-    Env extends Environment = BuildEnv<{}, null>,
-    LastResult extends ValueType | null = null,
-> = Stmts extends [infer S extends Stmt, ...infer Rest extends Stmt[]]
-        ? InterpretStmt<S, Env> extends infer R
-            ? R extends InterpretStmtSuccess<infer Result, infer Env>
-                ? Interpret<Rest, Env, Result>
-                : R // error
-            : NoWay<'Interpret'>
-        : LastResult;
+export type Interpret<E extends Expr, R = InterpretExpr<E>> =
+    R extends InterpretExprSuccess<infer V>
+        ? V
+        : R; // error

@@ -1,20 +1,18 @@
-import { ErrorResult, NoWay, SuccessResult } from '../Result';
+import { ErrorResult, SuccessResult } from '../Result';
 import { Token } from '../scanner/Token';
 import { Keywords, ValueType } from '../type';
-import { Push } from '../utils/array';
 import { Safe } from '../utils/common';
 
-import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr, BuildVariableExpr, VariableExpr, BuildAssignExpr, BuildCallExpr } from "./Expr";
-import { Identifier, Match, TokenLike } from './utils';
+import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr } from "./Expr";
+import { Match, TokenLike } from './utils';
 
 export type ParseExprError<M extends string> = ErrorResult<`[ParseExprError]: ${M}`>;
 export type ParseExprSuccess<R extends Expr, T extends Token[]> = SuccessResult<{ expr: R, rest: T }>;
 
-export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
+export type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
 
 // 优先级、结合性参考 C 语言：https://www.tutorialspoint.com/cprogramming/c_operators_precedence.htm
 // 表达式分类并按照由低到高：
-// assign:      =                   右结合
 // logic or:    ||                  左结合
 // logic and:   &&                  左结合
 // equality:    == !=               左结合
@@ -22,22 +20,7 @@ export type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 // additive:    + -                 左结合
 // factor:      * / %               左结合
 // unary:       !                   右结合
-// call:        primary(arg?)       左结合
-// primary:     number boolean null 'identifier' ()
-
-// assign part
-type ParseAssign<Tokens extends Token[], R = ParseLogicOr<Tokens>> =
-    R extends ParseExprSuccess<infer Left, infer Rest>
-        ? ParseAssignBody<Left, Rest>
-        : R; // error
-type ParseAssignBody<Left extends Expr, Tokens extends Token[]> =
-Tokens extends Match<TokenLike<'='>, infer Rest>
-    ? ParseAssign<Rest> extends ParseExprSuccess<infer Right, infer Rest>
-        ? Left extends VariableExpr
-            ? ParseExprSuccess<BuildAssignExpr<Left['name'], Right>, Rest>
-            : ParseExprError<`Invalid assignment target: ${Left['type']}}`>
-        : ParseExprError<`Parse right of assign variable fail: ${Rest[0]['lexeme']}`>
-    : ParseExprSuccess<Left, Tokens>;
+// primary:     literal group
 
 // logic or part
 type ParseLogicOr<Tokens extends Token[], R = ParseLogicAnd<Tokens>> =
@@ -118,34 +101,7 @@ type ParseUnary<Tokens extends Token[]> =
         ? ParseUnary<Rest> extends ParseExprSuccess<infer Expr, infer Rest>
             ? ParseExprSuccess<BuildUnaryExpr<Op, Expr>, Rest>
             : ParseExprError<`ParseUnary error after ${Op["lexeme"]}`>
-        : ParseCall<Tokens>;
-
-
-// call part
-type ParseCall<Tokens extends Token[], CR = ParsePrimary<Tokens>> =
-    CR extends ParseExprSuccess<infer Callee, infer Rest>
-        ? Rest extends Match<TokenLike<'('>, infer Rest>
-            ? Rest extends Match<TokenLike<')'>, infer Rest>
-                ? ParseCall<Rest, ParseExprSuccess<BuildCallExpr<Callee, []>, Rest>>
-                : ParseArgs<Rest> extends infer AR
-                    ? AR extends ParseArgsSuccess<infer Args, infer Rest>
-                        ? Rest extends Match<TokenLike<')'>, infer Rest>
-                            ? ParseCall<Rest, ParseExprSuccess<BuildCallExpr<Callee, Args>, Rest>>
-                            : ParseExprError<'Expect ")" after call.'>
-                        : AR // error
-                    : NoWay<'ParseCall-ParseArgs'>
-            : CR // not match more '('
-        : CR; // error
-
-type ParseArgsSuccess<R extends Expr[], T extends Token[]> = SuccessResult<{ args: R, rest: T }>;
-type ParseArgs<Tokens extends Token[], Args extends Expr[] = []> =
-    ParseExpr<Tokens> extends infer AE
-        ? AE extends ParseExprSuccess<infer Arg, infer Rest>
-            ? Rest extends Match<TokenLike<','>, infer Rest>
-                ? ParseArgs<Rest, Push<Args, Arg>>
-                : ParseArgsSuccess<Push<Args, Arg>, Rest>
-            : AE // error
-        : NoWay<'ParseArgs-ParseExpr'>;
+        : ParsePrimary<Tokens>;
 
 
 // primary part
@@ -157,15 +113,13 @@ type ParsePrimary<Tokens extends Token[]> =
                 ? ParseExprSuccess<BuildLiteralExpr<V>, R>
                 : E extends { type: infer B extends keyof Keywords }
                     ? ParseExprSuccess<BuildLiteralExpr<ToValue<B>>, R>
-                    : E extends Identifier
-                        ? ParseExprSuccess<BuildVariableExpr<E>, R>
-                        : E extends TokenLike<'('>
-                            ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
-                                ? RG extends Match<TokenLike<')'>, infer Rest>
-                                    ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
-                                    : ParseExprError<`Group not match ')'.`>
-                                : ParseExprError<`Parse Group expression fail.`>
-                            : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
+                    : E extends TokenLike<'('>
+                        ? ParseExpr<R> extends ParseExprSuccess<infer G, infer RG>
+                            ? RG extends Match<TokenLike<')'>, infer Rest>
+                                ? ParseExprSuccess<BuildGroupExpr<G>, Rest>
+                                : ParseExprError<`Group not match ')'.`>
+                            : ParseExprError<`Parse Group expression fail.`>
+                        : ParseExprError<`Unknown token type: ${E['type']}, lexeme: ${E['lexeme']}`>
         : ParseExprError<`ParsePrimary fail`>;
 
 type ToValue<K extends keyof Keywords> = Safe<KeywordValueMapping[Safe<K, keyof KeywordValueMapping>], ValueType>;
