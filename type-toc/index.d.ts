@@ -14,10 +14,10 @@ type Result = Toc<`22 + 20 * 100 - 3`>
 export type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
         ? Tokens extends Token[]
-            ? Parse<Tokens> extends infer E
-                ? E extends Expr
-                    ? Interpret<E>
-                    : E // error
+            ? Parse<Tokens> extends infer Ast
+                ? Ast extends Expr
+                    ? Interpret<Ast>
+                    : Ast // error
                 : NoWay<'Toc-Parse'>
             : Tokens // error
         : NoWay<'Toc-Scan'>;
