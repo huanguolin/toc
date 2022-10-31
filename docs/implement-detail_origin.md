@@ -1384,13 +1384,13 @@ class Parser {
 !(!false)
 
 // 等价于：
-!(!literal_1)
-literal_1 = false
+!(!primary_1)
+primary_1 = false
 
 // 等价于：
 !unary_1
-unary_1 = !literal_1
-literal_1 = false
+unary_1 = !primary_1
+primary_1 = false
 
 // AST:
 //  ! <- 左起第一个
