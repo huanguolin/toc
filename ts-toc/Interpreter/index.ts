@@ -1,127 +1,18 @@
-import { FunObject } from "../FunObject";
-import { AssignExpr } from "../Parser/Exprs/AssignExpr";
 import { BinaryExpr } from "../Parser/Exprs/BinaryExpr";
-import { CallExpr } from "../Parser/Exprs/CallExpr";
 import { GroupExpr } from "../Parser/Exprs/GroupExpr";
+import { IExpr } from "../Parser/Exprs/IExpr";
 import { IExprVisitor } from "../Parser/Exprs/IExprVisitor";
 import { LiteralExpr } from "../Parser/Exprs/LiteralExpr";
 import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
-import { VariableExpr } from "../Parser/Exprs/VariableExpr";
-import { BlockStmt } from "../Parser/Stmts/BlockStmt";
-import { ExprStmt } from "../Parser/Stmts/ExprStmt";
-import { ForStmt } from "../Parser/Stmts/ForStmt";
-import { FunStmt } from "../Parser/Stmts/FunStmt";
-import { IfStmt } from "../Parser/Stmts/IfStmt";
-import { IStmt } from "../Parser/Stmts/IStmt";
-import { IStmtVisitor } from "../Parser/Stmts/IStmtVisitor";
-import { VarStmt } from "../Parser/Stmts/varStmt";
 import { ValueType } from "../type";
-import { Environment } from "./Environment";
 import { RuntimeError } from "./RuntimeError";
 
-export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
-    private environment: Environment;
-
+export class Interpreter implements IExprVisitor<unknown> {
     constructor() {
-        this.environment = new Environment(null);
     }
 
-    interpret(stmts: IStmt[]): ValueType {
-        let lastResult: ValueType = null;
-        for (const stmt of stmts) {
-            lastResult = stmt.accept(this);
-        }
-        return lastResult;
-    }
-
-    visitForStmt(stmt: ForStmt): ValueType {
-        const previousEnv = this.environment;
-        this.environment = new Environment(this.environment);
-
-        if (stmt.initializer) {
-            stmt.initializer.accept(this);
-        }
-
-        let conditionResult: ValueType = true;
-        if (stmt.condition) {
-            conditionResult = stmt.condition.accept(this);
-        }
-
-        let result: ValueType = null;
-        while (conditionResult) {
-            result = stmt.body.accept(this);
-            if (stmt.increment) {
-                stmt.increment.accept(this);
-            }
-            if (stmt.condition) {
-                conditionResult = stmt.condition.accept(this);
-            }
-        }
-
-        this.environment = previousEnv;
-        return result;
-    }
-
-    visitFunStmt(stmt: FunStmt): FunObject {
-        const funObj = new FunObject(stmt, this.environment);
-        this.environment.define(stmt.name, funObj);
-        return funObj;
-    }
-
-    visitIfStmt(stmt: IfStmt): ValueType {
-        const cond = stmt.condition.accept(this);
-        if (cond) {
-            return stmt.ifClause.accept(this);
-        } else if (stmt.elseClause) {
-            return stmt.elseClause.accept(this);
-        }
-        return null;
-    }
-
-    visitBlockStmt(blockStmt: BlockStmt): ValueType {
-
-        const result = this.executeBlock(blockStmt, new Environment(this.environment));
-
-        return result;
-    }
-
-    executeBlock(blockStmt: BlockStmt, env: Environment): ValueType {
-        const previousEnv = this.environment;
-
-        try {
-            this.environment = env;
-
-            let lastResult: ValueType = null;
-            for (const stmt of blockStmt.stmts) {
-                lastResult = stmt.accept(this);
-            }
-            return lastResult;
-        } finally {
-            this.environment = previousEnv;
-        }
-    }
-
-    visitVarStmt(stmt: VarStmt): ValueType {
-        let initializer = null;
-        if (stmt.initializer) {
-            initializer = stmt.initializer.accept(this);
-        }
-        this.environment.define(stmt.name, initializer);
-        return initializer;
-    }
-
-    visitExprStmt(stmt: ExprStmt): ValueType {
-        return stmt.expression.accept(this);
-    }
-
-    visitAssignExpr(expr: AssignExpr): ValueType {
-        const v = expr.right.accept(this);
-        this.environment.assign(expr.varName, v);
-        return v;
-    }
-
-    visitVariableExpr(expr: VariableExpr): ValueType {
-        return this.environment.get(expr.name);
+    interpret(expr: IExpr): ValueType {
+        return expr.accept(this);
     }
 
     visitBinaryExpr(expr: BinaryExpr): ValueType {
@@ -165,21 +56,11 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
         throw new RuntimeError('Unknown unary operator: ' + expr.operator.type);
     }
 
-    visitCallExpr(expr: CallExpr): ValueType {
-        const callee = expr.callee.accept(this);
-
-        if (callee instanceof FunObject) {
-            return callee.execute(expr.args, this);
-        }
-
-        throw new RuntimeError(`Callee must be a 'FunObject', but got: ${callee}(${typeof callee})`);
-    }
-
     visitGroupExpr(expr: GroupExpr): ValueType {
         return expr.expression.accept(this);
     }
 
-    visitLiteralExpr(expr: LiteralExpr): Exclude<ValueType, FunObject> {
+    visitLiteralExpr(expr: LiteralExpr): ValueType {
         return expr.value;
     }
 

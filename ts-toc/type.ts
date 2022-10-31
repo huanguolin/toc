@@ -1,4 +1,3 @@
-import { FunObject } from "./FunObject";
 
 export type TokenType =
     | 'identifier'
@@ -45,4 +44,4 @@ export const keywords = [
     'null',
 ];
 
-export type ValueType = FunObject | string | number | boolean | null;
+export type ValueType = string | number | boolean | null;

@@ -5,9 +5,7 @@ export type ExprType =
     | 'group'
     | 'binary'
     | 'unary'
-    | 'literal'
-    | 'variable'
-    | 'call';
+    | 'literal';
 
 export interface IExpr {
     type: ExprType;

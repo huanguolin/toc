@@ -1,21 +1,11 @@
 import { Token } from "../Scanner/Token";
 import { TokenType } from "../type";
-import { AssignExpr } from "./Exprs/AssignExpr";
 import { BinaryExpr } from "./Exprs/BinaryExpr";
-import { CallExpr } from "./Exprs/CallExpr";
 import { GroupExpr } from "./Exprs/GroupExpr";
 import { IExpr } from "./Exprs/IExpr";
 import { LiteralExpr } from "./Exprs/LiteralExpr";
 import { UnaryExpr } from "./Exprs/UnaryExpr";
-import { VariableExpr } from "./Exprs/VariableExpr";
 import { ParseError } from "./ParseError";
-import { BlockStmt } from "./Stmts/BlockStmt";
-import { ExprStmt } from "./Stmts/ExprStmt";
-import { ForStmt } from "./Stmts/ForStmt";
-import { FunStmt } from "./Stmts/FunStmt";
-import { IfStmt } from "./Stmts/IfStmt";
-import { IStmt } from "./Stmts/IStmt";
-import { VarStmt } from "./Stmts/varStmt";
 
 export class Parser {
     private tokens: Token[];
@@ -26,135 +16,12 @@ export class Parser {
         this.index = 0;
     }
 
-    parse(): IStmt[] {
-        const stmts: IStmt[] = [];
-        while (!this.isAtEnd()) {
-            stmts.push(this.declaration());
-        }
-        return stmts;
-    }
-
-    private declaration() {
-        if (this.match('var')) {
-            return this.varDeclaration();
-        } else if (this.match('fun')) {
-            return this.funDeclaration();
-        }
-
-        return this.statement();
-    }
-
-    private funDeclaration() {
-        this.consume('identifier', `Expect function name.`);
-        const name = this.previous();
-        this.consume('(', `Expect '(' after function name.`);
-        let params: Token[] = [];
-        if (!this.match(')')) {
-            params = this.parameters();
-            this.consume(')', `Expect ')' after function parameters.`);
-        }
-        this.consume('{', `Expect '{' before function body.`);
-        const body = this.blockStatement();
-        return new FunStmt(name, params, body);
-    }
-
-    private parameters(): Token[] {
-        const params: Token[] = [];
-        do {
-            this.consume('identifier', 'Expect parameter name.');
-            params.push(this.previous());
-        } while(this.match(','))
-        return params;
-    }
-
-    private varDeclaration() {
-        this.consume('identifier', `Expect var name.`);
-        const name = this.previous();
-        let initializer = null;
-        if (this.match('=')) {
-            initializer = this.expression();
-        }
-        this.consume(';', `Expect ';' after var declaration.`);
-        return new VarStmt(name, initializer);
-    }
-
-    private statement(): IStmt {
-        if (this.match('{')) {
-            return this.blockStatement();
-        } else if (this.match('if')) {
-            return this.ifStatement();
-        } else if (this.match('for')) {
-            return this.forStatement();
-        }
-        return this.expressionStatement();
-    }
-
-    private forStatement() {
-        this.consume('(', 'Expect "(" after for keyword.');
-
-        let initializer: IStmt | null;
-        if (this.match(';')) {
-            initializer = null;
-        } else if (this.match('var')) {
-            initializer = this.varDeclaration();
-        } else {
-            initializer = this.expressionStatement();
-        }
-
-        let condition: IExpr | null;
-        if (this.match(';')) {
-            condition = null;
-        } else {
-            condition = this.expression();
-            this.consume(';', 'Expect ";" after for condition.');
-        }
-
-        let increment: IExpr | null;
-        if (this.match(')')) {
-            increment = null;
-        } else {
-            increment = this.expression();
-            this.consume(')', 'Expect ")" after for increment.');
-        }
-
-        const body = this.statement();
-        return new ForStmt(initializer, condition, increment, body);
-    }
-
-    private ifStatement() {
-        this.consume('(', 'Expect "(" before if condition.');
-        const condition = this.expression();
-        this.consume(')', 'Expect ")" after if condition.');
-        const ifClause = this.statement();
-        let elseClause = null;
-        if (this.match('else')) {
-            elseClause = this.statement();
-        }
-        return new IfStmt(condition, ifClause, elseClause);
-    }
-
-    private blockStatement() {
-        const stmts: IStmt[] = [];
-        while(!this.isAtEnd() && !this.match('}')) {
-            stmts.push(this.declaration());
-        }
-
-        if (this.previous().type !== '}') {
-            throw new ParseError('Expect "}" end the block.');
-        }
-
-        return new BlockStmt(stmts);
-    }
-
-    private expressionStatement() {
-        const expr = this.expression();
-        this.consume(';', 'Expect ";" after expression.');
-        return new ExprStmt(expr);
+    parse(): IExpr {
+        return this.expression();
     }
 
     // 优先级、结合性参考 C 语言：https://www.tutorialspoint.com/cprogramming/c_operators_precedence.htm
     // 表达式分类并按照由低到高：
-    // assign:      =                   右结合
     // logic or:    ||                  左结合
     // logic and:   &&                  左结合
     // equality:    == !=               左结合
@@ -162,25 +29,9 @@ export class Parser {
     // additive:    + -                 左结合
     // factor:      * / %               左结合
     // unary:       !                   右结合
-    // call:        primary(arg?)       左结合
-    // primary:     number boolean null 'identifier' ()
+    // primary:     literal group
     private expression(): IExpr {
-        return this.assign();
-    }
-
-
-    private assign(): IExpr {
-        const left = this.logicOr();
-        if (this.match('=')) {
-            const right = this.assign();
-
-            if (left instanceof VariableExpr) {
-                return new AssignExpr(left.name, right);
-            }
-
-            throw new ParseError('Invalid assignment target.');
-        }
-        return left;
+        return this.logicOr();
     }
 
     private logicOr() {
@@ -249,28 +100,7 @@ export class Parser {
             const expr = this.unary(); // 右结合
             return new UnaryExpr(operator, expr);
         }
-        return this.call();
-    }
-
-    private call(): IExpr {
-        let expr = this.primary();
-        while (this.match('(')) {
-            let args: IExpr[] = [];
-            if (!this.match(')')) {
-                args = this.arguments();
-                this.consume(')', 'Expect ")" end fun call.');
-            }
-            expr = new CallExpr(expr, args);
-        }
-        return expr;
-    }
-
-    private arguments(): IExpr[] {
-        const args: IExpr[] = [];
-        do {
-            args.push(this.expression());
-        } while(this.match(','));
-        return args;
+        return this.primary();
     }
 
     private primary(): IExpr {
@@ -284,8 +114,6 @@ export class Parser {
             return new LiteralExpr(type === 'true');
         } else if (this.match('string')) {
             return new LiteralExpr(this.previous().lexeme);
-        } else if (this.match('identifier')) {
-            return new VariableExpr(this.previous());
         } else if (this.match('(')) {
             const expr = this.expression();
             this.consume(')', 'Expect ")" after expression.');
