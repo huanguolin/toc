@@ -1364,7 +1364,7 @@ class Parser {
 expression      → additive ;
 additive        → factor ( ( "-" | "+" ) factor )* ;
 factor          → literal ( ( "/" | "*" ) literal )* ;
-literal         → STRING ;
+literal         → NUMBER ;
 ```
 > 现在去看 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md), 是不是能看懂更多了😂
 
