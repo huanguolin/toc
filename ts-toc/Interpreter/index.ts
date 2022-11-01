@@ -14,7 +14,7 @@ import { FunStmt } from '../Parser/Stmts/FunStmt';
 import { IStmt } from '../Parser/Stmts/IStmt';
 import { IStmtVisitor } from '../Parser/Stmts/IStmtVisitor';
 import { IfStmt } from '../Parser/Stmts/IfStmt';
-import { VarStmt } from '../Parser/Stmts/varStmt';
+import { VarStmt } from '../Parser/Stmts/VarStmt';
 import { ValueType } from '../type';
 
 import { Environment } from './Environment';

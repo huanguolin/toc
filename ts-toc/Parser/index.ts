@@ -16,7 +16,7 @@ import { ForStmt } from './Stmts/ForStmt';
 import { FunStmt } from './Stmts/FunStmt';
 import { IStmt } from './Stmts/IStmt';
 import { IfStmt } from './Stmts/IfStmt';
-import { VarStmt } from './Stmts/varStmt';
+import { VarStmt } from './Stmts/VarStmt';
 
 export class Parser {
     private tokens: Token[];

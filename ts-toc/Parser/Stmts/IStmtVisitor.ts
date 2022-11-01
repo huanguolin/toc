@@ -3,7 +3,7 @@ import { ExprStmt } from './ExprStmt';
 import { ForStmt } from './ForStmt';
 import { FunStmt } from './FunStmt';
 import { IfStmt } from './IfStmt';
-import { VarStmt } from './varStmt';
+import { VarStmt } from './VarStmt';
 
 export interface IStmtVisitor<T> {
     visitExprStmt: (stmt: ExprStmt) => T;
