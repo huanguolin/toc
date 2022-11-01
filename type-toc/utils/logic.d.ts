@@ -1,13 +1,12 @@
-import { TrimStart } from "./string";
+import { TrimStart } from './string';
 
-export type IsFalse<T> =
-    T extends false | null | undefined | 0 | ''
+export type IsFalse<T> = T extends false | null | undefined | 0 | ''
+    ? true
+    : T extends string
+    ? TrimStart<T> extends ''
         ? true
-        : T extends string
-            ? TrimStart<T> extends ''
-                ? true
-                : false
-            : false;
+        : false
+    : false;
 type tIsFalse1 = IsFalse<0>;
 type tIsFalse2 = IsFalse<''>;
 type tIsFalse3 = IsFalse<null>;

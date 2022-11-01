@@ -2,16 +2,13 @@
  * 目前只支持正整数运算。
  */
 
-import { Safe } from "../../common";
+import { Safe } from '../../common';
 
-import { Add } from "./add";
-import { Gt } from "./compare";
-import { Sub } from "./sub";
+import { Add } from './add';
+import { Gt } from './compare';
+import { Sub } from './sub';
 
-export type Mul<
-    N1 extends number,
-    N2 extends number,
-> = Gt<N1, N2> extends true
+export type Mul<N1 extends number, N2 extends number> = Gt<N1, N2> extends true
     ? MulBody<N1, N2>
     : MulBody<N2, N1>;
 type MulBody<

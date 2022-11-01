@@ -9,8 +9,11 @@
     "@typescript-eslint/parser": "^5.40.0",
     "@typescript/analyze-trace": "^0.9.0",
     "eslint": "^7.14.0",
+    "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-unused-imports": "^2.0.0",
+    "prettier": "^2.7.1",
     "typescript": "^4.8.3"
   },
   "scripts": {

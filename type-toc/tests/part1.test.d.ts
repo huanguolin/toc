@@ -95,7 +95,6 @@ type cases = [
     Expect<Equal<Toc<'123 % 100 + 15 - 12 / 3 / ( 5 -3);'>, 36>>,
     Expect<Equal<Toc<'(5 -3 ) * 6 || 7 - ( 9 / 3 );'>, 12>>,
 
-
     // space
     Expect<Equal<Toc<'1+10;'>, 11>>,
     Expect<Equal<Toc<'    1 +10  ;  '>, 11>>,

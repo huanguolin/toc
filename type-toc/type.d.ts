@@ -1,4 +1,4 @@
-import { FunObject } from "./FunObject";
+import { FunObject } from './FunObject';
 
 export type TokenType =
     | 'identifier'
@@ -36,14 +36,14 @@ export type TokenType =
     | 'EOF';
 
 export type Keywords = {
-    fun: true,
-    true: true,
-    false: true,
-    null: true,
-    var: true,
-    if: true,
-    else: true,
-    for: true,
+    fun: true;
+    true: true;
+    false: true;
+    null: true;
+    var: true;
+    if: true;
+    else: true;
+    for: true;
 };
 
 export type ValueType = FunObject | string | number | boolean | null;

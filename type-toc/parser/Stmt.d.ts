@@ -1,16 +1,9 @@
-import { Token } from "../scanner/Token";
+import { Token } from '../scanner/Token';
 
-import { Expr } from "./Expr";
-import { Identifier } from "./utils";
+import { Expr } from './Expr';
+import { Identifier } from './utils';
 
-
-export type StmtType =
-    | 'expression'
-    | 'var'
-    | 'block'
-    | 'if'
-    | 'for'
-    | 'fun';
+export type StmtType = 'expression' | 'var' | 'block' | 'if' | 'for' | 'fun';
 
 export interface Stmt {
     type: StmtType;
@@ -31,7 +24,8 @@ export interface VarStmt extends Stmt {
     initializer: Expr | null;
 }
 
-export interface BuildVarStmt<N extends Identifier, E extends Expr | null> extends VarStmt {
+export interface BuildVarStmt<N extends Identifier, E extends Expr | null>
+    extends VarStmt {
     name: N;
     initializer: E;
 }
@@ -55,7 +49,7 @@ export interface IfStmt extends Stmt {
 export interface BuildIfStmt<
     Condition extends Expr,
     IfClause extends Stmt,
-    ElseClause extends Stmt | null = null
+    ElseClause extends Stmt | null = null,
 > extends IfStmt {
     condition: Condition;
     ifClause: IfClause;

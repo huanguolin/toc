@@ -1,9 +1,8 @@
-import { NoWay } from "../Result";
-import { ValueType } from "../type";
+import { NoWay } from '../Result';
+import { ValueType } from '../type';
 
-import { RuntimeError } from "./RuntimeError";
-import { TocMap, MapHas, MapSet, MapGet } from "./map";
-
+import { RuntimeError } from './RuntimeError';
+import { TocMap, MapHas, MapSet, MapGet } from './map';
 
 export interface Environment {
     store: TocMap;
@@ -22,7 +21,7 @@ export type EnvDefine<
     Env extends Environment,
     Key extends string,
     Value extends ValueType,
-    Store extends TocMap = Env['store']
+    Store extends TocMap = Env['store'],
 > = MapHas<Store, Key> extends true
     ? RuntimeError<`Variable '${Key}' already defined.`>
     : BuildEnv<MapSet<Store, Key, Value>, Env['outer']>;
@@ -35,8 +34,8 @@ export type EnvGet<
 > = MapHas<Store, Key> extends true
     ? MapGet<Store, Key>
     : Outer extends Environment
-        ? EnvGet<Outer, Key>
-        : RuntimeError<`Undefined variable '${Key}'.`>;
+    ? EnvGet<Outer, Key>
+    : RuntimeError<`Undefined variable '${Key}'.`>;
 
 export type EnvAssign<
     Env extends Environment,
@@ -47,10 +46,9 @@ export type EnvAssign<
 > = MapHas<Store, Key> extends true
     ? BuildEnv<MapSet<Store, Key, Value>, Outer>
     : Outer extends Environment
-        ? EnvAssign<Outer, Key, Value> extends infer NewOuter
-            ? NewOuter extends Environment
-                ? BuildEnv<Store, NewOuter>
-                : NewOuter // error
-            : NoWay<'EnvAssign'>
-        : RuntimeError<`Undefined variable '${Key}'.`>;
-
+    ? EnvAssign<Outer, Key, Value> extends infer NewOuter
+        ? NewOuter extends Environment
+            ? BuildEnv<Store, NewOuter>
+            : NewOuter // error
+        : NoWay<'EnvAssign'>
+    : RuntimeError<`Undefined variable '${Key}'.`>;

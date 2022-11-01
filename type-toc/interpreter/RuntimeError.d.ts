@@ -1,3 +1,4 @@
-import { ErrorResult } from "../Result";
+import { ErrorResult } from '../Result';
 
-export type RuntimeError<M extends string> = ErrorResult<`[RuntimeError]: ${M}`>;
+export type RuntimeError<M extends string> =
+    ErrorResult<`[RuntimeError]: ${M}`>;

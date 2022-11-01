@@ -1,8 +1,8 @@
-import { FunObject } from "../FunObject";
-import { Token } from "../scanner/Token";
-import { ValueType } from "../type";
+import { FunObject } from '../FunObject';
+import { Token } from '../scanner/Token';
+import { ValueType } from '../type';
 
-import { Identifier } from "./utils";
+import { Identifier } from './utils';
 
 export type ExprType =
     | 'assign'
@@ -22,8 +22,9 @@ export interface LiteralExpr extends Expr {
     value: Exclude<ValueType, FunObject>;
 }
 
-export interface BuildLiteralExpr<T extends Exclude<ValueType, FunObject>> extends LiteralExpr {
-    value: T
+export interface BuildLiteralExpr<T extends Exclude<ValueType, FunObject>>
+    extends LiteralExpr {
+    value: T;
 }
 
 export interface VariableExpr extends Expr {
@@ -41,7 +42,8 @@ export interface AssignExpr extends Expr {
     right: Expr;
 }
 
-export interface BuildAssignExpr<N extends Identifier, E extends Expr> extends AssignExpr {
+export interface BuildAssignExpr<N extends Identifier, E extends Expr>
+    extends AssignExpr {
     varName: N;
     right: E;
 }
@@ -62,7 +64,11 @@ export interface BinaryExpr extends Expr {
     right: Expr;
 }
 
-export interface BuildBinaryExpr<L extends Expr, Op extends Token, R extends Expr> extends BinaryExpr {
+export interface BuildBinaryExpr<
+    L extends Expr,
+    Op extends Token,
+    R extends Expr,
+> extends BinaryExpr {
     left: L;
     operator: Op;
     right: R;
@@ -74,7 +80,8 @@ export interface CallExpr extends Expr {
     arguments: Expr[];
 }
 
-export interface BuildCallExpr<Callee extends Expr, Args extends Expr[]> extends CallExpr {
+export interface BuildCallExpr<Callee extends Expr, Args extends Expr[]>
+    extends CallExpr {
     callee: Callee;
     arguments: Args;
 }
@@ -85,7 +92,8 @@ export interface UnaryExpr extends Expr {
     expression: Expr;
 }
 
-export interface BuildUnaryExpr<Op extends Token, E extends Expr> extends UnaryExpr {
+export interface BuildUnaryExpr<Op extends Token, E extends Expr>
+    extends UnaryExpr {
     operator: Op;
     expression: E;
 }
