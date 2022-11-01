@@ -1,8 +1,7 @@
-import { Token } from "../../Scanner/Token";
-import { IExpr } from "../Exprs/IExpr";
-import { BlockStmt } from "./BlockStmt";
-import { IStmt } from "./IStmt";
-import { IStmtVisitor } from "./IStmtVisitor";
+import { IExpr } from '../Exprs/IExpr';
+
+import { IStmt } from './IStmt';
+import { IStmtVisitor } from './IStmtVisitor';
 
 export class ForStmt implements IStmt {
     type: 'for' = 'for';
@@ -15,7 +14,8 @@ export class ForStmt implements IStmt {
         initializer: IStmt | null,
         condition: IExpr | null,
         increment: IExpr | null,
-        body: IStmt) {
+        body: IStmt,
+    ) {
         this.initializer = initializer;
         this.condition = condition;
         this.increment = increment;

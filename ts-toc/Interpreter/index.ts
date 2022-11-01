@@ -1,25 +1,28 @@
-import { FunObject } from "../FunObject";
-import { AssignExpr } from "../Parser/Exprs/AssignExpr";
-import { BinaryExpr } from "../Parser/Exprs/BinaryExpr";
-import { CallExpr } from "../Parser/Exprs/CallExpr";
-import { GroupExpr } from "../Parser/Exprs/GroupExpr";
-import { IExprVisitor } from "../Parser/Exprs/IExprVisitor";
-import { LiteralExpr } from "../Parser/Exprs/LiteralExpr";
-import { UnaryExpr } from "../Parser/Exprs/UnaryExpr";
-import { VariableExpr } from "../Parser/Exprs/VariableExpr";
-import { BlockStmt } from "../Parser/Stmts/BlockStmt";
-import { ExprStmt } from "../Parser/Stmts/ExprStmt";
-import { ForStmt } from "../Parser/Stmts/ForStmt";
-import { FunStmt } from "../Parser/Stmts/FunStmt";
-import { IfStmt } from "../Parser/Stmts/IfStmt";
-import { IStmt } from "../Parser/Stmts/IStmt";
-import { IStmtVisitor } from "../Parser/Stmts/IStmtVisitor";
-import { VarStmt } from "../Parser/Stmts/varStmt";
-import { ValueType } from "../type";
-import { Environment } from "./Environment";
-import { RuntimeError } from "./RuntimeError";
+import { FunObject } from '../FunObject';
+import { AssignExpr } from '../Parser/Exprs/AssignExpr';
+import { BinaryExpr } from '../Parser/Exprs/BinaryExpr';
+import { CallExpr } from '../Parser/Exprs/CallExpr';
+import { GroupExpr } from '../Parser/Exprs/GroupExpr';
+import { IExprVisitor } from '../Parser/Exprs/IExprVisitor';
+import { LiteralExpr } from '../Parser/Exprs/LiteralExpr';
+import { UnaryExpr } from '../Parser/Exprs/UnaryExpr';
+import { VariableExpr } from '../Parser/Exprs/VariableExpr';
+import { BlockStmt } from '../Parser/Stmts/BlockStmt';
+import { ExprStmt } from '../Parser/Stmts/ExprStmt';
+import { ForStmt } from '../Parser/Stmts/ForStmt';
+import { FunStmt } from '../Parser/Stmts/FunStmt';
+import { IStmt } from '../Parser/Stmts/IStmt';
+import { IStmtVisitor } from '../Parser/Stmts/IStmtVisitor';
+import { IfStmt } from '../Parser/Stmts/IfStmt';
+import { VarStmt } from '../Parser/Stmts/varStmt';
+import { ValueType } from '../type';
 
-export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
+import { Environment } from './Environment';
+import { RuntimeError } from './RuntimeError';
+
+export class Interpreter
+    implements IExprVisitor<unknown>, IStmtVisitor<unknown>
+{
     private environment: Environment;
 
     constructor() {
@@ -79,8 +82,10 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
     }
 
     visitBlockStmt(blockStmt: BlockStmt): ValueType {
-
-        const result = this.executeBlock(blockStmt, new Environment(this.environment));
+        const result = this.executeBlock(
+            blockStmt,
+            new Environment(this.environment),
+        );
 
         return result;
     }
@@ -139,20 +144,27 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
             if (operator.type == '+') {
                 if (this.isString(leftValue) && this.isString(rightValue)) {
                     return leftValue + rightValue;
-                } else if (this.isNumber(leftValue) && this.isNumber(rightValue)) {
+                } else if (
+                    this.isNumber(leftValue) &&
+                    this.isNumber(rightValue)
+                ) {
                     return leftValue + rightValue;
                 }
-                throw new RuntimeError('"+" operator only support both operand is string or number.');
+                throw new RuntimeError(
+                    '"+" operator only support both operand is string or number.',
+                );
             } else if (operator.type == '==') {
                 return leftValue == rightValue;
             } else if (operator.type == '!=') {
-                 return leftValue != rightValue;
+                return leftValue != rightValue;
             } else {
                 // 纯数字运算
                 if (this.isNumber(leftValue) && this.isNumber(rightValue)) {
                     return this.evalMath(operator.type, leftValue, rightValue);
                 }
-                throw new RuntimeError(`Required both operand is number for operator ${operator.type}: left=${leftValue}, right=${rightValue}`);
+                throw new RuntimeError(
+                    `Required both operand is number for operator ${operator.type}: left=${leftValue}, right=${rightValue}`,
+                );
             }
         }
     }
@@ -172,7 +184,9 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
             return callee.execute(expr.args, this);
         }
 
-        throw new RuntimeError(`Callee must be a 'FunObject', but got: ${callee}(${typeof callee})`);
+        throw new RuntimeError(
+            `Callee must be a 'FunObject', but got: ${callee}(${typeof callee})`,
+        );
     }
 
     visitGroupExpr(expr: GroupExpr): ValueType {
@@ -182,7 +196,6 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
     visitLiteralExpr(expr: LiteralExpr): Exclude<ValueType, FunObject> {
         return expr.value;
     }
-
 
     private isNumber(x: unknown): x is number {
         return typeof x === 'number';
@@ -194,13 +207,20 @@ export class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown>
 
     private evalMath(op: string, x: number, y: number): number | boolean {
         switch (op) {
-            case '-': return x - y;
-            case '*': return x * y;
-            case '/': return x / y;
-            case '<': return x < y;
-            case '>': return x > y;
-            case '<=': return x <= y;
-            case '>=': return x >= y;
+            case '-':
+                return x - y;
+            case '*':
+                return x * y;
+            case '/':
+                return x / y;
+            case '<':
+                return x < y;
+            case '>':
+                return x > y;
+            case '<=':
+                return x <= y;
+            case '>=':
+                return x >= y;
             default:
                 throw new RuntimeError('Unknown operator: ' + op);
         }

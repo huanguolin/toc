@@ -1,5 +1,5 @@
-import { IStmt } from "./IStmt";
-import { IStmtVisitor } from "./IStmtVisitor";
+import { IStmt } from './IStmt';
+import { IStmtVisitor } from './IStmtVisitor';
 
 export class BlockStmt implements IStmt {
     type: 'block' = 'block';

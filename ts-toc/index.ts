@@ -11,14 +11,17 @@ function main() {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
-        terminal: false
+        terminal: false,
     });
 
     process.stdout.write('> ');
     rl.on('line', function (line: string) {
         try {
             const result = toc(line);
-            const printVal = result && typeof result === 'object' ? result.toString() : result;
+            const printVal =
+                result && typeof result === 'object'
+                    ? result.toString()
+                    : result;
             console.log('=', printVal);
         } catch (e) {
             let errMsg = e;

@@ -1,5 +1,5 @@
-import { ExprType, IExpr } from "./IExpr";
-import { IExprVisitor } from "./IExprVisitor";
+import { ExprType, IExpr } from './IExpr';
+import { IExprVisitor } from './IExprVisitor';
 
 export class GroupExpr implements IExpr {
     type: ExprType = 'group';

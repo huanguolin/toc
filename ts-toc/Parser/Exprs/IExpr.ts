@@ -1,4 +1,4 @@
-import { IExprVisitor } from "./IExprVisitor";
+import { IExprVisitor } from './IExprVisitor';
 
 export type ExprType =
     | 'assign'

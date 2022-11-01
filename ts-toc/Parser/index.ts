@@ -1,21 +1,22 @@
-import { Token } from "../Scanner/Token";
-import { TokenType } from "../type";
-import { AssignExpr } from "./Exprs/AssignExpr";
-import { BinaryExpr } from "./Exprs/BinaryExpr";
-import { CallExpr } from "./Exprs/CallExpr";
-import { GroupExpr } from "./Exprs/GroupExpr";
-import { IExpr } from "./Exprs/IExpr";
-import { LiteralExpr } from "./Exprs/LiteralExpr";
-import { UnaryExpr } from "./Exprs/UnaryExpr";
-import { VariableExpr } from "./Exprs/VariableExpr";
-import { ParseError } from "./ParseError";
-import { BlockStmt } from "./Stmts/BlockStmt";
-import { ExprStmt } from "./Stmts/ExprStmt";
-import { ForStmt } from "./Stmts/ForStmt";
-import { FunStmt } from "./Stmts/FunStmt";
-import { IfStmt } from "./Stmts/IfStmt";
-import { IStmt } from "./Stmts/IStmt";
-import { VarStmt } from "./Stmts/varStmt";
+import { Token } from '../Scanner/Token';
+import { TokenType } from '../type';
+
+import { AssignExpr } from './Exprs/AssignExpr';
+import { BinaryExpr } from './Exprs/BinaryExpr';
+import { CallExpr } from './Exprs/CallExpr';
+import { GroupExpr } from './Exprs/GroupExpr';
+import { IExpr } from './Exprs/IExpr';
+import { LiteralExpr } from './Exprs/LiteralExpr';
+import { UnaryExpr } from './Exprs/UnaryExpr';
+import { VariableExpr } from './Exprs/VariableExpr';
+import { ParseError } from './ParseError';
+import { BlockStmt } from './Stmts/BlockStmt';
+import { ExprStmt } from './Stmts/ExprStmt';
+import { ForStmt } from './Stmts/ForStmt';
+import { FunStmt } from './Stmts/FunStmt';
+import { IStmt } from './Stmts/IStmt';
+import { IfStmt } from './Stmts/IfStmt';
+import { VarStmt } from './Stmts/varStmt';
 
 export class Parser {
     private tokens: Token[];
@@ -63,7 +64,7 @@ export class Parser {
         do {
             this.consume('identifier', 'Expect parameter name.');
             params.push(this.previous());
-        } while(this.match(','))
+        } while (this.match(','));
         return params;
     }
 
@@ -135,7 +136,7 @@ export class Parser {
 
     private blockStatement() {
         const stmts: IStmt[] = [];
-        while(!this.isAtEnd() && !this.match('}')) {
+        while (!this.isAtEnd() && !this.match('}')) {
             stmts.push(this.declaration());
         }
 
@@ -167,7 +168,6 @@ export class Parser {
     private expression(): IExpr {
         return this.assign();
     }
-
 
     private assign(): IExpr {
         const left = this.logicOr();
@@ -269,7 +269,7 @@ export class Parser {
         const args: IExpr[] = [];
         do {
             args.push(this.expression());
-        } while(this.match(','));
+        } while (this.match(','));
         return args;
     }
 
@@ -291,7 +291,9 @@ export class Parser {
             this.consume(')', 'Expect ")" after expression.');
             return new GroupExpr(expr);
         }
-        throw new ParseError(`Expect expression, but got token: ${this.current().lexeme}.`);
+        throw new ParseError(
+            `Expect expression, but got token: ${this.current().lexeme}.`,
+        );
     }
 
     private isAtEnd() {

@@ -1,9 +1,9 @@
-import { Interpreter } from "./Interpreter";
-import { Environment } from "./Interpreter/Environment";
-import { RuntimeError } from "./Interpreter/RuntimeError";
-import { IExpr } from "./Parser/Exprs/IExpr";
-import { FunStmt } from "./Parser/Stmts/FunStmt";
-import { ValueType } from "./type";
+import { Interpreter } from './Interpreter';
+import { Environment } from './Interpreter/Environment';
+import { RuntimeError } from './Interpreter/RuntimeError';
+import { IExpr } from './Parser/Exprs/IExpr';
+import { FunStmt } from './Parser/Stmts/FunStmt';
+import { ValueType } from './type';
 
 export class FunObject {
     private declaration: FunStmt;
@@ -32,7 +32,7 @@ export class FunObject {
 
     toString() {
         const { name, parameters } = this.declaration;
-        const params = parameters.map(t => t.lexeme).join(', ');
+        const params = parameters.map((t) => t.lexeme).join(', ');
         return `<fun ${name.lexeme}(${params})>`;
     }
 }

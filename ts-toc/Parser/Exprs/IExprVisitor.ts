@@ -1,10 +1,10 @@
-import { AssignExpr } from "./AssignExpr";
-import { BinaryExpr } from "./BinaryExpr";
-import { CallExpr } from "./CallExpr";
-import { GroupExpr } from "./GroupExpr";
-import { LiteralExpr } from "./LiteralExpr";
-import { UnaryExpr } from "./UnaryExpr";
-import { VariableExpr } from "./VariableExpr";
+import { AssignExpr } from './AssignExpr';
+import { BinaryExpr } from './BinaryExpr';
+import { CallExpr } from './CallExpr';
+import { GroupExpr } from './GroupExpr';
+import { LiteralExpr } from './LiteralExpr';
+import { UnaryExpr } from './UnaryExpr';
+import { VariableExpr } from './VariableExpr';
 
 export interface IExprVisitor<T> {
     visitAssignExpr: (expr: AssignExpr) => T;

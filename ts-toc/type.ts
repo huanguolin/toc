@@ -1,4 +1,4 @@
-import { FunObject } from "./FunObject";
+import { FunObject } from './FunObject';
 
 export type TokenType =
     | 'identifier'

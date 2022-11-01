@@ -1,6 +1,7 @@
-import { ScanError } from "./ScanError";
-import { Token } from "./Token";
 import { keywords as keywordList, TokenType } from '../type';
+
+import { ScanError } from './ScanError';
+import { Token } from './Token';
 
 export class Scanner {
     private static readonly keywords = new Set(keywordList);
@@ -58,13 +59,14 @@ export class Scanner {
                         this.addToken(r, r);
                         break;
                     }
+                // eslint-disable-next-line no-fallthrough
                 case '|':
                     if (this.match('|')) {
                         const r = '||';
                         this.addToken(r, r);
                         break;
                     }
-                    throw new ScanError("Unknown token at: " + c);
+                    throw new ScanError('Unknown token at: ' + c);
                 case '\u0020':
                 case '\n':
                 case '\t':
@@ -80,7 +82,7 @@ export class Scanner {
                         this.addIdentifier();
                         break;
                     }
-                    throw new ScanError("Unknown token at: " + c);
+                    throw new ScanError('Unknown token at: ' + c);
             }
         }
         this.addToken('EOF', '');
@@ -96,7 +98,7 @@ export class Scanner {
     }
 
     private previous() {
-        return this.source.charAt(this.index - 1)
+        return this.source.charAt(this.index - 1);
     }
 
     private current() {
@@ -113,7 +115,11 @@ export class Scanner {
         return false;
     }
 
-    private addToken(type: TokenType, lexeme: string, literal: number | null = null) {
+    private addToken(
+        type: TokenType,
+        lexeme: string,
+        literal: number | null = null,
+    ) {
         this.tokens.push(new Token(type, lexeme, literal));
     }
 
@@ -185,10 +191,10 @@ export class Scanner {
     }
 
     private isAlphaChar(c: string) {
-        return c.length === 1
-            && ((c >= 'a' && c <= 'z')
-                || (c >= 'A' && c <= 'Z')
-                || c === '_');
+        return (
+            c.length === 1 &&
+            ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_')
+        );
     }
 }
 

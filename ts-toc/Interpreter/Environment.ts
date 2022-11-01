@@ -1,6 +1,7 @@
-import { Token } from "../Scanner/Token";
-import { ValueType } from "../type";
-import { RuntimeError } from "./RuntimeError";
+import { Token } from '../Scanner/Token';
+import { ValueType } from '../type';
+
+import { RuntimeError } from './RuntimeError';
 
 export class Environment {
     private store: Map<string, ValueType>;
@@ -13,7 +14,9 @@ export class Environment {
 
     define(name: Token, value: ValueType) {
         if (this.store.has(name.lexeme)) {
-            throw new RuntimeError(`Variable '${name.lexeme}' is already defined.`);
+            throw new RuntimeError(
+                `Variable '${name.lexeme}' is already defined.`,
+            );
         }
 
         this.store.set(name.lexeme, value);
