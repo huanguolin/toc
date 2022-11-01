@@ -1,0 +1,32 @@
+name: Check eslint & tsc
+
+on:
+  push:
+    branches: [ main, expr ]
+  pull_request:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Setup node.js env
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: Check ts-toc
+      run: cd ts-toc && npm i && npm run check
+
+    - name: Check type-toc
+      run: cd type-toc && npm i && npm run check

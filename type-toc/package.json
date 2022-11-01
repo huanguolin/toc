@@ -19,7 +19,9 @@
   "scripts": {
     "lint": "eslint . --ext .d.ts --max-warnings=0",
     "trace": "rm -rf ./trace && tsc -p ./tsconfig.analyze.json --generateTrace trace --incremental false",
-    "analyze": "npm run trace && analyze-trace ./trace"
+    "analyze": "npm run trace && analyze-trace ./trace",
+    "tsc": "tsc",
+    "check": "npm run lint && npm run tsc"
   },
   "author": "alvin.huang",
   "license": "MIT"

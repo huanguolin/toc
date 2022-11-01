@@ -20,7 +20,9 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node ./output/index.js",
-    "lint": "eslint . --ext .ts --max-warnings=0"
+    "lint": "eslint . --ext .ts --max-warnings=0",
+    "tsc": "tsc --noEmit",
+    "check": "npm run lint && npm run tsc"
   },
   "author": "alvin.huang",
   "license": "MIT"
