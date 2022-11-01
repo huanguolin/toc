@@ -26,7 +26,7 @@ jobs:
         node-version: 16
 
     - name: Check ts-toc
-      run: cd ts-toc && npm i && npm run check
+      run: cd ts-toc && pwd && npm i && npm run check
 
     - name: Check type-toc
-      run: cd type-toc && npm i && npm run check
+      run: cd type-toc && pwd && npm i && npm run check
