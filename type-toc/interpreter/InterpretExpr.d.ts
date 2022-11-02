@@ -1,41 +1,18 @@
+/* eslint-disable prettier/prettier */
 import { FunObject } from '../FunObject';
 import { NoWay, SuccessResult } from '../Result';
-import {
-    AssignExpr,
-    BinaryExpr,
-    CallExpr,
-    Expr,
-    GroupExpr,
-    LiteralExpr,
-    UnaryExpr,
-    VariableExpr,
-} from '../parser/Expr';
+import { AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr, VariableExpr } from '../parser/Expr';
 import { TokenLike } from '../parser/utils';
 import { Token } from '../scanner/Token';
 import { TokenType, ValueType } from '../type';
 import { Eq, Safe } from '../utils/common';
 import { Inverse, IsTrue } from '../utils/logic';
-import {
-    Add,
-    Div,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
-    Mod,
-    Mul,
-    Sub,
-} from '../utils/math/fast/index';
+import { Add, Div, Gt, Gte, Lt, Lte, Mod, Mul, Sub } from '../utils/math/fast/index';
 
-import {
-    BuildEnv,
-    EnvAssign,
-    EnvDefine,
-    EnvGet,
-    Environment,
-} from './Environment';
+import { BuildEnv, EnvAssign, EnvDefine, EnvGet, Environment } from './Environment';
 import { InterpretBlockStmt, InterpretStmtSuccess } from './InterpretStmt';
 import { RuntimeError } from './RuntimeError';
+/* eslint-enable prettier/prettier */
 
 export type InterpretExprSuccess<
     Value extends ValueType,

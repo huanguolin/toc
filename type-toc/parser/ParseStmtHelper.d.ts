@@ -1,20 +1,13 @@
+/* eslint-disable prettier/prettier */
 import { ErrorResult, NoWay, SuccessResult } from '../Result';
 import { BuildToken, EOF, Token } from '../scanner/Token';
 import { Push } from '../utils/array';
 
 import { Expr } from './Expr';
 import { ParseExpr, ParseExprSuccess } from './ParseExprHelper';
-import {
-    BlockStmt,
-    BuildBlockStmt,
-    BuildExprStmt,
-    BuildForStmt,
-    BuildFunStmt,
-    BuildIfStmt,
-    BuildVarStmt,
-    Stmt,
-} from './Stmt';
+import { BlockStmt, BuildBlockStmt, BuildExprStmt, BuildForStmt, BuildFunStmt, BuildIfStmt, BuildVarStmt, Stmt} from './Stmt';
 import { Identifier, Match, TokenLike } from './utils';
+/* eslint-enable prettier/prettier */
 
 export type ParseStmtError<M extends string> =
     ErrorResult<`[ParseStmtError]: ${M}`>;

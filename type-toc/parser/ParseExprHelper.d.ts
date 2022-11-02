@@ -1,21 +1,13 @@
+/* eslint-disable prettier/prettier */
 import { ErrorResult, NoWay, SuccessResult } from '../Result';
 import { Token } from '../scanner/Token';
 import { Keywords, ValueType } from '../type';
 import { Push } from '../utils/array';
 import { Safe } from '../utils/common';
 
-import {
-    Expr,
-    BuildBinaryExpr,
-    BuildUnaryExpr,
-    BuildLiteralExpr,
-    BuildGroupExpr,
-    BuildVariableExpr,
-    VariableExpr,
-    BuildAssignExpr,
-    BuildCallExpr,
-} from './Expr';
+import { Expr, BuildBinaryExpr, BuildUnaryExpr, BuildLiteralExpr, BuildGroupExpr, BuildVariableExpr, VariableExpr, BuildAssignExpr, BuildCallExpr } from './Expr';
 import { Identifier, Match, TokenLike } from './utils';
+/* eslint-enable prettier/prettier */
 
 export type ParseExprError<M extends string> =
     ErrorResult<`[ParseExprError]: ${M}`>;
