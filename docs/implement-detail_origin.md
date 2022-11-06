@@ -337,7 +337,7 @@ type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 #### 1.4.6 First-Class-Function
 在看到上面的限制后，或许你感到有点遗憾（一切都是权衡，没有什么是完美的）。但是不得不告诉你，还有另外一件不幸的事。它没有函数式语言的标志性能力—— [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)。即没有办法传入/传出函数，无法实现高阶函数。不过好在，没有这个能力，并不会影响表达能力。只是麻烦很多😓。
 
-简单来说，使用 `Function(argumentsironment1) => return + environment2` 的方式，可以表达对等的东西。
+简单来说，使用 `Function(arguments, Environment1) => return + environment2` 的方式，可以表达对等的东西。
 
 以上就是这门函数式编程语言的介绍。休息一下。我们就要开始编写解释器了😄。
 
