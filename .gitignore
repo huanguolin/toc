@@ -3,3 +3,6 @@ node_modules/
 trace/
 tools/prepare-ts-playground/toc.d.ts
 .DS_Store
+
+# rust-toc
+rust-toc/target/
