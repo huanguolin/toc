@@ -34,24 +34,12 @@ export class Scanner {
                     break;
                 case '<':
                 case '>':
-                    if (this.match('=')) {
-                        c += '=';
-                    }
-                    this.addToken(c as TokenType, c);
-                    break;
                 case '!':
-                    if (this.match('=')) {
-                        c += '=';
-                    }
-                    this.addToken(c as TokenType, c);
-                    break;
                 case '=':
                     if (this.match('=')) {
-                        const r = '==';
-                        this.addToken(r, r);
-                    } else {
-                        this.addToken(c, c);
+                        c += '=';
                     }
+                    this.addToken(c as TokenType, c);
                     break;
                 case '&':
                     if (this.match('&')) {
