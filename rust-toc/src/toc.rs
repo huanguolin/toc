@@ -1,16 +1,15 @@
-use crate::{scanner::Scanner, token::Token};
+use crate::{scanner::scan, token::Token, error::TocErr};
 
 
 pub struct Toc {
-    scanner: Scanner,
 }
 
 impl Toc {
     pub fn new() -> Self {
-        Toc { scanner: Scanner::new() }
+        Toc { }
     }
 
-    pub fn eval(&mut self, src: String) -> &Vec<Token> {
-        self.scanner.scan(src)
+    pub fn eval(&mut self, src: String) -> Result<Vec<Token>, TocErr> {
+        scan(src)
     }
 }

@@ -1,11 +1,11 @@
 
+mod ext;
 mod error;
 mod token;
 mod scanner;
 mod toc;
 
-use std::io::{self, BufRead, Write};
-
+use std::{io::{self, BufRead, Write}};
 use toc::Toc;
 
 fn main() {

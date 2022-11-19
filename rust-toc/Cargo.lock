@@ -3,9 +3,15 @@
 version = 3
 
 [[package]]
+name = "lazy_static"
+version = "1.5.0"
+source = "git+https://github.com/Kimundi/lazy-static.rs#e83d66490775eb953807c39d1f073a6daa3bc760"
+
+[[package]]
 name = "rust-toc"
 version = "0.1.0"
 dependencies = [
+ "lazy_static",
  "unicode-segmentation",
 ]
 
