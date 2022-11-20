@@ -12,31 +12,29 @@ use self::{keyword::Keyword, symbol::Symbol};
 
 #[derive(Debug)]
 pub enum Token {
-    Identifier(String),
-    String(String),
-    Number(u8),
-    Keyword(Keyword),
-    Symbol(Symbol),
+    Identifier(String, u32),
+    String(String, u32),
+    Number(u8, u32),
+    Keyword(Keyword, u32),
+    Symbol(Symbol, u32),
 }
 
-impl FromStr for Token {
-    type Err = TocErr;
-
-    fn from_str(s: &str) -> Result<Self, TocErr> {
-        if let Ok(sym) = Symbol::from_str(s) {
-            Ok(Token::Symbol(sym))
-        } else if let Ok(kwd) = Keyword::from_str(s) {
-            Ok(Token::Keyword(kwd))
-        } else if s.first_char_is_some_and(|c| c == '"') {
-            Ok(Token::String(s.to_string()))
-        } else if s.first_char_is_numeric() {
-            Ok(Token::Number(s.parse().unwrap()))
-        } else if s.first_char_is_alpha() {
-            Ok(Token::Identifier(s.to_string()))
+impl Token {
+    pub fn from(str: &str, line_num: u32) -> Result<Self, TocErr> {
+        if let Ok(sym) = Symbol::from_str(str) {
+            Ok(Token::Symbol(sym, line_num))
+        } else if let Ok(kwd) = Keyword::from_str(str) {
+            Ok(Token::Keyword(kwd, line_num))
+        } else if str.first_char_is_some_and(|c| c == '"') {
+            Ok(Token::String(str.to_string(), line_num))
+        } else if str.first_char_is_numeric() {
+            Ok(Token::Number(str.parse().unwrap(), line_num))
+        } else if str.first_char_is_alpha() {
+            Ok(Token::Identifier(str.to_string(), line_num))
         } else {
             Err(TocErr::new(
                 TocErrKind::ParseTokenFail,
-                format!("Unknown token: {}", s),
+                format!("Unknown token: {}", str),
             ))
         }
     }

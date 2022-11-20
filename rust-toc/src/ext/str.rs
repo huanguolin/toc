@@ -41,3 +41,13 @@ impl FirstChar for str {
         self.first_char_is_some_and(|fc| fc.is_ascii_alphanumeric() || fc == '_')
     }
 }
+
+pub trait IsNewline {
+    fn is_newline(&self) -> bool;
+}
+
+impl IsNewline for str {
+    fn is_newline(&self) -> bool {
+        self == "\n" || self == "\r\n"
+    }
+}
