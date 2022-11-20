@@ -9,7 +9,7 @@ impl Toc {
         Toc { }
     }
 
-    pub fn eval(&mut self, src: String) -> Result<Vec<Token>, TocErr> {
+    pub fn eval(&self, src: String) -> Result<Vec<Token>, TocErr> {
         scan(src)
     }
 }

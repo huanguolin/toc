@@ -1,0 +1,8 @@
+fun genInc(x) {
+    fun inc(y) {
+        x + y;
+    }
+}
+
+var inc3 = genInc(3);
+inc3(22 + 20 * 100 - 3);
