@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::{cell::Cell};
 
 use unicode_segmentation::UnicodeSegmentation;
@@ -34,7 +35,7 @@ impl<'a> Scanner<'a> {
         while !self.is_end() {
             let s = self.advance();
             let t = match s {
-                "\u{0020}" | "\n" | "\t" => continue, // ignore
+                "\u{0020}" | "\r\n" | "\n" | "\t" => continue, // ignore
                 "{" | "}" | "," | ";" | "(" | ")" | "*" | "/" | "+" | "-" => Ok(s),
                 ">" | "<" | "!" | "=" => {
                     Ok(if self.next_is("=") {
@@ -71,7 +72,7 @@ impl<'a> Scanner<'a> {
                     }
                 },
             };
-            self.add_token(Token::from(t?)?);
+            self.add_token(Token::from_str(t?)?);
         }
 
         Ok(self.tokens.take())

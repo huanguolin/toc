@@ -4,6 +4,8 @@ use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
 pub enum TocErrKind {
     ParseFail,
     ParseTokenFail,
+    ParseKeywordFail,
+    ParseSymbolFail,
 }
 
 impl Display for TocErrKind {
