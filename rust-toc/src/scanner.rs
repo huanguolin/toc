@@ -75,7 +75,7 @@ impl<'a> Scanner<'a> {
                     } else {
                         Err(TocErr::new(
                             TocErrKind::ParseFail,
-                            format!("Unknown token: {}", s),
+                            format!("Unknown token '{}' at line {}.", s, ln),
                         ))
                     }
                 },
