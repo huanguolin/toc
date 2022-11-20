@@ -34,7 +34,7 @@ impl Token {
         } else {
             Err(TocErr::new(
                 TocErrKind::ParseTokenFail,
-                format!("Unknown token: {}", str),
+                format!("Unknown token '{}' at line {}.", str, line_num),
             ))
         }
     }
