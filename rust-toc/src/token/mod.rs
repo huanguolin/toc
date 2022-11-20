@@ -14,7 +14,7 @@ use self::{keyword::Keyword, symbol::Symbol};
 pub enum Token {
     Identifier(String, u32),
     String(String, u32),
-    Number(u8, u32),
+    Number(u32, u32),
     Keyword(Keyword, u32),
     Symbol(Symbol, u32),
 }
@@ -33,9 +33,22 @@ impl Token {
             Ok(Token::Identifier(str.to_string(), line_num))
         } else {
             Err(TocErr::new(
-                TocErrKind::ParseTokenFail,
+                TocErrKind::UnknownToken,
                 format!("Unknown token '{}' at line {}.", str, line_num),
             ))
+        }
+    }
+}
+
+impl PartialEq for Token {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Identifier(l, _), Self::Identifier(r, _)) => l == r,
+            (Self::String(l, _), Self::String(r, _)) => l == r,
+            (Self::Number(l, _), Self::Number(r, _)) => l == r,
+            (Self::Keyword(l, _), Self::Keyword(r, _)) => l == r,
+            (Self::Symbol(l, _), Self::Symbol(r, _)) => l == r,
+            _ => false,
         }
     }
 }

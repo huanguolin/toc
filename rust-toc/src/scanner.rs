@@ -74,7 +74,7 @@ impl<'a> Scanner<'a> {
                         Ok(self.get_identifier())
                     } else {
                         Err(TocErr::new(
-                            TocErrKind::ParseFail,
+                            TocErrKind::ScanFail,
                             format!("Unknown token '{}' at line {}.", s, ln),
                         ))
                     }

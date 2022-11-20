@@ -1,4 +1,4 @@
-use crate::{scanner::scan, token::Token, error::TocErr};
+use crate::{scanner::scan, error::TocErr, parser::parse, expr::expr::Expr};
 
 
 pub struct Toc {
@@ -9,7 +9,7 @@ impl Toc {
         Toc { }
     }
 
-    pub fn eval(&self, src: String) -> Result<Vec<Token>, TocErr> {
-        scan(src)
+    pub fn eval(&self, src: String) -> Result<Expr, TocErr> {
+        parse(scan(src)?)
     }
 }

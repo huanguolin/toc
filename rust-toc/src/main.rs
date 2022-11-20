@@ -3,6 +3,8 @@ mod ext;
 mod error;
 mod token;
 mod scanner;
+mod expr;
+mod parser;
 mod toc;
 
 use std::{env, io::{self, BufRead, Write}, fs};

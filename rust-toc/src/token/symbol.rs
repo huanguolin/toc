@@ -59,9 +59,15 @@ impl FromStr for Symbol {
             "||" => Ok(Self::Or),
 
             _ => Err(TocErr::new(
-                TocErrKind::ParseSymbolFail,
+                TocErrKind::UnknownSymbol,
                 format!("Unknown symbol: {}", s),
             ))
         }
+    }
+}
+
+impl PartialEq for Symbol {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
     }
 }

@@ -27,9 +27,15 @@ impl FromStr for Keyword {
             "false" => Ok(Self::False),
             "null" => Ok(Self::Null),
             _ => Err(TocErr::new(
-                TocErrKind::ParseKeywordFail,
+                TocErrKind::UnknownKeyword,
                 format!("Unknown keyword: {}", s),
             ))
         }
+    }
+}
+
+impl PartialEq for Keyword {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
     }
 }
