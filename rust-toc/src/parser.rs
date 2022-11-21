@@ -92,7 +92,7 @@ impl Parser {
         }
     }
 
-    fn consume_symbol(&mut self, symbols: &[Symbol], msg: String) -> Result<(), TocErr> {
+    fn expect_symbol(&mut self, symbols: &[Symbol], msg: String) -> Result<(), TocErr> {
         if !self.is_end() {
             if let Token::Symbol(s, _) = self.current() {
                 if symbols.contains(&s) {
