@@ -50,6 +50,16 @@ impl Token {
             ))
         }
     }
+
+    pub fn to_str(&self) -> String {
+        match self {
+            Token::Identifier(i, _) => i.to_string(),
+            Token::String(s, _) => s.to_string(),
+            Token::Number(n, _) => n.to_string(),
+            Token::Keyword(k, _) => k.to_string(),
+            Token::Symbol(sym, _) => sym.to_string(),
+        }
+    }
 }
 
 impl PartialEq for Token {

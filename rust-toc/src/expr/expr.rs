@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::token::Token;
 
 use super::expr_visitor::ExprVisitor;
@@ -52,11 +54,11 @@ pub struct VariableExpr {
 #[derive(Debug)]
 pub struct CallExpr {
     pub callee: Box<Expr>,
-    args: Vec<Expr>,
+    pub args: Vec<Expr>,
 }
 
 impl Expr {
-    pub fn accept<R>(&self, visitor: impl ExprVisitor<R>) -> R {
+    pub fn accept<R>(&self, visitor: &impl ExprVisitor<R>) -> R {
         match self {
             Expr::Assign(expr) => visitor.visit_assign_expr(expr),
             Expr::Binary(expr) => visitor.visit_binary_expr(expr),
@@ -66,5 +68,66 @@ impl Expr {
             Expr::Variable(expr) => visitor.visit_variable_expr(expr),
             Expr::Call(expr) => visitor.visit_call_expr(expr),
         }
+    }
+}
+
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", SExprPinter::new().print(self))
+    }
+}
+
+
+/**
+ * S-expr printer.
+ */
+struct SExprPinter { }
+
+impl SExprPinter {
+    fn new() -> Self {
+        SExprPinter { }
+    }
+
+    fn print(&self, expr: &Expr) -> String {
+        expr.accept(self)
+    }
+}
+
+impl ExprVisitor<String> for SExprPinter {
+    fn visit_assign_expr(&self, expr: &AssignExpr) -> String {
+        format!("( = {} {})", expr.ver_name.to_str(), expr.right.accept(self))
+    }
+
+    fn visit_binary_expr(&self, expr: &BinaryExpr) -> String {
+        format!("({} {} {})", expr.op.to_str(), expr.left.accept(self), expr.right.accept(self))
+    }
+
+    fn visit_group_expr(&self, expr: &GroupExpr) -> String {
+        format!("({})", expr.expr.accept(self))
+    }
+
+    fn visit_unary_expr(&self, expr: &UnaryExpr) -> String {
+        format!("({} {})", expr.op.to_str(), expr.expr.accept(self))
+    }
+
+    fn visit_literal_expr(&self, expr: &LiteralExpr) -> String {
+        match expr {
+            LiteralExpr::String(s) => format!("{}", s),
+            LiteralExpr::Number(n) => format!("{}", n),
+            LiteralExpr::Bool(b) => format!("{}", b),
+        }
+    }
+
+    fn visit_variable_expr(&self, expr: &VariableExpr) -> String {
+        format!("{}", expr.var_name.to_str())
+    }
+
+    fn visit_call_expr(&self, expr: &CallExpr) -> String {
+        todo!()
+        // let callee = expr.callee.accept(self);
+        // let args = &expr.args
+        //     .into_iter()
+        //     .fold(String::new(), |a, b| format!("{} {}", a, b.accept(self)));
+        // format!("({} {})", callee, args)
     }
 }

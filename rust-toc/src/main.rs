@@ -42,7 +42,7 @@ fn repl() {
 
 fn print_result(result: Result<Expr, TocErr>) {
     match result {
-        Ok(val) => println!("{} {:?}", "=".green(), val),
+        Ok(val) => println!("{} {}", "=".green(), val.to_string()),
         Err(err) => eprintln!("{}", err.to_string().red().bold())
     }
 }
