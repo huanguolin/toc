@@ -59,7 +59,7 @@ impl Parser {
             Token::Number(n, _) => Ok(Expr::Literal(LiteralExpr::Number(n))),
             _ => Err(TocErr::new(
                 TocErrKind::ParseFail,
-                format!("Expect expression, but got token: {:?}", token)))
+                format!("Expect expression, but got token {}.", token)))
         }
     }
 

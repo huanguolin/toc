@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, fmt::Display};
 
 use crate::error::{TocErr, TocErrKind};
 
@@ -12,6 +12,21 @@ pub enum Keyword {
     True,
     False,
     Null,
+}
+
+impl Display for Keyword {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Fun => write!(f, "fun"),
+            Self::Var => write!(f, "var"),
+            Self::For => write!(f, "for"),
+            Self::If => write!(f, "if"),
+            Self::Else => write!(f, "else"),
+            Self::True => write!(f, "true"),
+            Self::False => write!(f, "false"),
+            Self::Null => write!(f, "null"),
+        }
+    }
 }
 
 impl FromStr for Keyword {
@@ -28,7 +43,7 @@ impl FromStr for Keyword {
             "null" => Ok(Self::Null),
             _ => Err(TocErr::new(
                 TocErrKind::UnknownKeyword,
-                format!("Unknown keyword: {}", s),
+                format!("Unknown keyword: {}.", s),
             ))
         }
     }

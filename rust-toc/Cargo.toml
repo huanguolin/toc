@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 unicode-segmentation = "1.10.0"
+colored = "2.0.0"
 
 [dependencies.lazy_static]
 git = "https://github.com/Kimundi/lazy-static.rs"

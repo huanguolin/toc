@@ -1,7 +1,7 @@
 pub mod keyword;
 pub mod symbol;
 
-use std::str::FromStr;
+use std::{str::FromStr, fmt::Display};
 
 use crate::{
     error::{TocErr, TocErrKind},
@@ -17,6 +17,18 @@ pub enum Token {
     Number(u32, u32),
     Keyword(Keyword, u32),
     Symbol(Symbol, u32),
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Identifier(i, l) => write!(f, "Identifier({}) at line {}", i, l),
+            Token::String(s, l) => write!(f, "String({}) at line {}", s, l),
+            Token::Number(n, l) => write!(f, "Number({}) at line {}", n, l),
+            Token::Keyword(k, l) => write!(f, "Keyword({}) at line {}", k, l),
+            Token::Symbol(sym, l) => write!(f, "Symbol({}) at line {}", sym, l),
+        }
+    }
 }
 
 impl Token {

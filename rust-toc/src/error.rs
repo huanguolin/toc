@@ -15,6 +15,7 @@ impl Display for TocErrKind {
     }
 }
 
+#[derive(Debug)]
 pub struct TocErr {
     pub kind: TocErrKind,
     pub msg: String,
@@ -22,13 +23,7 @@ pub struct TocErr {
 
 impl Display for TocErr {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(&format!("[Error: {}]: {}", self.kind, self.msg))
-    }
-}
-
-impl Debug for TocErr {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result  {
-        f.debug_struct("TocErr").field("kind", &self.kind).field("msg", &self.msg).finish()
+        f.write_str(&format!("[{}]: {}", self.kind, self.msg))
     }
 }
 
