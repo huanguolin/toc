@@ -1,4 +1,3 @@
-
 pub mod expr_visitor;
 
 use std::fmt::Display;
@@ -82,57 +81,131 @@ impl Display for Expr {
     }
 }
 
-
 /**
  * S-expr printer.
  */
-struct SExprPinter { }
+struct SExprPinter {}
 
 impl SExprPinter {
     fn new() -> Self {
-        SExprPinter { }
+        SExprPinter {}
     }
 
     fn print(&self, expr: &Expr) -> String {
         expr.accept(self)
+            .into_iter()
+            .fold(String::new(), |a, b| a + "\n" + &b)
+            .trim_start()
+            .to_string()
+    }
+
+    fn indent(&self, s: String) -> String {
+        // 4 space
+        format!("    {}", s)
+    }
+
+    fn indents(&self, res: &mut Vec<String>, expr: &Expr) {
+        for s in expr.accept(self) {
+            res.push(self.indent(s));
+        }
+    }
+
+    fn indents_with_start(&self, res: &mut Vec<String>, expr: &Expr) {
+        let ss = expr.accept(self);
+        for (i, s) in ss.into_iter().enumerate() {
+            if i == 0 {
+                res.push(format!("({}", s));
+            } else {
+                res.push(self.indent(s));
+            }
+        }
+    }
+
+    fn indents_with_end(&self, res: &mut Vec<String>, expr: &Expr) {let ss = expr.accept(self);
+        let len = ss.len();
+        for (i, s) in ss.into_iter().enumerate() {
+            let mut is = self.indent(s);
+            if i == len - 1 {
+                is += ")"
+            }
+            res.push(is);
+        }
+    }
+
+    fn indents_paired(&self, res: &mut Vec<String>, expr: &Expr) {
+        let ss = expr.accept(self);
+        let len = ss.len();
+        for (i, s) in ss.into_iter().enumerate() {
+            let mut is = self.indent(s.clone());
+            if i == 0 {
+                is = format!("({}", s);
+            }
+
+            if i == len - 1 {
+                is += ")";
+            }
+
+            res.push(self.indent(is));
+        }
     }
 }
 
-impl ExprVisitor<String> for SExprPinter {
-    fn visit_assign_expr(&self, expr: &AssignExpr) -> String {
-        format!("( = {} {})", expr.var_name.to_str(), expr.right.accept(self))
+impl ExprVisitor<Vec<String>> for SExprPinter {
+    fn visit_assign_expr(&self, expr: &AssignExpr) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+        res.push("(=".to_owned());
+        res.push(self.indent(expr.var_name.to_str()));
+        self.indents_with_end(&mut res, &expr.right);
+        res
     }
 
-    fn visit_binary_expr(&self, expr: &BinaryExpr) -> String {
-        format!("({} {} {})", expr.op.to_str(), expr.left.accept(self), expr.right.accept(self))
+    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+        res.push(format!("({}", expr.op.to_str()));
+        self.indents(&mut res, &expr.left);
+        self.indents_with_end(&mut res, &expr.right);
+        res
     }
 
-    fn visit_group_expr(&self, expr: &GroupExpr) -> String {
-        format!("({})", expr.expr.accept(self))
+    fn visit_group_expr(&self, expr: &GroupExpr) -> Vec<String> {
+        expr.expr.accept(self)
     }
 
-    fn visit_unary_expr(&self, expr: &UnaryExpr) -> String {
-        format!("({} {})", expr.op.to_str(), expr.expr.accept(self))
+    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+        res.push(format!("({}", expr.op.to_str()));
+        self.indents_with_end(&mut res, &expr.expr);
+        res
     }
 
-    fn visit_literal_expr(&self, expr: &LiteralExpr) -> String {
-        match expr {
+    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Vec<String> {
+        let s = match expr {
             LiteralExpr::String(s, _) => format!("{}", s),
             LiteralExpr::Number(n, _) => format!("{}", n),
             LiteralExpr::Bool(b, _) => format!("{}", b),
             LiteralExpr::Null(_) => format!("null"),
+        };
+        vec![s]
+    }
+
+    fn visit_variable_expr(&self, expr: &VariableExpr) -> Vec<String> {
+        vec![expr.var_name.to_str()]
+    }
+
+    fn visit_call_expr(&self, expr: &CallExpr) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+
+        if expr.args.len() > 0 {
+            self.indents_with_start(&mut res, &expr.callee);
+
+            for i in 0..expr.args.len() - 1 {
+                self.indents(&mut res, &expr.args[i]);
+            }
+            self.indents_with_end(&mut res, expr.args.last().unwrap());
+        } else {
+            self.indents_paired(&mut res, &expr.callee);
         }
-    }
 
-    fn visit_variable_expr(&self, expr: &VariableExpr) -> String {
-        format!("{}", expr.var_name.to_str())
-    }
-
-    fn visit_call_expr(&self, expr: &CallExpr) -> String {
-        let callee = expr.callee.accept(self);
-        let args = (&expr.args)
-            .into_iter()
-            .fold(String::new(), |a, b| format!("{} {}", a, &b.accept(self)));
-        format!("({} {})", callee, args)
+        res
     }
 }
