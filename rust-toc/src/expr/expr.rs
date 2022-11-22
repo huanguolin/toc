@@ -123,11 +123,10 @@ impl ExprVisitor<String> for SExprPinter {
     }
 
     fn visit_call_expr(&self, expr: &CallExpr) -> String {
-        todo!()
-        // let callee = expr.callee.accept(self);
-        // let args = &expr.args
-        //     .into_iter()
-        //     .fold(String::new(), |a, b| format!("{} {}", a, b.accept(self)));
-        // format!("({} {})", callee, args)
+        let callee = expr.callee.accept(self);
+        let args = (&expr.args)
+            .into_iter()
+            .fold(String::new(), |a, b| format!("{} {}", a, &b.accept(self)));
+        format!("({} {})", callee, args)
     }
 }
