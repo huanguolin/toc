@@ -60,6 +60,23 @@ impl Token {
             Token::Symbol(sym, _) => sym.to_string(),
         }
     }
+
+    pub fn is_literal_keyword(&self) -> bool {
+        match self {
+            Token::Keyword(k, _) => *k == Keyword::True || *k == Keyword::False || *k == Keyword::Null,
+            _ => false,
+        }
+    }
+
+    // pub fn line_num(&self) -> &u32 {
+    //     match self {
+    //         Token::Identifier(_, i) => i,
+    //         Token::String(_, s) => s,
+    //         Token::Number(_, n) => n,
+    //         Token::Keyword(_, k) => k,
+    //         Token::Symbol(_, sym) => sym,
+    //     }
+    // }
 }
 
 impl PartialEq for Token {

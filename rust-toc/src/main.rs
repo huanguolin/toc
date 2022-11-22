@@ -9,7 +9,7 @@ mod toc;
 
 use colored::Colorize;
 use error::TocErr;
-use expr::expr::Expr;
+use expr::Expr;
 use std::{env, io::{self, BufRead, Write}, fs};
 use toc::Toc;
 

@@ -1,4 +1,4 @@
-use crate::{scanner::scan, error::TocErr, parser::parse, expr::expr::Expr};
+use crate::{scanner::scan, error::TocErr, parser::parse, expr::Expr};
 
 
 pub struct Toc {
