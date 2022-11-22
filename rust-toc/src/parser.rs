@@ -1,10 +1,7 @@
 use crate::{
     error::{TocErr, TocErrKind},
     expr::expr::{BinaryExpr, Expr, LiteralExpr},
-    token::{
-        symbol::Symbol,
-        Token,
-    },
+    token::{symbol::Symbol, Token},
 };
 
 pub fn parse(tokens: Vec<Token>) -> Result<Expr, TocErr> {
@@ -59,7 +56,8 @@ impl Parser {
             Token::Number(n, _) => Ok(Expr::Literal(LiteralExpr::Number(n))),
             _ => Err(TocErr::new(
                 TocErrKind::ParseFail,
-                format!("Expect expression, but got token {}.", token)))
+                format!("Expect expression, but got token {}.", token),
+            )),
         }
     }
 
@@ -77,17 +75,11 @@ impl Parser {
 
     fn get_symbol(&mut self, symbols: &[Symbol]) -> Option<Token> {
         if self.is_end() {
-            return None
+            return None;
         }
 
         match self.current() {
-            Token::Symbol(s, _) => {
-                if symbols.contains(&s) {
-                    Some(self.shift())
-                } else {
-                    None
-                }
-            }
+            Token::Symbol(s, _) if symbols.contains(&s) => Some(self.shift()),
             _ => None,
         }
     }
