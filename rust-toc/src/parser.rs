@@ -5,11 +5,7 @@ use crate::{
         Expr::{Assign, Binary, Call, Group, Literal, Unary, Variable},
         GroupExpr, LiteralExpr, UnaryExpr, VariableExpr,
     },
-    token::{
-        keyword::Keyword,
-        symbol::Symbol,
-        Token,
-    },
+    token::{keyword::Keyword, symbol::Symbol, Token},
 };
 
 pub fn parse(tokens: Vec<Token>) -> Result<Expr, TocErr> {
@@ -157,6 +153,10 @@ impl Parser {
             let mut args: Vec<Expr> = Vec::new();
             if let None = self.get_symbol(&[Symbol::RightParen]) {
                 args = self.parse_arguments()?;
+                self.expect_symbol(
+                    &[Symbol::RightParen],
+                    "Expect ')' end fun call.".to_string(),
+                )?;
             }
             expr = Call(CallExpr {
                 callee,
@@ -171,7 +171,7 @@ impl Parser {
         let mut args: Vec<Expr> = Vec::new();
         loop {
             args.push(self.parse_expr()?);
-            if let Some(_) = self.get_symbol(&[Symbol::RightParen]) {
+            if let None = self.get_symbol(&[Symbol::Comma]) {
                 break;
             }
         }
@@ -183,7 +183,7 @@ impl Parser {
             return Err(TocErr::new(
                 TocErrKind::ParseFail,
                 "Expect expression, but got end.".to_string(),
-            ))
+            ));
         }
 
         let token = self.shift();
@@ -202,7 +202,7 @@ impl Parser {
                 let expr = self.parse_expr()?;
                 self.expect_symbol(
                     &[Symbol::RightParen],
-                    format!("Expect ')' after expression, but got token {}.", token),
+                    "Expect ')' after expression".to_string(),
                 )?;
                 Ok(Group(GroupExpr {
                     left_paren: token,
@@ -211,7 +211,7 @@ impl Parser {
             }
             _ => Err(TocErr::new(
                 TocErrKind::ParseFail,
-                format!("Expect expression, but got token {}.", token),
+                "Expect expression".to_string(),
             )),
         }
     }
@@ -240,15 +240,23 @@ impl Parser {
     }
 
     fn expect_symbol(&mut self, symbols: &[Symbol], msg: String) -> Result<(), TocErr> {
-        if !self.is_end() {
-            if let Token::Symbol(s, _) = self.current() {
+        if self.is_end() {
+            Err(TocErr::new(
+                TocErrKind::ParseFail,
+                format!("{} but got end.", msg),
+            ))
+        } else {
+            let token = self.current();
+            if let Token::Symbol(s, _) = token {
                 if symbols.contains(&s) {
                     self.shift();
                     return Ok(());
                 }
             }
+            Err(TocErr::new(
+                TocErrKind::ParseFail,
+                format!("{} but got {}.", msg, token),
+            ))
         }
-
-        Err(TocErr::new(TocErrKind::ParseFail, msg))
     }
 }

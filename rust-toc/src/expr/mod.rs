@@ -210,7 +210,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
 
         res.extend(expr.callee.accept(self));
         if expr.args.len() > 0 {
-            for i in 0..expr.args.len() - 1 {
+            for i in 0..expr.args.len() {
                 res.extend(expr.args[i].accept(self));
             }
         }
