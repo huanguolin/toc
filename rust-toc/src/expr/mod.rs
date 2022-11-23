@@ -136,7 +136,8 @@ impl SExprPinter {
         let ss = expr.accept(self);
         let len = ss.len();
         for (i, s) in ss.into_iter().enumerate() {
-            let mut is = self.indent(s.clone());
+            let mut is = s.clone();
+
             if i == 0 {
                 is = format!("({}", s);
             }
@@ -145,7 +146,11 @@ impl SExprPinter {
                 is += ")";
             }
 
-            res.push(self.indent(is));
+            if i == 0 {
+                res.push(is);
+            } else {
+                res.push(self.indent(is));
+            }
         }
     }
 }
