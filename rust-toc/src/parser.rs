@@ -43,7 +43,7 @@ impl Parser {
     // factor:      * / %               左结合
     // unary:       !                   右结合
     // call:        primary(arg?)       左结合
-    // primary:     number boolean null 'identifier' ()
+    // primary:     literal 'identifier' ()
 
     fn parse_expr(&mut self) -> Result<Expr, TocErr> {
         self.parse_assign_expr()
@@ -179,6 +179,13 @@ impl Parser {
     }
 
     fn parse_primary(&mut self) -> Result<Expr, TocErr> {
+        if self.is_end() {
+            return Err(TocErr::new(
+                TocErrKind::ParseFail,
+                "Expect expression, but got end.".to_string(),
+            ))
+        }
+
         let token = self.shift();
         match &token {
             Token::Number(n, _) => Ok(Literal(LiteralExpr::Number(n.clone(), token))),
