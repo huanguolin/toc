@@ -1,7 +1,10 @@
 pub mod expr_visitor;
 
-use std::{fmt::Display, cell::Cell};
-use colored::{Colorize, Color::{self, *}};
+use colored::{
+    Color::{self, *},
+    Colorize,
+};
+use std::{cell::Cell, fmt::Display};
 
 use crate::token::Token;
 use expr_visitor::ExprVisitor;
@@ -93,7 +96,15 @@ struct SExprPinter {
 impl SExprPinter {
     fn new() -> Self {
         SExprPinter {
-            colors: vec![Blue, Yellow, Green, BrightYellow],
+            colors: vec![
+                Red,
+                Green,
+                Yellow,
+                Blue,
+                Magenta,
+                Cyan,
+                White,
+            ],
             depth: Cell::new(0),
         }
     }
