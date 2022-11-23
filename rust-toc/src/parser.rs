@@ -2,7 +2,7 @@ use crate::{
     error::{TocErr, TocErrKind},
     expr::{
         AssignExpr, BinaryExpr, CallExpr, Expr,
-        Expr::{Assign, Binary, Call, Group, Literal, Unary, Variable},
+        Expr::{*},
         GroupExpr, LiteralExpr, UnaryExpr, VariableExpr,
     },
     token::{keyword::Keyword, symbol::Symbol, Token},
@@ -211,7 +211,7 @@ impl Parser {
             }
             _ => Err(TocErr::new(
                 TocErrKind::ParseFail,
-                "Expect expression".to_string(),
+                format!("Expect expression, but got token {}.", token),
             )),
         }
     }
