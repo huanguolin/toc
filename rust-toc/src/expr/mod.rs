@@ -1,6 +1,7 @@
 pub mod expr_visitor;
 
-use std::fmt::Display;
+use std::{fmt::Display, cell::Cell};
+use colored::{Colorize, Color::{self, *}};
 
 use crate::token::Token;
 use expr_visitor::ExprVisitor;
@@ -84,11 +85,17 @@ impl Display for Expr {
 /**
  * S-expr printer.
  */
-struct SExprPinter {}
+struct SExprPinter {
+    colors: Vec<Color>,
+    depth: Cell<usize>,
+}
 
 impl SExprPinter {
     fn new() -> Self {
-        SExprPinter {}
+        SExprPinter {
+            colors: vec![Blue, Yellow, Green, BrightYellow],
+            depth: Cell::new(0),
+        }
     }
 
     fn print(&self, expr: &Expr) -> String {
@@ -99,77 +106,76 @@ impl SExprPinter {
             .to_string()
     }
 
+    fn depth(&self) -> usize {
+        self.depth.get()
+    }
+
+    fn inc_depth(&self) {
+        let d = self.depth.get();
+        let n = (d + 1) % usize::MAX;
+        self.depth.set(n);
+    }
+
+    fn advance_color(&self) -> Color {
+        let color = self.colors[self.depth() % self.colors.len()];
+        self.inc_depth();
+        color
+    }
+
     fn indent(&self, s: String) -> String {
         // 4 space
         format!("    {}", s)
     }
 
-    fn indents(&self, res: &mut Vec<String>, expr: &Expr) {
-        for s in expr.accept(self) {
-            res.push(self.indent(s));
-        }
-    }
+    fn wrap_s_expr(&self, mut res: Vec<String>) -> Vec<String> {
+        let len = res.len();
 
-    fn indents_with_start(&self, res: &mut Vec<String>, expr: &Expr) {
-        let ss = expr.accept(self);
-        for (i, s) in ss.into_iter().enumerate() {
-            if i == 0 {
-                res.push(format!("({}", s));
-            } else {
-                res.push(self.indent(s));
-            }
+        if len == 0 {
+            panic!("wrap_s_expr() 'res.len()' can not be zero.");
         }
-    }
 
-    fn indents_with_end(&self, res: &mut Vec<String>, expr: &Expr) {let ss = expr.accept(self);
-        let len = ss.len();
-        for (i, s) in ss.into_iter().enumerate() {
-            let mut is = self.indent(s);
-            if i == len - 1 {
-                is += ")"
-            }
-            res.push(is);
-        }
-    }
-
-    fn indents_paired(&self, res: &mut Vec<String>, expr: &Expr) {
-        let ss = expr.accept(self);
-        let len = ss.len();
-        for (i, s) in ss.into_iter().enumerate() {
-            let mut is = s.clone();
+        let color = self.advance_color();
+        for i in 0..len {
+            let mut s = res[i].clone();
 
             if i == 0 {
-                is = format!("({}", s);
+                s = format!("{}{}", "(".color(color), s);
             }
 
             if i == len - 1 {
-                is += ")";
+                s = format!("{}{}", s, ")".color(color));
             }
 
             if i == 0 {
-                res.push(is);
+                res[i] = s; // The first one not need indent, other do.
             } else {
-                res.push(self.indent(is));
+                res[i] = self.indent(s);
             }
         }
+
+        res
     }
 }
 
 impl ExprVisitor<Vec<String>> for SExprPinter {
     fn visit_assign_expr(&self, expr: &AssignExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
-        res.push("(=".to_owned());
+
+        res.push("=".to_owned());
         res.push(self.indent(expr.var_name.to_str()));
-        self.indents_with_end(&mut res, &expr.right);
-        res
+        res.extend(expr.right.accept(self));
+
+        self.wrap_s_expr(res)
     }
 
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
-        res.push(format!("({}", expr.op.to_str()));
-        self.indents(&mut res, &expr.left);
-        self.indents_with_end(&mut res, &expr.right);
-        res
+
+        res.push(expr.op.to_str());
+        res.extend(expr.left.accept(self));
+        res.extend(expr.right.accept(self));
+
+        self.wrap_s_expr(res)
     }
 
     fn visit_group_expr(&self, expr: &GroupExpr) -> Vec<String> {
@@ -178,9 +184,11 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
 
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
-        res.push(format!("({}", expr.op.to_str()));
-        self.indents_with_end(&mut res, &expr.expr);
-        res
+
+        res.push(expr.op.to_str());
+        res.extend(expr.expr.accept(self));
+
+        self.wrap_s_expr(res)
     }
 
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Vec<String> {
@@ -200,17 +208,13 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
     fn visit_call_expr(&self, expr: &CallExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
 
+        res.extend(expr.callee.accept(self));
         if expr.args.len() > 0 {
-            self.indents_with_start(&mut res, &expr.callee);
-
             for i in 0..expr.args.len() - 1 {
-                self.indents(&mut res, &expr.args[i]);
+                res.extend(expr.args[i].accept(self));
             }
-            self.indents_with_end(&mut res, expr.args.last().unwrap());
-        } else {
-            self.indents_paired(&mut res, &expr.callee);
         }
 
-        res
+        self.wrap_s_expr(res)
     }
 }
