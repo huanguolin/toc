@@ -1,16 +1,17 @@
-
-mod ext;
 mod error;
-mod token;
-mod scanner;
 mod expr;
+mod ext;
 mod parser;
+mod repl;
+mod scanner;
 mod toc;
+mod token;
 
 use colored::Colorize;
 use error::TocErr;
 use expr::Expr;
-use std::{env, io::{self, BufRead, Write}, fs};
+use repl::Repl;
+use std::{env, fs};
 use toc::Toc;
 
 fn main() {
@@ -24,34 +25,25 @@ fn main() {
 
 fn eval_src_file(file: &str) {
     match fs::read_to_string(file) {
-        Ok(src) => print_result(Toc::new().eval(src)),
-        Err(err) => eprintln!("{} {}", "[Error] Read source code failed:".red().bold(), err.to_string().red().bold())
+        Ok(src) => println!("{}", fmt_result(Toc::new().eval(src))),
+        Err(err) => eprintln!(
+            "{} {}",
+            "[Error] Read source code failed:".red().bold(),
+            err.to_string().red().bold()
+        ),
     }
 }
 
 fn repl() {
     let toc = Toc::new();
-    print_arrow();
-    let stdin = io::stdin();
-    for line in stdin.lock().lines() {
-        let src = line.unwrap();
-        print_result(toc.eval(src));
-        print_arrow();
-    }
+    let mut repl = Repl::init(16);
+
+    repl.run("> ", |src| fmt_result(toc.eval(src)));
 }
 
-fn print_result(result: Result<Expr, TocErr>) {
+fn fmt_result(result: Result<Expr, TocErr>) -> String {
     match result {
-        Ok(val) => println!("{} {}", "=".green(), val.to_string()),
-        Err(err) => eprintln!("{}", err.to_string().red().bold())
+        Ok(val) => format!("{} {}", "=".green(), val.to_string()),
+        Err(err) => format!("{}", err.to_string().red().bold()),
     }
-}
-
-fn print_arrow() {
-    print(&"> ".blue().to_string());
-}
-
-fn print(str: &str) {
-    print!("{}", str);
-    let _ = io::stdout().flush();
 }
