@@ -1,4 +1,6 @@
 mod error;
+mod toc_result;
+mod interpreter;
 mod expr;
 mod ext;
 mod parser;
@@ -9,7 +11,7 @@ mod token;
 
 use colored::Colorize;
 use error::TocErr;
-use expr::Expr;
+use toc_result::TocResult;
 use repl::Repl;
 use std::{env, fs};
 use toc::Toc;
@@ -41,7 +43,7 @@ fn repl() {
     repl.run("> ", |src| fmt_result(toc.eval(src)));
 }
 
-fn fmt_result(result: Result<Expr, TocErr>) -> String {
+fn fmt_result(result: Result<TocResult, TocErr>) -> String {
     match result {
         Ok(val) => format!("{} {}", "=".green(), val.to_string()),
         Err(err) => format!("{}", err.to_string().red().bold()),
