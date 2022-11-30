@@ -88,7 +88,7 @@ impl Parser {
 
     fn parse_equality_expr(&mut self) -> Result<Expr, TocErr> {
         let mut expr = self.parse_relation_expr()?;
-        while let Some(token) = self.get_symbol(&[Symbol::Equal]) {
+        while let Some(token) = self.get_symbol(&[Symbol::Equal, Symbol::NotEqual]) {
             let left = Box::new(expr);
             let op = token;
             let right = Box::new(self.parse_relation_expr()?);
@@ -126,7 +126,7 @@ impl Parser {
 
     fn parse_factor_expr(&mut self) -> Result<Expr, TocErr> {
         let mut expr = self.parse_unary_expr()?;
-        while let Some(token) = self.get_symbol(&[Symbol::Star, Symbol::Slash]) {
+        while let Some(token) = self.get_symbol(&[Symbol::Star, Symbol::Slash, Symbol::Percent]) {
             let left = Box::new(expr);
             let op = token;
             let right = Box::new(self.parse_unary_expr()?);
@@ -136,13 +136,12 @@ impl Parser {
     }
 
     fn parse_unary_expr(&mut self) -> Result<Expr, TocErr> {
-        let mut expr = self.parse_call_expr()?;
         if let Some(token) = self.get_symbol(&[Symbol::Bang]) {
             let op = token;
             let right = Box::new(self.parse_unary_expr()?);
-            expr = Unary(UnaryExpr { op, expr: right });
+            return Ok(Unary(UnaryExpr { op, expr: right }));
         }
-        Ok(expr)
+        Ok(self.parse_call_expr()?)
     }
 
     fn parse_call_expr(&mut self) -> Result<Expr, TocErr> {

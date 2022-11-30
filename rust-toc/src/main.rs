@@ -1,20 +1,7 @@
-mod error;
-mod toc_result;
-mod interpreter;
-mod expr;
-mod ext;
-mod parser;
-mod repl;
-mod scanner;
-mod toc;
-mod token;
-
 use colored::Colorize;
-use error::TocErr;
-use toc_result::TocResult;
-use repl::Repl;
 use std::{env, fs};
-use toc::Toc;
+
+use rust_toc::{toc::Toc, error::TocErr, toc_result::TocResult, repl::Repl};
 
 fn main() {
     let args: Vec<String> = env::args().collect();

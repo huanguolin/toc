@@ -14,6 +14,9 @@ impl Toc {
     }
 
     pub fn eval(&self, src: String) -> Result<TocResult, TocErr> {
-        self.interpreter.interpret(parse(scan(src)?)?)
+        let tokens = scan(src)?;
+        let expr = parse(tokens)?;
+        // log::debug!("expr:\n{}", expr);
+        self.interpreter.interpret(expr)
     }
 }

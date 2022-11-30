@@ -50,9 +50,10 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
                     _ => {
                         if let (TocResult::Number(l), TocResult::Number(r)) = (lv, rv) {
                             match sym {
-                                Symbol::Minus => Ok(TocResult::Number(l - r)),
+                                Symbol::Minus => Ok(TocResult::Number(if l > r { l - r } else { 0 })),
                                 Symbol::Star => Ok(TocResult::Number(l * r)),
                                 Symbol::Slash => Ok(TocResult::Number(l / r)),
+                                Symbol::Percent => Ok(TocResult::Number(l % r)),
                                 Symbol::Greater => Ok(TocResult::Bool(l > r)),
                                 Symbol::Less => Ok(TocResult::Bool(l < r)),
                                 Symbol::GreaterEqual => Ok(TocResult::Bool(l >= r)),

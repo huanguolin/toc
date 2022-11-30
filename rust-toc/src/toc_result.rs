@@ -66,7 +66,8 @@ impl PartialEq<TocResult> for TocResult {
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+            (Self::Null, Self::Null) => true,
+            _ => false,
         }
     }
 }

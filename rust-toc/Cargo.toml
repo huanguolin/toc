@@ -1,5 +1,5 @@
 [package]
-name = "rust-toc"
+name = "rust_toc"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,5 +10,5 @@ unicode-segmentation = "1.10.0"
 colored = "2.0.0"
 termion = "1.5.5"
 
-[dependencies.lazy_static]
-git = "https://github.com/Kimundi/lazy-static.rs"
+[dev-dependencies]
+rstest = "0.16.0"

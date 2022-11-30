@@ -15,6 +15,7 @@ pub enum Symbol {
     Plus,       // +
     Minus,      // -
     Slash,      // /
+    Percent,    // %
     Star,       // *
     Less,       // <
     Greater,    // >
@@ -43,6 +44,7 @@ impl Display for Symbol {
             Self::Plus => write!(f, "+"),
             Self::Minus => write!(f, "-"),
             Self::Slash => write!(f, "/"),
+            Self::Percent => write!(f, "%"),
             Self::Star => write!(f, "*"),
             Self::Less => write!(f, "<"),
             Self::Greater => write!(f, ">"),
@@ -75,6 +77,7 @@ impl FromStr for Symbol {
             "+" => Ok(Self::Plus),
             "-" => Ok(Self::Minus),
             "/" => Ok(Self::Slash),
+            "%" => Ok(Self::Percent),
             "*" => Ok(Self::Star),
             "<" => Ok(Self::Less),
             ">" => Ok(Self::Greater),
