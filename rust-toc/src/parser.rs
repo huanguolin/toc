@@ -5,10 +5,10 @@ use crate::{
         Expr::{*},
         GroupExpr, LiteralExpr, UnaryExpr, VariableExpr,
     },
-    token::{keyword::Keyword, symbol::Symbol, Token},
+    token::{keyword::Keyword, symbol::Symbol, Token}, stmt::{Stmt, ExprStmt},
 };
 
-pub fn parse(tokens: Vec<Token>) -> Result<Expr, TocErr> {
+pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, TocErr> {
     Parser::new(tokens).parse()
 }
 
@@ -24,8 +24,26 @@ impl Parser {
         Parser { tokens }
     }
 
-    fn parse(&mut self) -> Result<Expr, TocErr> {
-        self.parse_expr()
+    fn parse(&mut self) -> Result<Vec<Stmt>, TocErr> {
+        let mut result: Vec<Stmt> = Vec::new();
+        while !self.is_end() {
+            result.push(self.parse_declaration()?)
+        }
+        Ok(result)
+    }
+
+    fn parse_declaration(&mut self) -> Result<Stmt, TocErr> {
+        self.parse_stmt()
+    }
+
+    fn parse_stmt(&mut self) -> Result<Stmt, TocErr> {
+        self.parse_expr_stmt()
+    }
+
+    fn parse_expr_stmt(&mut self) -> Result<Stmt, TocErr> {
+        let expr = self.parse_expr()?;
+        self.expect_symbol(&[Symbol::Semicolon], "Expect ';' after expression.".to_string())?;
+        Ok(Stmt::ExprStmt(ExprStmt { expr }))
     }
 
     // 优先级、结合性参考 C 语言：https://www.tutorialspoint.com/cprogramming/c_operators_precedence.htm

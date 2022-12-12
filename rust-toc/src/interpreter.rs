@@ -1,9 +1,7 @@
 use crate::{
     error::{TocErr, TocErrKind},
-    expr::{
-        expr_visitor::ExprVisitor, AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr,
-        UnaryExpr, VariableExpr,
-    },
+    expr::{expr_visitor::ExprVisitor, *},
+    stmt::{stmt_visitor::StmtVisitor, *},
     toc_result::TocResult,
     token::{symbol::Symbol, Token},
 };
@@ -15,8 +13,38 @@ impl Interpreter {
         Interpreter {}
     }
 
-    pub fn interpret(&self, expr: Expr) -> Result<TocResult, TocErr> {
-        expr.accept(self)
+    pub fn interpret(&self, stmts: Vec<Stmt>) -> Result<TocResult, TocErr> {
+        let mut lastResult: TocResult = TocResult::Null;
+        for stmt in stmts {
+            lastResult = stmt.accept(self)?;
+        }
+        Ok(lastResult)
+    }
+}
+
+impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
+    fn visit_expr_stmt(&self, stmt: &ExprStmt) -> Result<TocResult, TocErr> {
+       stmt.expr.accept(self)
+    }
+
+    fn visit_var_stmt(&self, stmt: &VarStmt) -> Result<TocResult, TocErr> {
+        todo!()
+    }
+
+    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {
+        todo!()
+    }
+
+    fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
+        todo!()
+    }
+
+    fn visit_for_stmt(&self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
+        todo!()
+    }
+
+    fn visit_fn_stmt(&self, stmt: &FnStmt) -> Result<TocResult, TocErr> {
+        todo!()
     }
 }
 
@@ -50,7 +78,9 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
                     _ => {
                         if let (TocResult::Number(l), TocResult::Number(r)) = (lv, rv) {
                             match sym {
-                                Symbol::Minus => Ok(TocResult::Number(if l > r { l - r } else { 0 })),
+                                Symbol::Minus => {
+                                    Ok(TocResult::Number(if l > r { l - r } else { 0 }))
+                                }
                                 Symbol::Star => Ok(TocResult::Number(l * r)),
                                 Symbol::Slash => Ok(TocResult::Number(l / r)),
                                 Symbol::Percent => Ok(TocResult::Number(l % r)),
