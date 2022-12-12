@@ -1,11 +1,11 @@
 use crate::{
     error::{TocErr, TocErrKind},
     expr::{
-        AssignExpr, BinaryExpr, CallExpr, Expr,
-        Expr::{*},
-        GroupExpr, LiteralExpr, UnaryExpr, VariableExpr,
+        AssignExpr, BinaryExpr, CallExpr, Expr, Expr::*, GroupExpr, LiteralExpr, UnaryExpr,
+        VariableExpr,
     },
-    token::{keyword::Keyword, symbol::Symbol, Token}, stmt::{Stmt, ExprStmt},
+    stmt::{ExprStmt, Stmt, VarStmt},
+    token::{keyword::Keyword, symbol::Symbol, Token},
 };
 
 pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, TocErr> {
@@ -33,7 +33,27 @@ impl Parser {
     }
 
     fn parse_declaration(&mut self) -> Result<Stmt, TocErr> {
-        self.parse_stmt()
+        if let Some(_) = self.get_keyword(&Keyword::Var) {
+            self.parse_var_declaration()
+        } else {
+            self.parse_stmt()
+        }
+    }
+
+    fn parse_var_declaration(&mut self) -> Result<Stmt, TocErr> {
+        let var_name = self.get_identifier("Expect var name.".to_string())?;
+        let mut initializer: Option<Expr> = None;
+        if let Some(_) = self.get_symbol(&[Symbol::Assign]) {
+            initializer = Some(self.parse_expr()?);
+        }
+        self.expect_symbol(
+            &[Symbol::Semicolon],
+            "Expect ';' after expression.".to_string(),
+        )?;
+        Ok(Stmt::VarStmt(VarStmt {
+            var_name,
+            initializer,
+        }))
     }
 
     fn parse_stmt(&mut self) -> Result<Stmt, TocErr> {
@@ -42,7 +62,10 @@ impl Parser {
 
     fn parse_expr_stmt(&mut self) -> Result<Stmt, TocErr> {
         let expr = self.parse_expr()?;
-        self.expect_symbol(&[Symbol::Semicolon], "Expect ';' after expression.".to_string())?;
+        self.expect_symbol(
+            &[Symbol::Semicolon],
+            "Expect ';' after expression.".to_string(),
+        )?;
         Ok(Stmt::ExprStmt(ExprStmt { expr }))
     }
 
@@ -256,24 +279,54 @@ impl Parser {
         }
     }
 
-    fn expect_symbol(&mut self, symbols: &[Symbol], msg: String) -> Result<(), TocErr> {
+    fn get_keyword(&mut self, keyword: &Keyword) -> Option<Token> {
         if self.is_end() {
-            Err(TocErr::new(
+            return None;
+        }
+
+        match self.current() {
+            Token::Keyword(k, _) if k == keyword => Some(self.shift()),
+            _ => None,
+        }
+    }
+
+    fn get_identifier(&mut self, msg: String) -> Result<Token, TocErr> {
+        self.ensure_not_end(&msg)?;
+
+        let token = self.current();
+        if let Token::Identifier(_, _) = token {
+            Ok(self.shift())
+        } else {
+            Err(self.unexpect_token_err(token, &msg))
+        }
+    }
+
+    fn expect_symbol(&mut self, symbols: &[Symbol], msg: String) -> Result<(), TocErr> {
+        self.ensure_not_end(&msg)?;
+
+        let token = self.current();
+        if let Token::Symbol(s, _) = token {
+            if symbols.contains(&s) {
+                self.shift();
+                return Ok(());
+            }
+        }
+
+        Err(self.unexpect_token_err(token, &msg))
+    }
+
+    fn ensure_not_end(&self, msg: &String) -> Result<(), TocErr> {
+        if self.is_end() {
+            return Err(TocErr::new(
                 TocErrKind::ParseFail,
                 format!("{} but got end.", msg),
-            ))
-        } else {
-            let token = self.current();
-            if let Token::Symbol(s, _) = token {
-                if symbols.contains(&s) {
-                    self.shift();
-                    return Ok(());
-                }
-            }
-            Err(TocErr::new(
-                TocErrKind::ParseFail,
-                format!("{} but got {}.", msg, token),
-            ))
+            ));
         }
+
+        Ok(())
+    }
+
+    fn unexpect_token_err(&self, token: &Token, msg: &String) -> TocErr {
+        TocErr::new(TocErrKind::ParseFail, format!("{} but got {}.", msg, token))
     }
 }
