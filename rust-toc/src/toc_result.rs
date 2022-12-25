@@ -45,6 +45,17 @@ impl Display for TocResult {
     }
 }
 
+impl Clone for TocResult {
+    fn clone(&self) -> Self {
+        match self {
+            Self::String(arg0) => Self::String(arg0.clone()),
+            Self::Number(arg0) => Self::Number(arg0.clone()),
+            Self::Bool(arg0) => Self::Bool(arg0.clone()),
+            Self::Null => Self::Null,
+        }
+    }
+}
+
 impl ops::Add<TocResult> for TocResult {
     type Output = Result<TocResult, TocErr>;
 

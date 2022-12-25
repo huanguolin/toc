@@ -1,5 +1,6 @@
 
 mod s_expr_printer;
+mod env;
 mod stmt;
 mod expr;
 mod ext;

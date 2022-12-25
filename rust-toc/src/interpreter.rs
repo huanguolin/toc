@@ -3,14 +3,18 @@ use crate::{
     expr::{expr_visitor::ExprVisitor, *},
     stmt::{stmt_visitor::StmtVisitor, *},
     toc_result::TocResult,
-    token::{symbol::Symbol, Token},
+    token::{symbol::Symbol, Token}, env::Env,
 };
 
-pub struct Interpreter {}
+pub struct Interpreter {
+    env: Env,
+}
 
 impl Interpreter {
     pub fn new() -> Self {
-        Interpreter {}
+        Interpreter {
+            env: Env::new(None)
+        }
     }
 
     pub fn interpret(&self, stmts: Vec<Stmt>) -> Result<TocResult, TocErr> {
