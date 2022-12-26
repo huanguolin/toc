@@ -13,7 +13,7 @@ impl Toc {
         }
     }
 
-    pub fn eval(&self, src: String) -> Result<TocResult, TocErr> {
+    pub fn eval(&mut self, src: String) -> Result<TocResult, TocErr> {
         let tokens = scan(src)?;
         let expr = parse(tokens)?;
         // log::debug!("expr:\n{}", expr);

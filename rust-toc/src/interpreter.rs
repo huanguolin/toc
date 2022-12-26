@@ -17,7 +17,7 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&self, stmts: Vec<Stmt>) -> Result<TocResult, TocErr> {
+    pub fn interpret(&mut self, stmts: Vec<Stmt>) -> Result<TocResult, TocErr> {
         let mut lastResult: TocResult = TocResult::Null;
         for stmt in stmts {
             lastResult = stmt.accept(self)?;

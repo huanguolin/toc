@@ -54,7 +54,7 @@ pub struct FnStmt {
 }
 
 impl Stmt {
-    pub fn accept<R>(&self, visitor: &impl StmtVisitor<R>) -> R {
+    pub fn accept<R>(&self, visitor: &mut impl StmtVisitor<R>) -> R {
         match self {
             Self::ExprStmt(stmt) => visitor.visit_expr_stmt(stmt),
             Self::VarStmt(stmt) => visitor.visit_var_stmt(stmt),
