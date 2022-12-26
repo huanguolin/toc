@@ -18,11 +18,11 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self, stmts: Vec<Stmt>) -> Result<TocResult, TocErr> {
-        let mut lastResult: TocResult = TocResult::Null;
+        let mut last_result: TocResult = TocResult::Null;
         for stmt in stmts {
-            lastResult = stmt.accept(self)?;
+            last_result = stmt.accept(self)?;
         }
-        Ok(lastResult)
+        Ok(last_result)
     }
 }
 
@@ -140,7 +140,7 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<TocResult, TocErr> {
-        todo!()
+        self.env.get(&expr.var_name)
     }
 
     fn visit_call_expr(&self, expr: &CallExpr) -> Result<TocResult, TocErr> {
