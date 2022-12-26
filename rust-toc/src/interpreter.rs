@@ -31,8 +31,13 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
        stmt.expr.accept(self)
     }
 
-    fn visit_var_stmt(&self, stmt: &VarStmt) -> Result<TocResult, TocErr> {
-        todo!()
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<TocResult, TocErr> {
+        let mut initializer = TocResult::Null;
+        if stmt.initializer.is_some() {
+            initializer = stmt.initializer.as_ref().unwrap().accept(self)?;
+        }
+        self.env.define(&stmt.var_name, initializer.clone())?;
+        Ok(initializer)
     }
 
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {

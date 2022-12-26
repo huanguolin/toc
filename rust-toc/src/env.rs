@@ -60,9 +60,9 @@ impl Env {
 
         let mut o = self.outer.take();
         if o.is_some() {
-            o.as_mut().unwrap().assign(name, value)?;
+            let r = o.as_mut().unwrap().assign(name, value);
             self.outer.set(o);
-            return Ok(())
+            return r
         }
 
         Err(TocErr::new(
