@@ -63,7 +63,7 @@ pub struct CallExpr {
 }
 
 impl Expr {
-    pub fn accept<R>(&self, visitor: &impl ExprVisitor<R>) -> R {
+    pub fn accept<R>(&self, visitor: &mut impl ExprVisitor<R>) -> R {
         match self {
             Expr::Assign(expr) => visitor.visit_assign_expr(expr),
             Expr::Binary(expr) => visitor.visit_binary_expr(expr),

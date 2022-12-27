@@ -26,7 +26,7 @@ impl SExprPinter {
         }
     }
 
-    pub fn print(&self, expr: &Expr) -> String {
+    pub fn print(&mut self, expr: &Expr) -> String {
         expr.accept(self)
             .into_iter()
             .fold(String::new(), |a, b| a + "\n" + &b)
@@ -86,7 +86,7 @@ impl SExprPinter {
 }
 
 impl ExprVisitor<Vec<String>> for SExprPinter {
-    fn visit_assign_expr(&self, expr: &AssignExpr) -> Vec<String> {
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
 
         res.push("=".to_owned());
@@ -96,7 +96,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
         self.wrap_s_expr(res)
     }
 
-    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Vec<String> {
+    fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
 
         res.push(expr.op.to_str());
@@ -106,11 +106,11 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
         self.wrap_s_expr(res)
     }
 
-    fn visit_group_expr(&self, expr: &GroupExpr) -> Vec<String> {
+    fn visit_group_expr(&mut self, expr: &GroupExpr) -> Vec<String> {
         expr.expr.accept(self)
     }
 
-    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Vec<String> {
+    fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
 
         res.push(expr.op.to_str());
@@ -119,7 +119,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
         self.wrap_s_expr(res)
     }
 
-    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Vec<String> {
+    fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Vec<String> {
         let s = match expr {
             LiteralExpr::String(s, _) => format!("{}", s),
             LiteralExpr::Number(n, _) => format!("{}", n),
@@ -129,11 +129,11 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
         vec![s]
     }
 
-    fn visit_variable_expr(&self, expr: &VariableExpr) -> Vec<String> {
+    fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Vec<String> {
         vec![expr.var_name.to_str()]
     }
 
-    fn visit_call_expr(&self, expr: &CallExpr) -> Vec<String> {
+    fn visit_call_expr(&mut self, expr: &CallExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
 
         res.extend(expr.callee.accept(self));

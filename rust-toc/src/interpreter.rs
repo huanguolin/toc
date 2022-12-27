@@ -27,7 +27,7 @@ impl Interpreter {
 }
 
 impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
-    fn visit_expr_stmt(&self, stmt: &ExprStmt) -> Result<TocResult, TocErr> {
+    fn visit_expr_stmt(&mut self, stmt: &ExprStmt) -> Result<TocResult, TocErr> {
        stmt.expr.accept(self)
     }
 
@@ -40,29 +40,31 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
         Ok(initializer)
     }
 
-    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {
+    fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {
         todo!()
     }
 
-    fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
+    fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
         todo!()
     }
 
-    fn visit_for_stmt(&self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
+    fn visit_for_stmt(&mut self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
         todo!()
     }
 
-    fn visit_fn_stmt(&self, stmt: &FnStmt) -> Result<TocResult, TocErr> {
+    fn visit_fn_stmt(&mut self, stmt: &FnStmt) -> Result<TocResult, TocErr> {
         todo!()
     }
 }
 
 impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
-    fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<TocResult, TocErr> {
-        todo!()
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<TocResult, TocErr> {
+        let v = expr.right.accept(self)?;
+        self.env.assign(&expr.var_name, v.clone())?;
+        Ok(v)
     }
 
-    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<TocResult, TocErr> {
+    fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Result<TocResult, TocErr> {
         let lv = expr.left.accept(self)?;
 
         if let Token::Symbol(sym, _) = &expr.op {
@@ -119,11 +121,11 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
         }
     }
 
-    fn visit_group_expr(&self, expr: &GroupExpr) -> Result<TocResult, TocErr> {
+    fn visit_group_expr(&mut self, expr: &GroupExpr) -> Result<TocResult, TocErr> {
         expr.expr.accept(self)
     }
 
-    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<TocResult, TocErr> {
+    fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<TocResult, TocErr> {
         let v = expr.expr.accept(self)?;
         if let Token::Symbol(Symbol::Bang, _) = &expr.op {
             Ok(TocResult::Bool(v.is_false()))
@@ -135,15 +137,15 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
         }
     }
 
-    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<TocResult, TocErr> {
+    fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Result<TocResult, TocErr> {
         Ok(TocResult::from(expr))
     }
 
-    fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<TocResult, TocErr> {
+    fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<TocResult, TocErr> {
         self.env.get(&expr.var_name)
     }
 
-    fn visit_call_expr(&self, expr: &CallExpr) -> Result<TocResult, TocErr> {
+    fn visit_call_expr(&mut self, expr: &CallExpr) -> Result<TocResult, TocErr> {
         todo!()
     }
 }

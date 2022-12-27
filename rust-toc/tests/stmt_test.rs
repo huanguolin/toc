@@ -3,7 +3,6 @@ mod helper;
 use helper::{toc, toc_err};
 use rstest::rstest;
 
-#[ignore = "TODO"]
 #[rstest]
 #[case("1 + 2;", "3")]
 fn expr_test(#[case] input: &str, #[case] output: &str) {
