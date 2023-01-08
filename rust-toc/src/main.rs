@@ -1,7 +1,7 @@
 use colored::Colorize;
-use std::{env, fs, sync::{Mutex, Arc}};
+use std::{env, fs};
 
-use rust_toc::{toc::Toc, error::TocErr, toc_result::TocResult, repl::Repl};
+use rust_toc::{error::TocErr, repl::Repl, toc::Toc, toc_result::TocResult};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -24,10 +24,10 @@ fn eval_src_file(file: &str) {
 }
 
 fn repl() {
-    let toc = Arc::new(Mutex::new(Toc::new()));
+    let toc = Toc::new();
     let mut repl = Repl::init(16);
 
-    repl.run("> ", |src| fmt_result(toc.lock().unwrap().eval(src)));
+    repl.run("> ", |src| fmt_result(toc.eval(src)));
 }
 
 fn fmt_result(result: Result<TocResult, TocErr>) -> String {
