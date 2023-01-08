@@ -4,7 +4,7 @@ use crate::{
         AssignExpr, BinaryExpr, CallExpr, Expr, Expr::*, GroupExpr, LiteralExpr, UnaryExpr,
         VariableExpr,
     },
-    stmt::{BlockStmt, ExprStmt, Stmt, VarStmt},
+    stmt::{BlockStmt, ExprStmt, Stmt, VarStmt, IfStmt},
     token::{keyword::Keyword, symbol::Symbol, Token},
 };
 
@@ -42,6 +42,7 @@ impl Parser {
 
     fn parse_var_declaration(&mut self) -> Result<Stmt, TocErr> {
         let var_keyword = self.get_keyword(&Keyword::Var).unwrap();
+
         let var_name = self.get_identifier("Expect var name.".to_string())?;
         let mut initializer: Option<Expr> = None;
         if let Some(_) = self.get_symbol(&[Symbol::Assign]) {
@@ -62,12 +63,28 @@ impl Parser {
         let token = self.current();
         match token {
             Token::Symbol(Symbol::LeftBrace, _) => self.parse_block_stmt(),
+            Token::Keyword(Keyword::If, _) => self.parse_if_stmt(),
             _ => self.parse_expr_stmt(),
         }
     }
 
+    fn parse_if_stmt(&mut self) -> Result<Stmt, TocErr> {
+        let if_keyword = self.get_keyword(&Keyword::If).unwrap();
+
+        self.expect_symbol(&[Symbol::LeftParen], "Expect '(' before if condition.".to_string())?;
+        let condition = self.parse_expr()?;
+        self.expect_symbol(&[Symbol::RightParen], "Expect ')' after if condition.".to_string())?;
+        let if_clause = Box::new(self.parse_stmt()?);
+        let mut else_clause = None;
+        if let Some(_) = self.get_keyword(&Keyword::Else) {
+            else_clause = Some(Box::new(self.parse_stmt()?));
+        }
+        Ok(Stmt::IfStmt(IfStmt { if_keyword, condition, if_clause, else_clause }))
+    }
+
     fn parse_block_stmt(&mut self) -> Result<Stmt, TocErr> {
         let left_brace = self.get_symbol(&[Symbol::LeftBrace]).unwrap();
+
         let mut stmts: Vec<Stmt> = Vec::new();
         while !self.is_end() && !self.current().is_symbol(&Symbol::RightBrace) {
             stmts.push(self.parse_declaration()?);

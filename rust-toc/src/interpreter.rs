@@ -77,7 +77,14 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
-        todo!()
+        let cond = stmt.condition.accept(self)?;
+        if cond.is_true() {
+            stmt.if_clause.accept(self)
+        } else if stmt.else_clause.is_some() {
+            stmt.else_clause.as_ref().unwrap().accept(self)
+        } else {
+            Ok(TocResult::Null)
+        }
     }
 
     fn visit_for_stmt(&self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
