@@ -3,8 +3,8 @@ use std::{collections::HashMap, cell::Cell};
 use crate::{toc_result::TocResult, token::Token, error::{TocErr, TocErrKind}};
 
 pub struct Env {
+    pub outer: Box<Cell<Option<Env>>>,
     store: HashMap<String, TocResult>,
-    outer: Box<Cell<Option<Env>>>,
 }
 
 impl Env {

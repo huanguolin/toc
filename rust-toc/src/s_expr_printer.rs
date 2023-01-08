@@ -90,7 +90,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
         let mut res: Vec<String> = Vec::new();
 
         res.push("=".to_owned());
-        res.push(self.indent(expr.var_name.to_str()));
+        res.push(self.indent(expr.var_name.to_string()));
         res.extend(expr.right.accept(self));
 
         self.wrap_s_expr(res)
@@ -99,7 +99,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
     fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
 
-        res.push(expr.op.to_str());
+        res.push(expr.op.to_string());
         res.extend(expr.left.accept(self));
         res.extend(expr.right.accept(self));
 
@@ -113,7 +113,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Vec<String> {
         let mut res: Vec<String> = Vec::new();
 
-        res.push(expr.op.to_str());
+        res.push(expr.op.to_string());
         res.extend(expr.expr.accept(self));
 
         self.wrap_s_expr(res)
@@ -130,7 +130,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
     }
 
     fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Vec<String> {
-        vec![expr.var_name.to_str()]
+        vec![expr.var_name.to_string()]
     }
 
     fn visit_call_expr(&mut self, expr: &CallExpr) -> Vec<String> {

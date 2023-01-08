@@ -4,7 +4,7 @@ use crate::{
         AssignExpr, BinaryExpr, CallExpr, Expr, Expr::*, GroupExpr, LiteralExpr, UnaryExpr,
         VariableExpr,
     },
-    stmt::{ExprStmt, Stmt, VarStmt},
+    stmt::{BlockStmt, ExprStmt, Stmt, VarStmt},
     token::{keyword::Keyword, symbol::Symbol, Token},
 };
 
@@ -33,14 +33,15 @@ impl Parser {
     }
 
     fn parse_declaration(&mut self) -> Result<Stmt, TocErr> {
-        if let Some(_) = self.get_keyword(&Keyword::Var) {
-            self.parse_var_declaration()
-        } else {
-            self.parse_stmt()
+        let token = self.current();
+        match token {
+            Token::Keyword(Keyword::Var, _) => self.parse_var_declaration(),
+            _ => self.parse_stmt(),
         }
     }
 
     fn parse_var_declaration(&mut self) -> Result<Stmt, TocErr> {
+        let var_keyword = self.get_keyword(&Keyword::Var).unwrap();
         let var_name = self.get_identifier("Expect var name.".to_string())?;
         let mut initializer: Option<Expr> = None;
         if let Some(_) = self.get_symbol(&[Symbol::Assign]) {
@@ -51,13 +52,38 @@ impl Parser {
             "Expect ';' after expression.".to_string(),
         )?;
         Ok(Stmt::VarStmt(VarStmt {
+            var_keyword,
             var_name,
             initializer,
         }))
     }
 
     fn parse_stmt(&mut self) -> Result<Stmt, TocErr> {
-        self.parse_expr_stmt()
+        let token = self.current();
+        match token {
+            Token::Symbol(Symbol::LeftBrace, _) => self.parse_block_stmt(),
+            _ => self.parse_expr_stmt(),
+        }
+    }
+
+    fn parse_block_stmt(&mut self) -> Result<Stmt, TocErr> {
+        let left_brace = self.get_symbol(&[Symbol::LeftBrace]).unwrap();
+        let mut stmts: Vec<Stmt> = Vec::new();
+        while !self.is_end() && !self.current().is_symbol(&Symbol::RightBrace) {
+            stmts.push(self.parse_declaration()?);
+        }
+
+        if self.is_end() {
+            return Err(TocErr::new(
+                TocErrKind::ParseFail,
+                "Expect '}' end the block.".to_string(),
+            ));
+        }
+
+        // Consume '}'.
+        self.get_symbol(&[Symbol::RightBrace]).unwrap();
+
+        Ok(Stmt::BlockStmt(BlockStmt { left_brace, stmts }))
     }
 
     fn parse_expr_stmt(&mut self) -> Result<Stmt, TocErr> {

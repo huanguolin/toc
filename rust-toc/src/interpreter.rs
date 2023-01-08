@@ -1,3 +1,5 @@
+use std::{mem::{swap, self}, cell::Cell};
+
 use crate::{
     error::{TocErr, TocErrKind},
     expr::{expr_visitor::ExprVisitor, *},
@@ -7,13 +9,13 @@ use crate::{
 };
 
 pub struct Interpreter {
-    env: Env,
+    env: Cell<Env>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
-            env: Env::new(None)
+            env: Cell::new(Env::new(None))
         }
     }
 
@@ -23,6 +25,33 @@ impl Interpreter {
             last_result = stmt.accept(self)?;
         }
         Ok(last_result)
+    }
+
+    fn execute_block(&mut self, block_stmt: &BlockStmt, env: Env) -> Result<TocResult, TocErr> {
+        self.env.replace(env);
+
+        let mut last_result: TocResult = TocResult::Null;
+        let mut err: Option<TocErr> = None;
+        for stmt in &block_stmt.stmts {
+            match stmt.accept(self) {
+                Err(e) => {
+                    err = Some(e);
+                    break;
+                },
+                Ok(r) => {
+                    last_result = r;
+                }
+            }
+        }
+
+        let outer = self.env.get_mut().outer.replace(None);
+        self.env.replace(outer.unwrap());
+
+        if err.is_some() {
+            Err(err.unwrap())
+        } else {
+            Ok(last_result)
+        }
     }
 }
 
@@ -36,12 +65,12 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
         if stmt.initializer.is_some() {
             initializer = stmt.initializer.as_ref().unwrap().accept(self)?;
         }
-        self.env.define(&stmt.var_name, initializer.clone())?;
+        self.env.get_mut().define(&stmt.var_name, initializer.clone())?;
         Ok(initializer)
     }
 
     fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {
-        todo!()
+       self.execute_block(stmt, Env::new(Some(self.env.replace(Env::new(None)))))
     }
 
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
@@ -60,7 +89,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
 impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<TocResult, TocErr> {
         let v = expr.right.accept(self)?;
-        self.env.assign(&expr.var_name, v.clone())?;
+        self.env.get_mut().assign(&expr.var_name, v.clone())?;
         Ok(v)
     }
 
@@ -142,7 +171,7 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, expr: &VariableExpr) -> Result<TocResult, TocErr> {
-        self.env.get(&expr.var_name)
+        self.env.get_mut().get(&expr.var_name)
     }
 
     fn visit_call_expr(&mut self, expr: &CallExpr) -> Result<TocResult, TocErr> {

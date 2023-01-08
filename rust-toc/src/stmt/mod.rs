@@ -21,6 +21,7 @@ pub struct ExprStmt {
 
 #[derive(Debug)]
 pub struct VarStmt {
+    pub var_keyword: Token,
     pub var_name: Token,
     pub initializer: Option<Expr>,
 }
@@ -33,6 +34,7 @@ pub struct BlockStmt {
 
 #[derive(Debug)]
 pub struct IfStmt {
+    pub if_keyword: Token,
     pub condition: Expr,
     pub if_clause: Box<Stmt>,
     pub else_clause: Option<Box<Stmt>>,
@@ -40,6 +42,7 @@ pub struct IfStmt {
 
 #[derive(Debug)]
 pub struct ForStmt {
+    pub for_keyword: Token,
     pub initializer: Option<Box<Stmt>>,
     pub condition: Option<Expr>,
     pub increment: Option<Expr>,
@@ -48,6 +51,7 @@ pub struct ForStmt {
 
 #[derive(Debug)]
 pub struct FnStmt {
+    pub fn_keyword: Token,
     pub name: Token,
     pub parameters: Vec<Token>,
     pub body: BlockStmt,

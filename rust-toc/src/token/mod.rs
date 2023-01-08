@@ -51,7 +51,7 @@ impl Token {
         }
     }
 
-    pub fn to_str(&self) -> String {
+    pub fn to_string(&self) -> String {
         match self {
             Token::Identifier(i, _) => i.to_string(),
             Token::String(s, _) => s.to_string(),
@@ -64,6 +64,13 @@ impl Token {
     pub fn is_literal_keyword(&self) -> bool {
         match self {
             Token::Keyword(k, _) => *k == Keyword::True || *k == Keyword::False || *k == Keyword::Null,
+            _ => false,
+        }
+    }
+
+    pub fn is_symbol(&self, symbol: &Symbol) -> bool {
+        match self {
+            Token::Symbol(i, _) => i == symbol,
             _ => false,
         }
     }
