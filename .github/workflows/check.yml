@@ -30,3 +30,11 @@ jobs:
 
     - name: Check type-toc
       run: cd type-toc && pwd && npm i && npm run check
+
+    - name: Setup rust env
+      uses: ATiltedTree/setup-rust@v1
+      with:
+        rust-version: stable
+
+    - name: Check rust-toc
+      run: cd rust-toc && pwd && cargo test
