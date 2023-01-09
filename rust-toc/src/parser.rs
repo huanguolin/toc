@@ -1,10 +1,12 @@
+use std::fs::OpenOptions;
+
 use crate::{
     error::{TocErr, TocErrKind},
     expr::{
         AssignExpr, BinaryExpr, CallExpr, Expr, Expr::*, GroupExpr, LiteralExpr, UnaryExpr,
         VariableExpr,
     },
-    stmt::{BlockStmt, ExprStmt, Stmt, VarStmt, IfStmt},
+    stmt::{BlockStmt, ExprStmt, ForStmt, IfStmt, Stmt, VarStmt},
     token::{keyword::Keyword, symbol::Symbol, Token},
 };
 
@@ -33,11 +35,10 @@ impl Parser {
     }
 
     fn parse_declaration(&mut self) -> Result<Stmt, TocErr> {
-        let token = self.current();
-        match token {
-            Token::Keyword(Keyword::Var, _) => self.parse_var_declaration(),
-            _ => self.parse_stmt(),
+        if self.match_keyword(&[Keyword::Var]) {
+            return self.parse_var_declaration()
         }
+        self.parse_stmt()
     }
 
     fn parse_var_declaration(&mut self) -> Result<Stmt, TocErr> {
@@ -60,26 +61,85 @@ impl Parser {
     }
 
     fn parse_stmt(&mut self) -> Result<Stmt, TocErr> {
-        let token = self.current();
-        match token {
-            Token::Symbol(Symbol::LeftBrace, _) => self.parse_block_stmt(),
-            Token::Keyword(Keyword::If, _) => self.parse_if_stmt(),
-            _ => self.parse_expr_stmt(),
+        if self.match_symbol(&[Symbol::LeftBrace]) {
+            return self.parse_block_stmt()
+        } else if self.match_keyword(&[Keyword::If]) {
+            return self.parse_if_stmt()
+        } else if self.match_keyword(&[Keyword::For]) {
+            return self.parse_for_stmt()
         }
+        self.parse_expr_stmt()
+    }
+
+    fn parse_for_stmt(&mut self) -> Result<Stmt, TocErr> {
+        let for_keyword = self.get_keyword(&Keyword::For).unwrap();
+
+        self.expect_symbol(
+            &[Symbol::LeftParen],
+            "Expect '(' after for keyword.".to_string(),
+        )?;
+
+        let initializer: Option<Box<Stmt>>;
+        if self.match_symbol(&[Symbol::Semicolon]) {
+            initializer = None;
+            self.shift(); // consume ';'
+        } else if self.match_keyword(&[Keyword::Var]) {
+            initializer = Some(Box::new(self.parse_var_declaration()?));
+        } else {
+            initializer = Some(Box::new(self.parse_expr_stmt()?));
+        }
+
+        let mut condition: Option<Expr> = None;
+        if self.get_symbol(&[Symbol::Semicolon]).is_none() {
+            condition = Some(self.parse_expr()?);
+            self.expect_symbol(
+                &[Symbol::Semicolon],
+                "Expect ';' after for condition.".to_string(),
+            )?;
+        }
+
+        let mut increment: Option<Expr> = None;
+        if self.get_symbol(&[Symbol::LeftParen]).is_none() {
+            increment = Some(self.parse_expr()?);
+            self.expect_symbol(
+                &[Symbol::RightParen],
+                "Expect ';' after for condition.".to_string(),
+            )?;
+        }
+
+        let body = Box::new(self.parse_stmt()?);
+        Ok(Stmt::ForStmt(ForStmt {
+            for_keyword,
+            initializer,
+            condition,
+            increment,
+            body,
+        }))
     }
 
     fn parse_if_stmt(&mut self) -> Result<Stmt, TocErr> {
         let if_keyword = self.get_keyword(&Keyword::If).unwrap();
 
-        self.expect_symbol(&[Symbol::LeftParen], "Expect '(' before if condition.".to_string())?;
+        self.expect_symbol(
+            &[Symbol::LeftParen],
+            "Expect '(' before if condition.".to_string(),
+        )?;
         let condition = self.parse_expr()?;
-        self.expect_symbol(&[Symbol::RightParen], "Expect ')' after if condition.".to_string())?;
+        self.expect_symbol(
+            &[Symbol::RightParen],
+            "Expect ')' after if condition.".to_string(),
+        )?;
         let if_clause = Box::new(self.parse_stmt()?);
         let mut else_clause = None;
         if let Some(_) = self.get_keyword(&Keyword::Else) {
             else_clause = Some(Box::new(self.parse_stmt()?));
         }
-        Ok(Stmt::IfStmt(IfStmt { if_keyword, condition, if_clause, else_clause }))
+        Ok(Stmt::IfStmt(IfStmt {
+            if_keyword,
+            condition,
+            if_clause,
+            else_clause,
+        }))
     }
 
     fn parse_block_stmt(&mut self) -> Result<Stmt, TocErr> {
@@ -309,6 +369,24 @@ impl Parser {
 
     fn current(&self) -> &Token {
         &self.tokens[0]
+    }
+
+    fn match_symbol(&mut self, symbols: &[Symbol]) -> bool {
+        if self.is_end() {
+            return false
+        }
+
+        let t = self.current();
+        symbols.iter().any(|s| t.is_symbol(s))
+    }
+
+    fn match_keyword(&mut self, keywords: &[Keyword]) -> bool {
+        if self.is_end() {
+            return false
+        }
+
+        let t = self.current();
+        keywords.iter().any(|k| t.is_keyword(k))
     }
 
     fn get_symbol(&mut self, symbols: &[Symbol]) -> Option<Token> {

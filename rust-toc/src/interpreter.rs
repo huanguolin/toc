@@ -29,7 +29,7 @@ impl Interpreter {
     }
 
     fn execute_block(&self, block_stmt: &BlockStmt, env: Env) -> Result<TocResult, TocErr> {
-        self.env.replace(env);
+        self.push_env(env);
 
         let mut last_result: TocResult = TocResult::Null;
         let mut err: Option<TocErr> = None;
@@ -45,14 +45,22 @@ impl Interpreter {
             }
         }
 
-        let outer = self.env.borrow_mut().outer.replace(None);
-        self.env.replace(outer.unwrap());
+        self.pop_env();
 
         if err.is_some() {
             Err(err.unwrap())
         } else {
             Ok(last_result)
         }
+    }
+
+    fn push_env(&self, env: Env) {
+        self.env.replace(env);
+    }
+
+    fn pop_env(&self) {
+        let outer = self.env.borrow_mut().outer.replace(None);
+        self.env.replace(outer.unwrap());
     }
 }
 
@@ -88,7 +96,32 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_for_stmt(&self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
-        todo!()
+        let prev_env = self.env.replace(Env::new(None));
+        self.push_env(Env::new(Some(prev_env)));
+
+        if stmt.initializer.is_some() {
+            stmt.initializer.as_ref().unwrap().accept(self)?;
+        }
+
+        let mut condition_result: TocResult = TocResult::Bool(true);
+        if stmt.condition.is_some() {
+            condition_result = stmt.condition.as_ref().unwrap().accept(self)?;
+        }
+
+        let mut result: TocResult = TocResult::Null;
+        while condition_result.is_true() {
+            result = stmt.body.accept(self)?;
+            if stmt.increment.is_some() {
+                stmt.increment.as_ref().unwrap().accept(self)?;
+            }
+            if stmt.condition.is_some() {
+                condition_result = stmt.condition.as_ref().unwrap().accept(self)?;
+            }
+        }
+
+        self.pop_env();
+
+        Ok(result)
     }
 
     fn visit_fn_stmt(&self, stmt: &FnStmt) -> Result<TocResult, TocErr> {

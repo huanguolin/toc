@@ -4,7 +4,9 @@ use helper::{toc, toc_err};
 use rstest::rstest;
 
 #[rstest]
-// expr
+// empty stmt
+#[case(" ", "null")]
+// expr stmt
 #[case("1 + 2;", "3")]
 // block scope
 #[case("
@@ -47,6 +49,26 @@ use rstest::rstest;
     if (false) { }
     else { }",
     "null")]
+// for statement
+#[case("
+    var x = 0;
+    for (;false;)
+        x = x + 8;
+    x;",
+    "0")]
+#[case("
+    var x = 0;
+    for (var i = 1; i < 5; i=i+1)
+        x = x + i;
+    x;",
+    "10")]
+#[case("
+    var x = 0;
+    var i = 1;
+    for (; i < 5; i=i+1)
+        x = x + i;
+    ",
+    "10")]
 fn expr_test(#[case] input: &str, #[case] output: &str) {
     toc(input, output);
 }
@@ -69,4 +91,10 @@ fn expr_error_3() {
     toc_err("
         if (true) var b = 1;
         else var b = false;");
+}
+
+#[test]
+#[should_panic(expected = "[ParseFail]: Expect expression, but got end.")]
+fn expr_error_4() {
+    toc_err("for(");
 }

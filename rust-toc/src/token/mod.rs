@@ -75,6 +75,13 @@ impl Token {
         }
     }
 
+    pub fn is_keyword(&self, keyword: &Keyword) -> bool {
+        match self {
+            Token::Keyword(i, _) => i == keyword,
+            _ => false,
+        }
+    }
+
     // pub fn line_num(&self) -> &u32 {
     //     match self {
     //         Token::Identifier(_, i) => i,
