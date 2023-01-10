@@ -20,7 +20,7 @@ impl Env {
         if self.store.contains_key(&id) {
             Err(TocErr::new(
                 TocErrKind::RuntimeError,
-                format!("Variable '{}' is already defined.", id),
+                &format!("Variable '{}' is already defined.", id),
             ))
         } else {
             self.store.insert(id, value);
@@ -47,7 +47,7 @@ impl Env {
 
         Err(TocErr::new(
             TocErrKind::RuntimeError,
-            format!("Undefined variable '{}'.", id),
+            &format!("Undefined variable '{}'.", id),
         ))
     }
 
@@ -67,7 +67,7 @@ impl Env {
 
         Err(TocErr::new(
             TocErrKind::RuntimeError,
-            format!("Undefined variable '{}'.", id),
+            &format!("Undefined variable '{}'.", id),
         ))
     }
 

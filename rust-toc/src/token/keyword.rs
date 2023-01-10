@@ -43,7 +43,7 @@ impl FromStr for Keyword {
             "null" => Ok(Self::Null),
             _ => Err(TocErr::new(
                 TocErrKind::UnknownKeyword,
-                format!("Unknown keyword: {}.", s),
+                &format!("Unknown keyword: {}.", s),
             ))
         }
     }

@@ -11,7 +11,7 @@ pub enum Stmt {
     BlockStmt(BlockStmt),
     IfStmt(IfStmt),
     ForStmt(ForStmt),
-    FnStmt(FnStmt),
+    FunStmt(FunStmt),
 }
 
 #[derive(Debug)]
@@ -50,11 +50,11 @@ pub struct ForStmt {
 }
 
 #[derive(Debug)]
-pub struct FnStmt {
-    pub fn_keyword: Token,
+pub struct FunStmt {
+    pub fun_keyword: Token,
     pub name: Token,
     pub parameters: Vec<Token>,
-    pub body: BlockStmt,
+    pub body: Box<Stmt>,
 }
 
 impl Stmt {
@@ -65,7 +65,7 @@ impl Stmt {
             Self::BlockStmt(stmt) => visitor.visit_block_stmt(stmt),
             Self::IfStmt(stmt) => visitor.visit_if_stmt(stmt),
             Self::ForStmt(stmt) => visitor.visit_for_stmt(stmt),
-            Self::FnStmt(stmt) => visitor.visit_fn_stmt(stmt),
+            Self::FunStmt(stmt) => visitor.visit_fun_stmt(stmt),
         }
     }
 }

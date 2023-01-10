@@ -124,7 +124,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
         Ok(result)
     }
 
-    fn visit_fn_stmt(&self, stmt: &FnStmt) -> Result<TocResult, TocErr> {
+    fn visit_fun_stmt(&self, stmt: &FunStmt) -> Result<TocResult, TocErr> {
         todo!()
     }
 }
@@ -173,13 +173,13 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
                                 Symbol::LessEqual => Ok(TocResult::Bool(l <= r)),
                                 _ => Err(TocErr::new(
                                     TocErrKind::RuntimeError,
-                                    format!("Unknown binary operator {}.", expr.op),
+                                    &format!("Unknown binary operator {}.", expr.op),
                                 )),
                             }
                         } else {
                             Err(TocErr::new(
                                 TocErrKind::RuntimeError,
-                                format!("Required both operand is number for operator {}, but got left is {} and right is {}.", expr.op, expr.left, expr.right),
+                                &format!("Required both operand is number for operator {}, but got left is {} and right is {}.", expr.op, expr.left, expr.right),
                             ))
                         }
                     }
@@ -188,7 +188,7 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
         } else {
             Err(TocErr::new(
                 TocErrKind::RuntimeError,
-                format!("Unknown binary operator {}.", expr.op),
+                &format!("Unknown binary operator {}.", expr.op),
             ))
         }
     }
@@ -204,7 +204,7 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
         } else {
             Err(TocErr::new(
                 TocErrKind::RuntimeError,
-                format!("Unknown unary operator {}.", expr.op),
+                &format!("Unknown unary operator {}.", expr.op),
             ))
         }
     }

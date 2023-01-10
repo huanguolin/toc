@@ -65,7 +65,7 @@ impl ops::Add<TocResult> for TocResult {
             (Self::Number(l), Self::Number(r)) => Ok(Self::Number(l + r)),
             _ => Err(TocErr::new(
                 TocErrKind::RuntimeError,
-                format!("'+' operator only support both operand is string or number."),
+                &format!("'+' operator only support both operand is string or number."),
             ))
         }
     }

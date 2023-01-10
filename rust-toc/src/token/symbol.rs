@@ -93,7 +93,7 @@ impl FromStr for Symbol {
 
             _ => Err(TocErr::new(
                 TocErrKind::UnknownSymbol,
-                format!("Unknown symbol: {}.", s),
+                &format!("Unknown symbol: {}.", s),
             ))
         }
     }

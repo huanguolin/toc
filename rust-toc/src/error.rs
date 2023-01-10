@@ -32,10 +32,10 @@ impl Error for TocErr {
 }
 
 impl TocErr {
-    pub fn new(kind: TocErrKind, msg: String) -> Self {
+    pub fn new(kind: TocErrKind, msg: &str) -> Self {
         TocErr {
             kind,
-            msg,
+            msg: msg.to_owned(),
         }
     }
 }

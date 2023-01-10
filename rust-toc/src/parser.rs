@@ -1,12 +1,10 @@
-use std::fs::OpenOptions;
-
 use crate::{
     error::{TocErr, TocErrKind},
     expr::{
         AssignExpr, BinaryExpr, CallExpr, Expr, Expr::*, GroupExpr, LiteralExpr, UnaryExpr,
         VariableExpr,
     },
-    stmt::{BlockStmt, ExprStmt, ForStmt, IfStmt, Stmt, VarStmt},
+    stmt::{BlockStmt, ExprStmt, ForStmt, FunStmt, IfStmt, Stmt, VarStmt},
     token::{keyword::Keyword, symbol::Symbol, Token},
 };
 
@@ -36,23 +34,66 @@ impl Parser {
 
     fn parse_declaration(&mut self) -> Result<Stmt, TocErr> {
         if self.match_keyword(&[Keyword::Var]) {
-            return self.parse_var_declaration()
+            self.parse_var_declaration()
+        } else if self.match_keyword(&[Keyword::Fun]) {
+            self.parse_fun_declaration()
+        } else {
+            self.parse_stmt()
         }
-        self.parse_stmt()
+    }
+
+    fn parse_fun_declaration(&mut self) -> Result<Stmt, TocErr> {
+        let fun_keyword = self.get_keyword(&Keyword::Fun).unwrap();
+
+        let name = self.get_identifier("Expect function name.")?;
+
+        self.expect_symbol(&[Symbol::LeftParen], "Expect '(' after function name.")?;
+        let mut parameters: Vec<Token> = Vec::new();
+        if !self.match_symbol(&[Symbol::RightParen]) {
+            parameters = self.parameters()?;
+            self.expect_symbol(
+                &[Symbol::LeftParen],
+                "Expect ')' after function parameters.",
+            )?;
+        }
+        if !self.match_symbol(&[Symbol::RightBrace]) {
+            return Err(TocErr::new(
+                TocErrKind::ParseFail,
+                "Expect '{' before function body.",
+            ));
+        }
+
+        let body = Box::new(self.parse_block_stmt()?);
+
+        Ok(Stmt::FunStmt(FunStmt {
+            fun_keyword,
+            name,
+            parameters,
+            body,
+        }))
+    }
+
+    fn parameters(&mut self) -> Result<Vec<Token>, TocErr> {
+        let mut params: Vec<Token> = Vec::new();
+        loop {
+            let param = self.get_identifier("Expect parameter name.")?;
+            params.push(param);
+            if !self.match_symbol(&[Symbol::Comma]) {
+                break;
+            }
+        }
+        Ok(params)
     }
 
     fn parse_var_declaration(&mut self) -> Result<Stmt, TocErr> {
         let var_keyword = self.get_keyword(&Keyword::Var).unwrap();
 
-        let var_name = self.get_identifier("Expect var name.".to_string())?;
+        let var_name = self.get_identifier("Expect var name.")?;
         let mut initializer: Option<Expr> = None;
         if let Some(_) = self.get_symbol(&[Symbol::Assign]) {
             initializer = Some(self.parse_expr()?);
         }
-        self.expect_symbol(
-            &[Symbol::Semicolon],
-            "Expect ';' after expression.".to_string(),
-        )?;
+        self.expect_symbol(&[Symbol::Semicolon], "Expect ';' after expression.")?;
         Ok(Stmt::VarStmt(VarStmt {
             var_keyword,
             var_name,
@@ -62,11 +103,11 @@ impl Parser {
 
     fn parse_stmt(&mut self) -> Result<Stmt, TocErr> {
         if self.match_symbol(&[Symbol::LeftBrace]) {
-            return self.parse_block_stmt()
+            return self.parse_block_stmt();
         } else if self.match_keyword(&[Keyword::If]) {
-            return self.parse_if_stmt()
+            return self.parse_if_stmt();
         } else if self.match_keyword(&[Keyword::For]) {
-            return self.parse_for_stmt()
+            return self.parse_for_stmt();
         }
         self.parse_expr_stmt()
     }
@@ -74,10 +115,7 @@ impl Parser {
     fn parse_for_stmt(&mut self) -> Result<Stmt, TocErr> {
         let for_keyword = self.get_keyword(&Keyword::For).unwrap();
 
-        self.expect_symbol(
-            &[Symbol::LeftParen],
-            "Expect '(' after for keyword.".to_string(),
-        )?;
+        self.expect_symbol(&[Symbol::LeftParen], "Expect '(' after for keyword.")?;
 
         let initializer: Option<Box<Stmt>>;
         if self.match_symbol(&[Symbol::Semicolon]) {
@@ -92,19 +130,13 @@ impl Parser {
         let mut condition: Option<Expr> = None;
         if self.get_symbol(&[Symbol::Semicolon]).is_none() {
             condition = Some(self.parse_expr()?);
-            self.expect_symbol(
-                &[Symbol::Semicolon],
-                "Expect ';' after for condition.".to_string(),
-            )?;
+            self.expect_symbol(&[Symbol::Semicolon], "Expect ';' after for condition.")?;
         }
 
         let mut increment: Option<Expr> = None;
         if self.get_symbol(&[Symbol::RightParen]).is_none() {
             increment = Some(self.parse_expr()?);
-            self.expect_symbol(
-                &[Symbol::RightParen],
-                "Expect ')' after for condition.".to_string(),
-            )?;
+            self.expect_symbol(&[Symbol::RightParen], "Expect ')' after for condition.")?;
         }
 
         let body = Box::new(self.parse_stmt()?);
@@ -120,15 +152,9 @@ impl Parser {
     fn parse_if_stmt(&mut self) -> Result<Stmt, TocErr> {
         let if_keyword = self.get_keyword(&Keyword::If).unwrap();
 
-        self.expect_symbol(
-            &[Symbol::LeftParen],
-            "Expect '(' before if condition.".to_string(),
-        )?;
+        self.expect_symbol(&[Symbol::LeftParen], "Expect '(' before if condition.")?;
         let condition = self.parse_expr()?;
-        self.expect_symbol(
-            &[Symbol::RightParen],
-            "Expect ')' after if condition.".to_string(),
-        )?;
+        self.expect_symbol(&[Symbol::RightParen], "Expect ')' after if condition.")?;
         let if_clause = Box::new(self.parse_stmt()?);
         let mut else_clause = None;
         if let Some(_) = self.get_keyword(&Keyword::Else) {
@@ -153,7 +179,7 @@ impl Parser {
         if self.is_end() {
             return Err(TocErr::new(
                 TocErrKind::ParseFail,
-                "Expect '}' end the block.".to_string(),
+                "Expect '}' end the block.",
             ));
         }
 
@@ -165,10 +191,7 @@ impl Parser {
 
     fn parse_expr_stmt(&mut self) -> Result<Stmt, TocErr> {
         let expr = self.parse_expr()?;
-        self.expect_symbol(
-            &[Symbol::Semicolon],
-            "Expect ';' after expression.".to_string(),
-        )?;
+        self.expect_symbol(&[Symbol::Semicolon], "Expect ';' after expression.")?;
         Ok(Stmt::ExprStmt(ExprStmt { expr }))
     }
 
@@ -201,7 +224,7 @@ impl Parser {
             } else {
                 return Err(TocErr::new(
                     TocErrKind::ParseFail,
-                    format!("Invalid assignment target before {}.", assign),
+                    &format!("Invalid assignment target before {}.", assign),
                 ));
             }
         }
@@ -296,10 +319,7 @@ impl Parser {
             let mut args: Vec<Expr> = Vec::new();
             if let None = self.get_symbol(&[Symbol::RightParen]) {
                 args = self.parse_arguments()?;
-                self.expect_symbol(
-                    &[Symbol::RightParen],
-                    "Expect ')' end fun call.".to_string(),
-                )?;
+                self.expect_symbol(&[Symbol::RightParen], "Expect ')' end fun call.")?;
             }
             expr = Call(CallExpr {
                 callee,
@@ -325,7 +345,7 @@ impl Parser {
         if self.is_end() {
             return Err(TocErr::new(
                 TocErrKind::ParseFail,
-                "Expect expression, but got end.".to_string(),
+                "Expect expression, but got end.",
             ));
         }
 
@@ -343,10 +363,7 @@ impl Parser {
             Token::Identifier(_, _) => Ok(Variable(VariableExpr { var_name: token })),
             Token::Symbol(sym, _) if *sym == Symbol::LeftParen => {
                 let expr = self.parse_expr()?;
-                self.expect_symbol(
-                    &[Symbol::RightParen],
-                    "Expect ')' after expression".to_string(),
-                )?;
+                self.expect_symbol(&[Symbol::RightParen], "Expect ')' after expression")?;
                 Ok(Group(GroupExpr {
                     left_paren: token,
                     expr: Box::new(expr),
@@ -354,7 +371,7 @@ impl Parser {
             }
             _ => Err(TocErr::new(
                 TocErrKind::ParseFail,
-                format!("Expect expression, but got token {}.", token),
+                &format!("Expect expression, but got token {}.", token),
             )),
         }
     }
@@ -373,7 +390,7 @@ impl Parser {
 
     fn match_symbol(&mut self, symbols: &[Symbol]) -> bool {
         if self.is_end() {
-            return false
+            return false;
         }
 
         let t = self.current();
@@ -382,7 +399,7 @@ impl Parser {
 
     fn match_keyword(&mut self, keywords: &[Keyword]) -> bool {
         if self.is_end() {
-            return false
+            return false;
         }
 
         let t = self.current();
@@ -411,19 +428,19 @@ impl Parser {
         }
     }
 
-    fn get_identifier(&mut self, msg: String) -> Result<Token, TocErr> {
-        self.ensure_not_end(&msg)?;
+    fn get_identifier(&mut self, msg: &str) -> Result<Token, TocErr> {
+        self.ensure_not_end(msg)?;
 
         let token = self.current();
         if let Token::Identifier(_, _) = token {
             Ok(self.shift())
         } else {
-            Err(self.unexpect_token_err(token, &msg))
+            Err(self.unexpect_token_err(token, msg))
         }
     }
 
-    fn expect_symbol(&mut self, symbols: &[Symbol], msg: String) -> Result<(), TocErr> {
-        self.ensure_not_end(&msg)?;
+    fn expect_symbol(&mut self, symbols: &[Symbol], msg: &str) -> Result<(), TocErr> {
+        self.ensure_not_end(msg)?;
 
         let token = self.current();
         if let Token::Symbol(s, _) = token {
@@ -433,21 +450,24 @@ impl Parser {
             }
         }
 
-        Err(self.unexpect_token_err(token, &msg))
+        Err(self.unexpect_token_err(token, msg))
     }
 
-    fn ensure_not_end(&self, msg: &String) -> Result<(), TocErr> {
+    fn ensure_not_end(&self, msg: &str) -> Result<(), TocErr> {
         if self.is_end() {
             return Err(TocErr::new(
                 TocErrKind::ParseFail,
-                format!("{} but got end.", msg),
+                &format!("{} but got end.", msg),
             ));
         }
 
         Ok(())
     }
 
-    fn unexpect_token_err(&self, token: &Token, msg: &String) -> TocErr {
-        TocErr::new(TocErrKind::ParseFail, format!("{} but got {}.", msg, token))
+    fn unexpect_token_err(&self, token: &Token, msg: &str) -> TocErr {
+        TocErr::new(
+            TocErrKind::ParseFail,
+            &format!("{} but got {}.", msg, token),
+        )
     }
 }
