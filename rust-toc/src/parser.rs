@@ -99,11 +99,11 @@ impl Parser {
         }
 
         let mut increment: Option<Expr> = None;
-        if self.get_symbol(&[Symbol::LeftParen]).is_none() {
+        if self.get_symbol(&[Symbol::RightParen]).is_none() {
             increment = Some(self.parse_expr()?);
             self.expect_symbol(
                 &[Symbol::RightParen],
-                "Expect ';' after for condition.".to_string(),
+                "Expect ')' after for condition.".to_string(),
             )?;
         }
 
