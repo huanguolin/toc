@@ -6,7 +6,7 @@ use crate::{token::Token, s_expr_printer::SExprPinter};
 
 use self::expr_visitor::ExprVisitor;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Assign(AssignExpr),
     Binary(BinaryExpr),
@@ -17,32 +17,32 @@ pub enum Expr {
     Call(CallExpr),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AssignExpr {
     pub var_name: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BinaryExpr {
     pub left: Box<Expr>,
     pub op: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GroupExpr {
     pub left_paren: Token,
     pub expr: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UnaryExpr {
     pub op: Token,
     pub expr: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LiteralExpr {
     String(String, Token),
     Number(u32, Token),
@@ -50,12 +50,12 @@ pub enum LiteralExpr {
     Null(Token),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableExpr {
     pub var_name: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CallExpr {
     pub callee: Box<Expr>,
     pub left_paren: Token,

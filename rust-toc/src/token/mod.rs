@@ -10,7 +10,7 @@ use crate::{
 
 use self::{keyword::Keyword, symbol::Symbol};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Identifier(String, u32),
     String(String, u32),
@@ -51,7 +51,7 @@ impl Token {
         }
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn lexeme(&self) -> String {
         match self {
             Token::Identifier(i, _) => i.to_string(),
             Token::String(s, _) => s.to_string(),

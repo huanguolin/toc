@@ -49,14 +49,16 @@ impl Parser {
 
         self.expect_symbol(&[Symbol::LeftParen], "Expect '(' after function name.")?;
         let mut parameters: Vec<Token> = Vec::new();
-        if !self.match_symbol(&[Symbol::RightParen]) {
+        if self.match_symbol(&[Symbol::RightParen]) {
+            self.shift(); // Consume ')'
+        } else {
             parameters = self.parameters()?;
             self.expect_symbol(
-                &[Symbol::LeftParen],
+                &[Symbol::RightParen],
                 "Expect ')' after function parameters.",
             )?;
         }
-        if !self.match_symbol(&[Symbol::RightBrace]) {
+        if !self.match_symbol(&[Symbol::LeftBrace]) {
             return Err(TocErr::new(
                 TocErrKind::ParseFail,
                 "Expect '{' before function body.",
@@ -78,7 +80,9 @@ impl Parser {
         loop {
             let param = self.get_identifier("Expect parameter name.")?;
             params.push(param);
-            if !self.match_symbol(&[Symbol::Comma]) {
+            if self.match_symbol(&[Symbol::Comma]) {
+                self.shift();
+            } else {
                 break;
             }
         }

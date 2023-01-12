@@ -4,6 +4,7 @@ use crate::{
     env::Env,
     error::{TocErr, TocErrKind},
     expr::{expr_visitor::ExprVisitor, *},
+    fun_object::FunObject,
     stmt::{stmt_visitor::StmtVisitor, *},
     toc_result::TocResult,
     token::{symbol::Symbol, Token},
@@ -28,7 +29,7 @@ impl Interpreter {
         Ok(last_result)
     }
 
-    fn execute_block(&self, block_stmt: &BlockStmt, env: Env) -> Result<TocResult, TocErr> {
+    pub fn execute_block(&self, block_stmt: &BlockStmt, env: Env) -> Result<TocResult, TocErr> {
         self.push_env(env);
 
         let mut last_result: TocResult = TocResult::Null;
@@ -125,7 +126,14 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_fun_stmt(&self, stmt: &FunStmt) -> Result<TocResult, TocErr> {
-        todo!()
+        let fun_name = &stmt.name;
+        let fun_object = FunObject::new(stmt.to_owned());
+        let value = TocResult::Fun(fun_object);
+        let clone_value = value.clone();
+        self.env
+            .borrow_mut()
+            .define(fun_name, value)?;
+        Ok(clone_value)
     }
 }
 

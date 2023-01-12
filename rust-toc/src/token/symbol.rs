@@ -2,7 +2,7 @@ use std::{str::FromStr, fmt::Display};
 
 use crate::error::{TocErr, TocErrKind};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Symbol {
     // single-char
     LeftBrace,  // {

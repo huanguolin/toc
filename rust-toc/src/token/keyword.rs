@@ -1,8 +1,8 @@
-use std::{str::FromStr, fmt::Display};
+use std::{fmt::Display, str::FromStr};
 
 use crate::error::{TocErr, TocErrKind};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Keyword {
     Fun,
     Var,
@@ -44,7 +44,7 @@ impl FromStr for Keyword {
             _ => Err(TocErr::new(
                 TocErrKind::UnknownKeyword,
                 &format!("Unknown keyword: {}.", s),
-            ))
+            )),
         }
     }
 }

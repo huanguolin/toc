@@ -4,7 +4,7 @@ use self::stmt_visitor::StmtVisitor;
 
 pub mod stmt_visitor;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     ExprStmt(ExprStmt),
     VarStmt(VarStmt),
@@ -14,25 +14,25 @@ pub enum Stmt {
     FunStmt(FunStmt),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExprStmt {
     pub expr: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VarStmt {
     pub var_keyword: Token,
     pub var_name: Token,
     pub initializer: Option<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BlockStmt {
     pub left_brace: Token,
     pub stmts: Vec<Stmt>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IfStmt {
     pub if_keyword: Token,
     pub condition: Expr,
@@ -40,7 +40,7 @@ pub struct IfStmt {
     pub else_clause: Option<Box<Stmt>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ForStmt {
     pub for_keyword: Token,
     pub initializer: Option<Box<Stmt>>,
@@ -49,7 +49,7 @@ pub struct ForStmt {
     pub body: Box<Stmt>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FunStmt {
     pub fun_keyword: Token,
     pub name: Token,

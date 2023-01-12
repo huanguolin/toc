@@ -13,3 +13,4 @@ pub mod repl;
 pub mod error;
 pub mod toc_result;
 pub mod toc;
+pub mod fun_object;

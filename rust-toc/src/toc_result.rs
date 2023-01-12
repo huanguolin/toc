@@ -1,9 +1,10 @@
 use std::{fmt::Display, ops};
 
-use crate::{error::{TocErr, TocErrKind}, expr::LiteralExpr};
+use crate::{error::{TocErr, TocErrKind}, expr::LiteralExpr, fun_object::FunObject};
 
-
+#[derive(Clone)]
 pub enum TocResult {
+    Fun(FunObject),
     String(String),
     Number(u32),
     Bool(bool),
@@ -22,6 +23,7 @@ impl TocResult {
 
     pub fn is_true(&self) -> bool {
         match self {
+            Self::Fun(_) => true,
             Self::String(s) => s.len() > 0,
             Self::Number(n) => *n != 0,
             Self::Bool(b) => *b,
@@ -37,21 +39,11 @@ impl TocResult {
 impl Display for TocResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Fun(v) => write!(f, "{}", v.to_string()),
             Self::String(v) => write!(f, "{}", v),
             Self::Number(v) => write!(f, "{}", v),
             Self::Bool(v) => write!(f, "{}", v),
             Self::Null => write!(f, "null"),
-        }
-    }
-}
-
-impl Clone for TocResult {
-    fn clone(&self) -> Self {
-        match self {
-            Self::String(arg0) => Self::String(arg0.clone()),
-            Self::Number(arg0) => Self::Number(arg0.clone()),
-            Self::Bool(arg0) => Self::Bool(arg0.clone()),
-            Self::Null => Self::Null,
         }
     }
 }
