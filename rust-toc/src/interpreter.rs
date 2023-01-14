@@ -1,4 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
 use crate::{
     env::Env,
@@ -11,13 +14,13 @@ use crate::{
 };
 
 pub struct Interpreter {
-    env: RefCell<Env>,
+    env: Cell<Rc<RefCell<Env>>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
-            env: RefCell::new(Env::new(None)),
+            env: Cell::new(Rc::new(RefCell::new(Env::new(None)))),
         }
     }
 
@@ -55,13 +58,39 @@ impl Interpreter {
         }
     }
 
+    fn take_env(&self) -> Rc<RefCell<Env>> {
+        self.env.replace(Rc::new(RefCell::new(Env::new(None))))
+    }
+
     fn push_env(&self, env: Env) {
-        self.env.replace(env);
+        self.env.replace(Rc::new(RefCell::new(env)));
     }
 
     fn pop_env(&self) {
-        let outer = self.env.borrow_mut().outer.replace(None);
-        self.env.replace(outer.unwrap());
+        let env = self.take_env();
+        self.env
+            .replace(Rc::clone(env.borrow().outer.as_ref().unwrap()));
+    }
+
+    fn define(&self, token: &Token, value: TocResult) -> Result<(), TocErr> {
+        let env = self.take_env();
+        let result = env.borrow_mut().define(token, value);
+        self.env.replace(env);
+        return result;
+    }
+
+    fn assign(&self, token: &Token, value: TocResult) -> Result<(), TocErr> {
+        let env = self.take_env();
+        let result = env.borrow_mut().assign(token, value);
+        self.env.replace(env);
+        return result;
+    }
+
+    fn get(&self, token: &Token) -> Result<TocResult, TocErr> {
+        let env = self.take_env();
+        let result = env.borrow_mut().get(token);
+        self.env.replace(env);
+        return result;
     }
 }
 
@@ -75,14 +104,12 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
         if stmt.initializer.is_some() {
             initializer = stmt.initializer.as_ref().unwrap().accept(self)?;
         }
-        self.env
-            .borrow_mut()
-            .define(&stmt.var_name, initializer.clone())?;
+        self.define(&stmt.var_name, initializer.clone())?;
         Ok(initializer)
     }
 
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {
-        self.execute_block(stmt, Env::new(Some(self.env.replace(Env::new(None)))))
+        self.execute_block(stmt, Env::new(Some(self.take_env())))
     }
 
     fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
@@ -97,8 +124,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_for_stmt(&self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
-        let prev_env = self.env.replace(Env::new(None));
-        self.push_env(Env::new(Some(prev_env)));
+        self.push_env(Env::new(Some(self.take_env())));
 
         if stmt.initializer.is_some() {
             stmt.initializer.as_ref().unwrap().accept(self)?;
@@ -128,9 +154,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     fn visit_fun_stmt(&self, stmt: &FunStmt) -> Result<TocResult, TocErr> {
         let fun_name = &stmt.name;
         let fun_object = Rc::new(FunObject::new(stmt.to_owned()));
-        self.env
-            .borrow_mut()
-            .define(fun_name, TocResult::Fun(Rc::clone(&fun_object)))?;
+        self.define(fun_name, TocResult::Fun(Rc::clone(&fun_object)))?;
         Ok(TocResult::Fun(Rc::clone(&fun_object)))
     }
 }
@@ -138,7 +162,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
 impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
     fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<TocResult, TocErr> {
         let v = expr.right.accept(self)?;
-        self.env.borrow_mut().assign(&expr.var_name, v.clone())?;
+        self.assign(&expr.var_name, v.clone())?;
         Ok(v)
     }
 
@@ -220,7 +244,7 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<TocResult, TocErr> {
-        self.env.borrow().get(&expr.var_name)
+        self.get(&expr.var_name)
     }
 
     fn visit_call_expr(&self, expr: &CallExpr) -> Result<TocResult, TocErr> {

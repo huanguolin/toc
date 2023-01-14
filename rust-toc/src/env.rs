@@ -1,17 +1,21 @@
-use std::{collections::HashMap, cell::Cell};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::{toc_result::TocResult, token::Token, error::{TocErr, TocErrKind}};
+use crate::{
+    error::{TocErr, TocErrKind},
+    toc_result::TocResult,
+    token::Token,
+};
 
 pub struct Env {
-    pub outer: Box<Cell<Option<Env>>>,
+    pub outer: Option<Rc<RefCell<Env>>>,
     store: HashMap<String, TocResult>,
 }
 
 impl Env {
-    pub fn new(outer: Option<Env>) -> Self {
+    pub fn new(outer: Option<Rc<RefCell<Env>>>) -> Self {
         Self {
             store: HashMap::new(),
-            outer: Box::new(Cell::new(outer)),
+            outer,
         }
     }
 
@@ -31,18 +35,13 @@ impl Env {
     pub fn get(&self, name: &Token) -> Result<TocResult, TocErr> {
         let id = self.get_key(name);
 
-        let res = self.store
-            .get(&id)
-            .map(|v| v.clone());
+        let res = self.store.get(&id).map(|v| v.clone());
         if res.is_some() {
-            return Ok(res.unwrap())
+            return Ok(res.unwrap());
         }
 
-        let o = self.outer.take();
-        if o.is_some() {
-            let v = o.as_ref().unwrap().get(name);
-            self.outer.set(o);
-            return v;
+        if self.outer.is_some() {
+            return self.outer.as_ref().unwrap().borrow().get(name);
         }
 
         Err(TocErr::new(
@@ -55,14 +54,16 @@ impl Env {
         let id = self.get_key(&name);
         if self.store.contains_key(&id) {
             *self.store.get_mut(&id).unwrap() = value;
-            return Ok(())
+            return Ok(());
         }
 
-        let mut o = self.outer.take();
-        if o.is_some() {
-            let r = o.as_mut().unwrap().assign(name, value);
-            self.outer.set(o);
-            return r
+        if self.outer.is_some() {
+            return self
+                .outer
+                .as_ref()
+                .unwrap()
+                .borrow_mut()
+                .assign(name, value);
         }
 
         Err(TocErr::new(
@@ -75,7 +76,10 @@ impl Env {
         if let Token::Identifier(id, _) = name {
             id.clone()
         } else {
-            panic!("[Env::define] required name is identifier, but got {}.", name);
+            panic!(
+                "[Env::define] required name is identifier, but got {}.",
+                name
+            );
         }
     }
 }
