@@ -20,7 +20,7 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
-            env: Cell::new(Rc::new(RefCell::new(Env::new(None)))),
+            env: Cell::new(Env::build_mut_ref(None)),
         }
     }
 
@@ -32,7 +32,7 @@ impl Interpreter {
         Ok(last_result)
     }
 
-    pub fn execute_block(&self, block_stmt: &BlockStmt, env: Env) -> Result<TocResult, TocErr> {
+    pub fn execute_block(&self, block_stmt: &BlockStmt, env: Rc<RefCell<Env>>) -> Result<TocResult, TocErr> {
         self.push_env(env);
 
         let mut last_result: TocResult = TocResult::Null;
@@ -59,11 +59,11 @@ impl Interpreter {
     }
 
     fn take_env(&self) -> Rc<RefCell<Env>> {
-        self.env.replace(Rc::new(RefCell::new(Env::new(None))))
+        self.env.replace(Env::build_mut_ref(None))
     }
 
-    fn push_env(&self, env: Env) {
-        self.env.replace(Rc::new(RefCell::new(env)));
+    fn push_env(&self, env: Rc<RefCell<Env>>) {
+        self.env.replace(env);
     }
 
     fn pop_env(&self) {
@@ -109,7 +109,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {
-        self.execute_block(stmt, Env::new(Some(self.take_env())))
+        self.execute_block(stmt, Env::build_mut_ref(Some(self.take_env())))
     }
 
     fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
@@ -124,7 +124,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_for_stmt(&self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
-        self.push_env(Env::new(Some(self.take_env())));
+        self.push_env(Env::build_mut_ref(Some(self.take_env())));
 
         if stmt.initializer.is_some() {
             stmt.initializer.as_ref().unwrap().accept(self)?;
@@ -153,7 +153,7 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
 
     fn visit_fun_stmt(&self, stmt: &FunStmt) -> Result<TocResult, TocErr> {
         let fun_name = &stmt.name;
-        let fun_object = Rc::new(FunObject::new(stmt.to_owned()));
+        let fun_object = Rc::new(FunObject::new(stmt.to_owned(), Rc::clone(&self.take_env())));
         self.define(fun_name, TocResult::Fun(Rc::clone(&fun_object)))?;
         Ok(TocResult::Fun(Rc::clone(&fun_object)))
     }

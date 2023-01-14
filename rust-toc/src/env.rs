@@ -19,6 +19,11 @@ impl Env {
         }
     }
 
+    pub fn build_mut_ref(outer: Option<Rc<RefCell<Env>>>) -> Rc<RefCell<Env>> {
+        let env = Env::new(outer);
+        Rc::new(RefCell::new(env))
+    }
+
     pub fn define(&mut self, name: &Token, value: TocResult) -> Result<(), TocErr> {
         let id = self.get_key(&name);
         if self.store.contains_key(&id) {

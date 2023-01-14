@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, rc::Rc, cell::RefCell};
 
 use crate::{
     env::Env,
@@ -12,14 +12,14 @@ use crate::{
 #[derive(Clone)]
 pub struct FunObject {
     decl: FunStmt,
-    // env: Env,
+    env: Rc<RefCell<Env>>,
 }
 
 impl FunObject {
-    pub fn new(decl: FunStmt) -> Self {
+    pub fn new(decl: FunStmt, env: Rc<RefCell<Env>>) -> Self {
         FunObject {
             decl,
-            // env,
+            env,
         }
     }
 
@@ -31,15 +31,14 @@ impl FunObject {
             ));
         }
 
-        let mut env = Env::new(None); // self.env
         for (i, a) in args.iter().enumerate() {
             let av = a.accept(interpreter)?;
             let param = &self.decl.parameters[i];
-            env.define(param, av)?;
+            self.env.borrow_mut().define(param, av)?;
         }
 
         if let Stmt::BlockStmt(bs) = self.decl.body.as_ref() {
-            interpreter.execute_block(bs, env)
+            interpreter.execute_block(bs, Rc::clone(&self.env))
         } else {
             Err(TocErr::new(
                 TocErrKind::RuntimeError,
