@@ -57,7 +57,7 @@ impl ops::Add<TocResult> for TocResult {
 
     fn add(self, rhs: TocResult) -> Self::Output {
         match (self, rhs) {
-            (Self::String(l), Self::String(r)) => Ok(Self::String(l + &r)),
+            (Self::String(l), Self::String(r)) => Ok(Self::String(string_add(l, r))),
             (Self::Number(l), Self::Number(r)) => Ok(Self::Number(l + r)),
             _ => Err(TocErr::new(
                 TocErrKind::RuntimeError,
@@ -77,4 +77,13 @@ impl PartialEq<TocResult> for TocResult {
             _ => false,
         }
     }
+}
+
+fn string_add(l: String, r: String) -> String {
+    format!("\"{}{}\"", trim_quotes(l), trim_quotes(r))
+}
+
+fn trim_quotes(s: String) -> String {
+    let q = "\"";
+    s.trim_start_matches(q).trim_end_matches(q).to_string()
 }

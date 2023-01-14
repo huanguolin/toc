@@ -8,6 +8,9 @@ use rstest::rstest;
 #[case("1 + 2;", "3")]
 #[case("0 + 999;", "999")]
 #[case("123 + 32;", "155")]
+#[case(r#""123" + "45";"#, "\"12345\"")]
+#[case(r#""123" + "";"#, "\"123\"")]
+#[case(r#""" + "";"#, "\"\"")]
 #[case("999 - 1;", "998")]
 #[case("999 - 0;", "999")]
 #[case("999 - 991;", "8")]
@@ -111,9 +114,14 @@ fn expr_error_2() {
     toc_err("+ 2");
 }
 
-
 #[test]
 #[should_panic(expected = "[ParseFail]: Expect expression, but got token Symbol(+) at line 1.")]
 fn expr_error_3() {
     toc_err("1 + + 2");
+}
+
+#[test]
+#[should_panic(expected = "[RuntimeError]: '+' operator only support both operand is string or number.")]
+fn expr_error_4() {
+    toc_err(r#"1 + "abc";"#);
 }
