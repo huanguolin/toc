@@ -1,10 +1,10 @@
-use std::{fmt::Display, ops};
+use std::{fmt::Display, ops, rc::Rc};
 
 use crate::{error::{TocErr, TocErrKind}, expr::LiteralExpr, fun_object::FunObject};
 
 #[derive(Clone)]
 pub enum TocResult {
-    Fun(FunObject),
+    Fun(Rc<FunObject>),
     String(String),
     Number(u32),
     Bool(bool),

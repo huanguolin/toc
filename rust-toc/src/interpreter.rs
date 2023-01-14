@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     env::Env,
@@ -127,13 +127,11 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
 
     fn visit_fun_stmt(&self, stmt: &FunStmt) -> Result<TocResult, TocErr> {
         let fun_name = &stmt.name;
-        let fun_object = FunObject::new(stmt.to_owned());
-        let value = TocResult::Fun(fun_object);
-        let clone_value = value.clone();
+        let fun_object = Rc::new(FunObject::new(stmt.to_owned()));
         self.env
             .borrow_mut()
-            .define(fun_name, value)?;
-        Ok(clone_value)
+            .define(fun_name, TocResult::Fun(Rc::clone(&fun_object)))?;
+        Ok(TocResult::Fun(Rc::clone(&fun_object)))
     }
 }
 
