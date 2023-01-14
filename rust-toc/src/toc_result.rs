@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops, rc::Rc};
+use std::{fmt::Display, ops, rc::Rc, any::type_name};
 
 use crate::{error::{TocErr, TocErrKind}, expr::LiteralExpr, fun_object::FunObject};
 
@@ -33,6 +33,10 @@ impl TocResult {
 
     pub fn is_false(&self) -> bool {
         !self.is_true()
+    }
+
+    pub fn type_name(&self) -> &str {
+        type_name::<Self>()
     }
 }
 

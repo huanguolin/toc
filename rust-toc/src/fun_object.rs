@@ -1,4 +1,4 @@
-use std::{fmt::Display, rc::Rc, cell::RefCell};
+use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 use crate::{
     env::Env,
@@ -17,28 +17,35 @@ pub struct FunObject {
 
 impl FunObject {
     pub fn new(decl: FunStmt, env: Rc<RefCell<Env>>) -> Self {
-        FunObject {
-            decl,
-            env,
-        }
+        FunObject { decl, env }
     }
 
-    pub fn execute(self, args: Vec<Expr>, interpreter: &Interpreter) -> Result<TocResult, TocErr> {
+    pub fn execute(
+        &self,
+        args: &Vec<Expr>,
+        interpreter: &Interpreter,
+    ) -> Result<TocResult, TocErr> {
         if args.len() != self.decl.parameters.len() {
             return Err(TocErr::new(
                 TocErrKind::RuntimeError,
-                &format!("Arguments length not match parameters."),
+                &format!(
+                    "Call {} error, arguments length not match parameters, required {}, given {}.",
+                    &self,
+                    self.decl.parameters.len(),
+                    args.len(),
+                ),
             ));
         }
 
+        let env = Env::build_mut_ref(Some(Rc::clone(&self.env)));
         for (i, a) in args.iter().enumerate() {
             let av = a.accept(interpreter)?;
             let param = &self.decl.parameters[i];
-            self.env.borrow_mut().define(param, av)?;
+            env.borrow_mut().define(param, av)?;
         }
 
         if let Stmt::BlockStmt(bs) = self.decl.body.as_ref() {
-            interpreter.execute_block(bs, Rc::clone(&self.env))
+            interpreter.execute_block(bs, env)
         } else {
             Err(TocErr::new(
                 TocErrKind::RuntimeError,
@@ -57,7 +64,7 @@ impl Display for FunObject {
             .iter()
             .map(|p| p.lexeme())
             .collect::<Vec<String>>()
-            .join(",");
+            .join(", ");
         write!(f, "<fun {}({})>", fun_name, params)
     }
 }

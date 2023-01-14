@@ -33,7 +33,8 @@ impl Interpreter {
     }
 
     pub fn execute_block(&self, block_stmt: &BlockStmt, env: Rc<RefCell<Env>>) -> Result<TocResult, TocErr> {
-        self.push_env(env);
+        let prv_env = self.take_env();
+        self.env.replace(env);
 
         let mut last_result: TocResult = TocResult::Null;
         let mut err: Option<TocErr> = None;
@@ -49,7 +50,7 @@ impl Interpreter {
             }
         }
 
-        self.pop_env();
+        self.env.replace(prv_env);
 
         if err.is_some() {
             Err(err.unwrap())
@@ -60,16 +61,6 @@ impl Interpreter {
 
     fn take_env(&self) -> Rc<RefCell<Env>> {
         self.env.replace(Env::build_mut_ref(None))
-    }
-
-    fn push_env(&self, env: Rc<RefCell<Env>>) {
-        self.env.replace(env);
-    }
-
-    fn pop_env(&self) {
-        let env = self.take_env();
-        self.env
-            .replace(Rc::clone(env.borrow().outer.as_ref().unwrap()));
     }
 
     fn define(&self, token: &Token, value: TocResult) -> Result<(), TocErr> {
@@ -109,7 +100,10 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<TocResult, TocErr> {
-        self.execute_block(stmt, Env::build_mut_ref(Some(self.take_env())))
+        let env = self.take_env();
+        let block_env = Env::build_mut_ref(Some(Rc::clone(&env)));
+        self.env.replace(env);
+        self.execute_block(stmt, block_env)
     }
 
     fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<TocResult, TocErr> {
@@ -124,7 +118,8 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_for_stmt(&self, stmt: &ForStmt) -> Result<TocResult, TocErr> {
-        self.push_env(Env::build_mut_ref(Some(self.take_env())));
+        let prv_env = self.take_env();
+        self.env.replace(Env::build_mut_ref(Some(Rc::clone(&prv_env))));
 
         if stmt.initializer.is_some() {
             stmt.initializer.as_ref().unwrap().accept(self)?;
@@ -146,14 +141,18 @@ impl StmtVisitor<Result<TocResult, TocErr>> for Interpreter {
             }
         }
 
-        self.pop_env();
+        self.env.replace(prv_env);
 
         Ok(result)
     }
 
     fn visit_fun_stmt(&self, stmt: &FunStmt) -> Result<TocResult, TocErr> {
         let fun_name = &stmt.name;
-        let fun_object = Rc::new(FunObject::new(stmt.to_owned(), Rc::clone(&self.take_env())));
+
+        let env = self.take_env();
+        let fun_object = Rc::new(FunObject::new(stmt.to_owned(), Rc::clone(&env)));
+        self.env.replace(env);
+
         self.define(fun_name, TocResult::Fun(Rc::clone(&fun_object)))?;
         Ok(TocResult::Fun(Rc::clone(&fun_object)))
     }
@@ -248,6 +247,15 @@ impl ExprVisitor<Result<TocResult, TocErr>> for Interpreter {
     }
 
     fn visit_call_expr(&self, expr: &CallExpr) -> Result<TocResult, TocErr> {
-        todo!()
+        let callee = expr.callee.accept(self)?;
+
+        if let TocResult::Fun(f) = callee {
+            return f.execute(&expr.args, self)
+        }
+
+        Err(TocErr::new(
+            TocErrKind::RuntimeError,
+            &format!("Callee must be a 'FunObject', but got: {}({}).", callee, callee.type_name())
+        ))
     }
 }
