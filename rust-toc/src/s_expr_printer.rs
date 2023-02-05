@@ -5,10 +5,10 @@ use colored::{
     Colorize,
 };
 
-use crate::expr::{
+use crate::{expr::{
     expr_visitor::ExprVisitor, AssignExpr, BinaryExpr, CallExpr, Expr, GroupExpr, LiteralExpr,
     UnaryExpr, VariableExpr,
-};
+}, stmt::{Stmt, stmt_visitor::StmtVisitor}, token::Token};
 
 /**
  * S-expr printer.
@@ -26,8 +26,16 @@ impl SExprPinter {
         }
     }
 
-    pub fn print(&self, expr: &Expr) -> String {
+    pub fn print_expr(&self, expr: &Expr) -> String {
         expr.accept(self)
+            .into_iter()
+            .fold(String::new(), |a, b| a + "\n" + &b)
+            .trim_start()
+            .to_string()
+    }
+
+    pub fn print_stmt(&self, stmt: &Stmt) -> String {
+        stmt.accept(self)
             .into_iter()
             .fold(String::new(), |a, b| a + "\n" + &b)
             .trim_start()
@@ -83,6 +91,94 @@ impl SExprPinter {
 
         res
     }
+
+    fn fmt_fun_parameters(&self, parameters: &Vec<Token>) -> String {
+        let ps = parameters
+            .iter()
+            .map(|p| p.lexeme())
+            .collect::<Vec<_>>();
+        "(".to_owned() + &ps.join(" ") + ")"
+    }
+}
+
+impl StmtVisitor<Vec<String>> for SExprPinter {
+    fn visit_expr_stmt(&self, stmt: &crate::stmt::ExprStmt) -> Vec<String> {
+        stmt.expr.accept(self)
+    }
+
+    fn visit_var_stmt(&self, stmt: &crate::stmt::VarStmt) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+
+        res.push("var".to_owned());
+        res.push(stmt.var_name.lexeme());
+        if let Some(init) = &stmt.initializer {
+            res.extend(init.accept(self));
+        }
+
+        self.wrap_s_expr(res)
+    }
+
+    fn visit_block_stmt(&self, stmt: &crate::stmt::BlockStmt) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+
+        res.push("block".to_owned());
+        for s in &stmt.stmts {
+            res.extend(s.accept(self));
+        }
+
+        self.wrap_s_expr(res)
+    }
+
+    fn visit_if_stmt(&self, stmt: &crate::stmt::IfStmt) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+
+        res.push("if".to_owned());
+        res.extend(stmt.if_clause.accept(self));
+        if let Some(else_clause) = &stmt.else_clause {
+            res.extend(else_clause.accept(self));
+        }
+
+        self.wrap_s_expr(res)
+    }
+
+    fn visit_for_stmt(&self, stmt: &crate::stmt::ForStmt) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+
+        res.push("for".to_owned());
+
+        if let Some(init) = &stmt.initializer {
+            res.extend(init.accept(self));
+        } else {
+            res.push("()".to_owned());
+        }
+
+        if let Some(cond) = &stmt.condition {
+            res.extend(cond.accept(self));
+        } else {
+            res.push("()".to_owned());
+        }
+
+        if let Some(inc) = &stmt.increment {
+            res.extend(inc.accept(self));
+        } else {
+            res.push("()".to_owned());
+        }
+
+        res.extend(stmt.body.accept(self));
+
+        self.wrap_s_expr(res)
+    }
+
+    fn visit_fun_stmt(&self, stmt: &crate::stmt::FunStmt) -> Vec<String> {
+        let mut res: Vec<String> = Vec::new();
+
+        res.push("fun".to_owned());
+        res.push(stmt.name.lexeme());
+        res.push(self.fmt_fun_parameters(&stmt.parameters));
+        res.extend(stmt.body.accept(self));
+
+        self.wrap_s_expr(res)
+    }
 }
 
 impl ExprVisitor<Vec<String>> for SExprPinter {
@@ -90,7 +186,7 @@ impl ExprVisitor<Vec<String>> for SExprPinter {
         let mut res: Vec<String> = Vec::new();
 
         res.push("=".to_owned());
-        res.push(self.indent(expr.var_name.lexeme()));
+        res.push(expr.var_name.lexeme());
         res.extend(expr.right.accept(self));
 
         self.wrap_s_expr(res)

@@ -1,4 +1,6 @@
-use crate::{expr::Expr, token::Token};
+use std::fmt::Display;
+
+use crate::{expr::Expr, token::Token, s_expr_printer::SExprPinter};
 
 use self::stmt_visitor::StmtVisitor;
 
@@ -67,5 +69,11 @@ impl Stmt {
             Self::ForStmt(stmt) => visitor.visit_for_stmt(stmt),
             Self::FunStmt(stmt) => visitor.visit_fun_stmt(stmt),
         }
+    }
+}
+
+impl Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", SExprPinter::new().print_stmt(self))
     }
 }

@@ -27,6 +27,9 @@ fn repl() {
     let toc = Toc::new();
     let mut repl = Repl::init(16);
 
+    // for debug
+    // repl.run("> ", |src| toc.eval_for_debug(src));
+
     repl.run("> ", |src| fmt_result(toc.eval(src)));
 }
 

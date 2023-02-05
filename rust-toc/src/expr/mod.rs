@@ -78,6 +78,6 @@ impl Expr {
 
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", SExprPinter::new().print(self))
+        write!(f, "{}", SExprPinter::new().print_expr(self))
     }
 }
