@@ -37,7 +37,7 @@ try {
 const readmePath = path.resolve('../../README.md');
 try {
     let readme = fs.readFileSync(readmePath, 'utf8');
-    readme = readme.replace(/Click\s\[here\]\([^\)]*?\)/, `Click [here](${url})`);
+    readme = readme.replace(/Click\s\[here\]\([^\)]*?\)/, `Click [here](${url}) `);
     try {
         fs.writeFileSync(readmePath, readme);
         log('Update readme success!');
