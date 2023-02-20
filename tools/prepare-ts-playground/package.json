@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.ts",
-  "dependencies": {
-    "@qiwi/dts-bundle": "^0.7.5",
-    "lz-string": "^1.4.4"
-  },
-  "devDependencies": {},
   "scripts": {
     "toc": "node toc.js",
     "doc": "node doc.js"
   },
+  "dependencies": {
+    "@qiwi/dts-bundle": "^0.7.5",
+    "axios": "^1.3.3",
+    "lz-string": "^1.4.4"
+  },
+  "devDependencies": {},
   "author": "alvin huang <huanguolin@outlook.com>",
   "license": "MIT"
 }
