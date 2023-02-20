@@ -69,7 +69,7 @@ function buildAppendContent(lines, codeBlockMap, codeBlock) {
         .map(c => lines.slice(c.start, c.end).join(newline))
         .join(newline + newline);
 
-    const url = utils.buildTsPlaygroundUrl(srcCode);
+    const url = utils.buildTsPlayUrl(srcCode);
 
     return `> 点击[这里](${url})，在线体验。   ${newline}`;
 }

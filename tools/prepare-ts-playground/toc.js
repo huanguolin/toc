@@ -48,7 +48,7 @@ async function buildTsPlayUrl() {
     try {
         const srcCode = fs.readFileSync(mergeFilePath, 'utf8');
         try {
-            url = await utils.buildTsPlaygroundUrl(srcCode);
+            url = await utils.buildShortenTsPlayUrl(srcCode);
             log('Build url success!');
         } catch (err) {
             error(`Build ts play ground url error: ${err}`);

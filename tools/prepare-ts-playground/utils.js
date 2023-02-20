@@ -3,13 +3,18 @@ const axios = require('axios');
 
 module.exports = {
     getLogger,
-    buildTsPlaygroundUrl,
+    buildTsPlayUrl,
+    buildShortenTsPlayUrl,
 };
 
-async function buildTsPlaygroundUrl(srcCode) {
+function buildTsPlayUrl(srcCode) {
     const urlPrefix = 'https://www.typescriptlang.org/play?#code/';
     const encodedSrcCode = LZString.compressToEncodedURIComponent(srcCode);
-    const longUrl = urlPrefix + encodedSrcCode;
+    return urlPrefix + encodedSrcCode;
+}
+
+async function buildShortenTsPlayUrl(srcCode) {
+    const longUrl = buildTsPlayUrl(srcCode);
     return await shortenTsPlayUrl(longUrl);
 }
 
