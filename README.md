@@ -2,7 +2,7 @@
 A toy interpreter implemented with TypeScript's type system (see `type-toc` folder).
 > As a comparison, one was also implemented directly in TypeScript(see `ts-toc` folder).
 
-👉 Click [here](https://tsplay.dev/NBJQzN) to go to ts-playground and try it out!
+👉 Click [here](https://tsplay.dev/wRB0Yw) to go to ts-playground and try it out!
 
 ![type-toc-example](./docs/imgs/type-toc-example.png)
 
