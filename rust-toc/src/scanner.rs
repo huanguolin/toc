@@ -1,5 +1,5 @@
 
-use std::{cell::Cell};
+use std::cell::Cell;
 
 use unicode_segmentation::UnicodeSegmentation;
 
