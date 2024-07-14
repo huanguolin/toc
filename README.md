@@ -10,7 +10,8 @@ A toy interpreter implemented with TypeScript's type system (see `type-toc` fold
 > see [Toc Grammar](./docs/grammar.md)
 
 # Implement Detail
-> see [类型体操之实现一个类C风格语言的解释器](./docs/implement-detail.md)
+> see [Type Gymnastics: Implementing an Interpreter for a C-style Language](./docs/implement-detail_en.md)  
+> 中文文档： [类型体操之实现一个类C风格语言的解释器](./docs/implement-detail.md)
 
 # License
 - Code: [MIT](https://opensource.org/licenses/MIT)
