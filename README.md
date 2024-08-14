@@ -4,7 +4,7 @@ A toy interpreter implemented with TypeScript's type system (see `type-toc` fold
 
 👉 Click [here](https://tsplay.dev/wRB0Yw) to go to ts-playground and try it out!
 
-![type-toc-example](./docs/imgs/type-toc-example.png)
+![type-toc-demo](./docs/imgs/type-toc-demo.gif)
 
 # Language Grammar of Toc
 > see [Toc Grammar](./docs/grammar.md)
