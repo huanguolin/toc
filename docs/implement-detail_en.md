@@ -1,5 +1,7 @@
 # Type Gymnastics: Implementing an Interpreter for a C-style Language
 
+![type-toc-demo](./imgs/type-toc-demo.gif)
+
 - [Type Gymnastics: Implementing an Interpreter for a C-style Language](#Type Gymnastics: Implementing an Interpreter for a C-style Language)
   - [1. What kind of functional language is TypeScript's type system?](#1-what-kind-of-functional-language-is-typescripts-type-system)
     - [1.1 Types and Values](#11-types-and-values)
