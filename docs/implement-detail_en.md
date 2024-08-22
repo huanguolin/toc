@@ -54,7 +54,7 @@ TypeScript is a superset of JavaScript, primarily adding static type checking to
 
 Does dynamicity and static checking seem to be in conflict? However, the ts team and community have provided a way to balance both. That is, when the ts compiler cannot make an inference, it allows the developer to tell ts how to infer. The type description that informs ts (simply put, it describes what the output type should be based on different input types) is consistent with the corresponding js code logic (since considering types often simplifies things). Therefore, ts's type system must be powerful enough[to be Turing complete.](https://github.com/microsoft/TypeScript/issues/14833)to be competent.
 
-The type system of ts is a functional programming language. Type gymnastics refers to using this programming language to play tricks. What we are going to play today is to use it to implement an interpreter for another language (I named this language[Toc](https://github.com/huanguolin/Toc)) (If you want to experience this interpreter, please go to[Toc](https://github.com/huanguolin/Toc)the repository, it's easy to find the entrance 😊).`Toc` The language is `C` style syntax, close to `js`. Dynamic typing, with basic types including numbers, booleans, strings, and `null`, supporting variables, expressions, block statements,`if-else` conditional statements,`for` loop statements, and functions. Functions are first-class citizens, can be passed in and out, and support closures. For more detailed syntax, please refer to [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md)。
+The type system of ts is a functional programming language. Type gymnastics refers to using this programming language to play tricks. What we are going to play today is to use it to implement an interpreter for another language (I named this language[Toc](https://github.com/huanguolin/toc)) (If you want to experience this interpreter, please go to[Toc](https://github.com/huanguolin/toc)the repository, it's easy to find the entrance 😊).`Toc` The language is `C` style syntax, close to `js`. Dynamic typing, with basic types including numbers, booleans, strings, and `null`, supporting variables, expressions, block statements,`if-else` conditional statements,`for` loop statements, and functions. Functions are first-class citizens, can be passed in and out, and support closures. For more detailed syntax, please refer to [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md)。
 
 If you are not very familiar with the type system of TypeScript, that's okay. 😊 We are not going to jump straight into implementation; let's do some warm-up exercises first—let's take a look at what the TypeScript type system provides and what its limitations are. Therefore, this article is divided into two parts:
 
@@ -590,7 +590,7 @@ type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and 
 
 > Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQmjJyiogAMiw4+ESklDT0MINsRPK4IIL6VQu8fA5Q67DGZriWNotYQ+x9axunAPywJ6frAFxQXdq9ffQiojD0syD6YR2uEO4eSRSZI9EC+KoPUHZArNBa-MpA6ReUFpCHAx5KRqFISfD5zPFfdrORL-ZI+PzVJC1an0am1GFFakADnhpPKqXSlMQdNyWT5DKgABUElAge5ZsBJPJJQB7XCiohYADG-wIkgAbhATCAoHAIBAwFBZnAoGAZQQ1RRtaLcAAzRE4YQACkYAFYmbUAJRAA), experience online.
 
-If you want to experience the string version, you can go directly to the repository. [Toc](https://github.com/huanguolin/Toc) Click here to go to the interpreter. Input `type Result = Toc<'99999 + 99999;'>` to experience it. Because `Toc` the underlying implementation uses the string version. The code is in[here](https://github.com/huanguolin/Toc/tree/main/type-Toc/utils/math/fast)。
+If you want to experience the string version, you can go directly to the repository. [Toc](https://github.com/huanguolin/toc) Click here to go to the interpreter. Input `type Result = Toc<'99999 + 99999;'>` to experience it. Because `Toc` the underlying implementation uses the string version. The code is in[here](https://github.com/huanguolin/toc/tree/main/type-Toc/utils/math/fast)。
 
 Alright, now we should be ready to start implementing the interpreter.
 
@@ -602,8 +602,8 @@ Our interpreter is mainly divided into three steps: lexical analysis, syntax ana
 
 Additionally, for comparison and to accommodate those like me who are not from a formal computer science background, I will discuss two versions of the implementation (I personally feel that looking at an implementation in a familiar language is easier to accept):
 
-* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/Toc/tree/main/ts-Toc) the following.
-* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/Toc/tree/main/type-Toc) the following.
+* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/toc/tree/main/ts-Toc) the following.
+* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/toc/tree/main/type-Toc) the following.
 
 when I discuss a feature, I will first explain the TypeScript version, and then the type version. When implementing the TypeScript version, I will not consider translating it into the type version, but will abandon the most natural method for it. The purpose of this approach is primarily for better understanding (especially for non-computer science students); The second is for comparison, to see how we 'navigate' in a 'poor' language context.
 
