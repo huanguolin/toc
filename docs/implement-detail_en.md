@@ -58,7 +58,7 @@ The type system of ts is a functional programming language. Type gymnastics refe
 
 If you are not very familiar with the type system of TypeScript, that's okay. 😊 We are not going to jump straight into implementation; let's do some warm-up exercises first—let's take a look at what the TypeScript type system provides and what its limitations are. Therefore, this article is divided into two parts:
 
-1. How is the type system of TypeScript a functional language?
+1. What kind of functional language is the type system of ts?
 2. How to implement a Toc interpreter?
 
 If the first part is not novel to you, you can skip directly to the second part.
