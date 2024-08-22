@@ -590,7 +590,7 @@ type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and 
 
 > Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQmjJyiogAMiw4+ESklDT0MINsRPK4IIL6VQu8fA5Q67DGZriWNotYQ+x9axunAPywJ6frAFxQXdq9ffQiojD0syD6YR2uEO4eSRSZI9EC+KoPUHZArNBa-MpA6ReUFpCHAx5KRqFISfD5zPFfdrORL-ZI+PzVJC1an0am1GFFakADnhpPKqXSlMQdNyWT5DKgABUElAge5ZsBJPJJQB7XCiohYADG-wIkgAbhATCAoHAIBAwFBZnAoGAZQQ1RRtaLcAAzRE4YQACkYAFYmbUAJRAA), experience online.
 
-If you want to experience the string version, you can go directly to the repository. [Toc](https://github.com/huanguolin/toc) Click here to go to the interpreter. Input `type Result = Toc<'99999 + 99999;'>` to experience it. Because `Toc` the underlying implementation uses the string version. The code is in[here](https://github.com/huanguolin/toc/tree/main/type-Toc/utils/math/fast)。
+If you want to experience the string version, you can go directly to the repository. [Toc](https://github.com/huanguolin/toc) Click here to go to the interpreter. Input `type Result = Toc<'99999 + 99999;'>` to experience it. Because `Toc` the underlying implementation uses the string version. The code is in[here](https://github.com/huanguolin/toc/tree/main/type-toc/utils/math/fast)。
 
 Alright, now we should be ready to start implementing the interpreter.
 
@@ -602,8 +602,8 @@ Our interpreter is mainly divided into three steps: lexical analysis, syntax ana
 
 Additionally, for comparison and to accommodate those like me who are not from a formal computer science background, I will discuss two versions of the implementation (I personally feel that looking at an implementation in a familiar language is easier to accept):
 
-* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/toc/tree/main/ts-Toc) the following.
-* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/toc/tree/main/type-Toc) the following.
+* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/toc/tree/main/ts-toc) the following.
+* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/toc/tree/main/type-toc) the following.
 
 when I discuss a feature, I will first explain the TypeScript version, and then the type version. When implementing the TypeScript version, I will not consider translating it into the type version, but will abandon the most natural method for it. The purpose of this approach is primarily for better understanding (especially for non-computer science students); The second is for comparison, to see how we 'navigate' in a 'poor' language context.
 
