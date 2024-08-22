@@ -1,72 +1,76 @@
-# Type Gymnastics: Implementing an Interpreter for a C-style Language
+# Type gymnastics: Implementing a C-style language interpreter
 
 ![type-toc-demo](./imgs/type-toc-demo.gif)
 
-- [Type Gymnastics: Implementing an Interpreter for a C-style Language](#Type Gymnastics: Implementing an Interpreter for a C-style Language)
-  - [1. What kind of functional language is TypeScript's type system?](#1-what-kind-of-functional-language-is-typescripts-type-system)
-    - [1.1 Types and Values](#11-types-and-values)
+- [Type gymnastics: Implementing a C-style language interpreter](#type-gymnastics-implementing-a-c-style-language-interpreter)
+  - [1. What kind of functional language is the type system of ts?](#1-what-kind-of-functional-language-is-the-type-system-of-ts)
+    - [1.1 Types and values](#11-types-and-values)
     - [1.2 Variables](#12-variables)
-    - [1.3 Conditionals](#13-conditionals)
+    - [1.3 Conditions](#13-conditions)
       - [1.3.1 Assignability](#131-assignability)
-      - [1.3.2 Pattern Matching](#132-pattern-matching)
-      - [1.3.3 Local Constants](#133-local-constants)
+      - [1.3.2 Pattern matching](#132-pattern-matching)
+      - [1.3.3 Local constants](#133-local-constants)
     - [1.4 Functions](#14-functions)
       - [1.4.1 Generics](#141-generics)
-      - [1.4.2 Type Tools — Functions](#142-type-tools--functions)
+      - [1.4.2 Type tools - Functions](#142-type-tools---functions)
       - [1.4.3 Recursion](#143-recursion)
-      - [1.4.4 Loops \<=\> Recursion](#144-loops--recursion)
-      - [1.4.5 Tail Recursion](#145-tail-recursion)
-      - [1.4.6 First-Class Functions](#146-first-class-functions)
-  - [2. How to Implement the Toc Interpreter?](#2-how-to-implement-the-toc-interpreter)
-    - [2.1 Arithmetic Operations and Comparisons](#21-arithmetic-operations-and-comparisons)
-    - [2.2 解释器](#22-解释器)
-      - [2.2.1 Toc 的语法](#221-toc-的语法)
-      - [2.2.2 词法分析](#222-词法分析)
-        - [2.2.2.1 分词（ts版）](#2221-分词ts版)
-        - [2.2.2.2 分词（type版）](#2222-分词type版)
-      - [2.2.3 语法分析](#223-语法分析)
-        - [2.2.3.1 递归下降](#2231-递归下降)
-        - [2.2.3.2 完整的表达式语法分析(ts版本)](#2232-完整的表达式语法分析ts版本)
-        - [2.2.3.3 完整的表达式语法分析(type版本)](#2233-完整的表达式语法分析type版本)
-      - [2.2.4 执行](#224-执行)
-        - [2.2.4.1 访问者模式与ts-Interpreter](#2241-访问者模式与ts-interpreter)
+      - [1.4.4 Loop \<=\> Recursion](#144-loop--recursion)
+      - [1.4.5 Tail recursion](#145-tail-recursion)
+      - [1.4.6 First-Class-Function](#146-first-class-function)
+  - [2. How to implement a Toc interpreter?](#2-how-to-implement-a-toc-interpreter)
+    - [2.1 Arithmetic operations and size comparisons](#21-arithmetic-operations-and-size-comparisons)
+    - [2.2 Interpreter](#22-interpreter)
+      - [2.2.1 Syntax of Toc](#221-syntax-of-toc)
+      - [2.2.2 Lexical Analysis](#222-lexical-analysis)
+        - [2.2.2.1 Tokenization (ts version)](#2221-tokenization-ts-version)
+        - [2.2.2.2 Tokenization (type version)](#2222-tokenization-type-version)
+      - [2.2.3 Syntax Analysis](#223-syntax-analysis)
+        - [2.2.3.1 Recursive Descent](#2231-recursive-descent)
+        - [2.2.3.2 Complete Expression Syntax Analysis (ts version)](#2232-complete-expression-syntax-analysis-ts-version)
+        - [2.2.3.3 Complete Expression Syntax Analysis (type version)](#2233-complete-expression-syntax-analysis-type-version)
+      - [2.2.4 Execution](#224-execution)
+        - [2.2.4.1 Visitor Pattern and ts-Interpreter](#2241-visitor-pattern-and-ts-interpreter)
         - [2.2.4.2 type-Interpreter](#2242-type-interpreter)
-      - [2.2.5 语句](#225-语句)
-        - [2.2.5.1 表达式语句](#2251-表达式语句)
-        - [2.2.5.2 var 语句](#2252-var-语句)
-        - [2.2.5.3 环境](#2253-环境)
-        - [2.2.5.4 变量表达式和赋值表达式](#2254-变量表达式和赋值表达式)
-        - [2.2.5.5 作用域](#2255-作用域)
-        - [2.2.5.6 block 语句](#2256-block-语句)
-        - [2.2.5.7 if 语句](#2257-if-语句)
-        - [2.2.5.8 for 语句](#2258-for-语句)
-      - [2.2.6 函数](#226-函数)
-        - [2.2.6.1 函数语句](#2261-函数语句)
-        - [2.2.6.2 call 表达式](#2262-call-表达式)
-      - [2.2.7 未尽事宜](#227-未尽事宜)
-  - [3. 总结](#3-总结)
-  - [4. 参考](#4-参考)
+      - [2.2.5 Statements](#225-statements)
+        - [2.2.5.1 Expression Statements](#2251-expression-statements)
+        - [2.2.5.2 var Statements](#2252-var-statements)
+        - [2.2.5.3 Environment](#2253-environment)
+        - [2.2.5.4 Variable Expressions and Assignment Expressions](#2254-variable-expressions-and-assignment-expressions)
+        - [2.2.5.5 Scope](#2255-scope)
+        - [2.2.5.6 Block statement](#2256-block-statement)
+        - [2.2.5.7 If statement](#2257-if-statement)
+        - [2.2.5.8 For statement](#2258-for-statement)
+      - [2.2.6 Function](#226-function)
+        - [2.2.6.1 Function statement](#2261-function-statement)
+        - [2.2.6.2 Call expression](#2262-call-expression)
+      - [2.2.7 Unfinished business](#227-unfinished-business)
+  - [3. Summary](#3-summary)
+  - [4. References](#4-references)
 
-TypeScript is a superset of JavaScript, primarily adding static type checking while remaining fully compatible with JavaScript. At runtime, types are completely erased. Because of this, TypeScript's type system is extremely powerful, allowing for more type hints and error checking while maintaining JavaScript's dynamism and rapid development capabilities.
 
-> For simplicity, we'll use abbreviations like ts and js to represent TypeScript and JavaScript, respectively.
+TypeScript is a superset of JavaScript, primarily adding static type checking to JavaScript while being fully compatible with it. At runtime, types are completely erased. Because of this, the TypeScript type system is extremely powerful, allowing for more type hints and error checking while maintaining the dynamic nature of JavaScript and enabling rapid development.
 
-Dynamic nature and static checking seem to conflict? However, the ts team and community have found a way to accommodate both. When the ts compiler cannot make inferences, it allows developers to tell ts how to infer. This type description (simply put, what the output type should be based on different input types) is consistent with the corresponding js code logic (because it only considers types, it's often simpler). Therefore, TypeScript's type system needs to be [Turing complete](https://github.com/microsoft/TypeScript/issues/14833) to be up to the task.
+> For simplicity, we will use abbreviations like ts and js to refer to TypeScript and JavaScript.
 
-TypeScript's type system is a functional programming language. Type gymnastics refers to using this programming language to play tricks. What we're going to do today is use it to implement an interpreter for another language (which I've named [Toc](https://github.com/huanguolin/Toc)) (if you want to experience this interpreter, please go to the [Toc](https://github.com/huanguolin/Toc) repository, it's easy to find the entry point😊). The `Toc` language has C-style syntax, similar to `js`. It's dynamically typed, with basic types including numbers, booleans, strings, and `null`. It supports variables, expressions, block statements, `if-else` conditional statements, `for` loop statements, and functions. Functions are first-class citizens, can be passed in and out, and support closures. For more detailed syntax, refer to [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md).
+Does dynamicity and static checking seem to be in conflict? However, the ts team and community have provided a way to balance both. That is, when the ts compiler cannot make an inference, it allows the developer to tell ts how to infer. The type description that informs ts (simply put, it describes what the output type should be based on different input types) is consistent with the corresponding js code logic (since considering types often simplifies things). Therefore, ts's type system must be powerful enough[to be Turing complete.](https://github.com/microsoft/TypeScript/issues/14833)to be competent.
 
-If you're not very familiar with TypeScript's type system, don't worry. 😊 We won't start implementing it right away. Let's do some warm-up exercises first—let's look at what TypeScript's type system provides and what limitations it has. So, this article is divided into two parts:
-1. What kind of functional language is TypeScript's type system?
-2. How to implement the Toc interpreter?
+The type system of ts is a functional programming language. Type gymnastics refers to using this programming language to play tricks. What we are going to play today is to use it to implement an interpreter for another language (I named this language[Toc](https://github.com/huanguolin/Toc)) (If you want to experience this interpreter, please go to[Toc](https://github.com/huanguolin/Toc)the repository, it's easy to find the entrance 😊).`Toc` The language is `C` style syntax, close to `js`. Dynamic typing, with basic types including numbers, booleans, strings, and `null`, supporting variables, expressions, block statements,`if-else` conditional statements,`for` loop statements, and functions. Functions are first-class citizens, can be passed in and out, and support closures. For more detailed syntax, please refer to [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md)。
 
-If the first part doesn't offer you anything new, you can skip directly to the second part.
+If you are not very familiar with the type system of TypeScript, that's okay. 😊 We are not going to jump straight into implementation; let's do some warm-up exercises first—let's take a look at what the TypeScript type system provides and what its limitations are. Therefore, this article is divided into two parts:
 
-## 1. What kind of functional language is TypeScript's type system?
-When we think of programming languages, we typically expect features like variables, conditionals, loops, and functions; otherwise, they're not usable (of course, I'm referring to normal programming languages, not something like [Ook!](https://code.tutsplus.com/articles/10-most-bizarre-programming-languages-ever-created--net-2412)). However, before I discuss variables, conditionals, loops, and functions, I want to talk about something more fundamental.
+1. How is the type system of TypeScript a functional language?
+2. How to implement a Toc interpreter?
 
-### 1.1 Types and Values
+If the first part is not novel to you, you can skip directly to the second part.
 
-Types describe sets of values. For example, `number` represents all numbers. `1` is a value of the `number` type. But `1` can also be a type itself, describing a set with only one value. TypeScript allows us to make such precise type descriptions. Therefore, it also provides union types ([union](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#union-types)), tuples ([tuple](https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types)), and more.
+## 1. What kind of functional language is the type system of ts?
+
+When it comes to programming languages, we think of at least including features like variables, conditions, loops, and functions; otherwise, it cannot be used (of course, I am talking about normal programming languages, not something like [Ook!](https://code.tutsplus.com/articles/10-most-bizarre-programming-languages-ever-created--net-2412) this). However, before I talk about variables, conditions, loops, and functions, I need to mention something more fundamental.
+
+### 1.1 Types and values
+
+Types are collections that describe values, for example, `number` represents all numbers.`1` is `number` a value of. `1` It can also be a type, which describes a collection that contains only one value. TypeScript allows us to make such precise type descriptions. Therefore, it also provides union types ([union](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#union-types)）, tuple([tuple](https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types)) and so on.
+
 ```ts
 type A = 1;
 
@@ -76,38 +80,41 @@ type B = 'red' | 'green' | 'blue';
 // tuple
 type C = [B, number]; // ['red' | 'green' | 'blue', number]
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UCMBuAUGg9JqBXAdgJYD2+aokUAQglAOQBOEAJnVAD70DmTE+bnOgCMANrgh10WHMFxgREcuGgBhWgG0qAGij5cAWyEQGAXRRRsUdYxYDuvfh3qjxdHXsPGTQA) to experience it online.
 
-Of course, it also provides the universal set and the empty set: `any` and `never`.
-Now, let's return to variables, conditionals, loops, and functions.   
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UCMBuAUGg9JqBXAdgJYD2+aokUAQglAOQBOEAJnVAD70DmTE+bnOgCMANrgh10WHMFxgREcuGgBhWgG0qAGij5cAWyEQGAXRRRsUdYxYDuvfh3qjxdHXsPGTQA), experience online.
 
+Of course, it also provides the whole set and the empty set:`any` and `never`.
+&#x20;Now let's return to variables, conditions, loops, and functions.
 
 ### 1.2 Variables
 
-Well, TypeScript's type system doesn't actually provide variables; it only provides constants, which is very functional. However, this is sufficient. If you're familiar with other functional programming languages, you'll understand why.
+Well, in fact, the type system of ts does not provide variables; it only provides constants, which is very functional. But that's enough; if you are familiar with other functional programming languages, you will understand.
 
 ```ts
 type A = 2;
 type B = string | A; // string | 2
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UBMBuAUKSUBCCoGdgAnASwDsBzKAH1hSgHoGDjyrakg) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UBMBuAUKSUBCCoGdgAnASwDsBzKAH1hSgHoGDjyrakg), experience online.
 
-Is that all? Well, these are global constants. There's actually another type - local constants, which we'll discuss when we talk about conditionals. Also, I mentioned there are functions, and function parameters are a type of constant too 😼.
+Is that all? Well, this is a global constant. In fact, there is also a local constant, which I will explain when we talk about conditions. Also, I mentioned that there are functions, and the parameters of functions are also a kind of constant. 😼
 
-### 1.3 Conditionals
+### 1.3 Conditions
 
 ```ts
 type A = 2;
 type B = A extends number ? true : false; // true
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UBMBuAUKSUBCDZQgA9gIA7AEwGcpSBXAWwCMIAnKAfimBdugC4oAMwCGAG0oQUUAPTSuPCEA) to experience it online.   
+
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UBMBuAUKSUBCDZQgA9gIA7AEwGcpSBXAWwCMIAnKAfimBdugC4oAMwCGAG0oQUUAPTSuPCEA), experience online.
 
 Isn't it simple?
 
-The form `A extends B ? C : D` expresses that if `A` can be assigned to `B`, the result is `C`, otherwise it's `D`. Assignability is a key concept in TypeScript, which I'll explain next.
+`A extends B ? C : D` This form expresses `A` can be assigned to `B`, then the result is `C`, otherwise it is `D`。Assignability is a key concept in TypeScript, and I will explain it below.
+
 #### 1.3.1 Assignability
-TypeScript uses a structural type system ([Structural Type System](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html#structural-type-system), also known as [duck typing](https://en.wikipedia.org/wiki/Duck_typing)). This means that TypeScript determines your type based on what properties and methods you have, or whether your structure conforms to a certain type definition. As long as it conforms to a type definition's structure, it's acceptable, unlike in languages like `java` or `c#` where you must explicitly declare a type during definition.
+
+TypeScript adopts a structural type system ([Structural Type System](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html#structural-type-system), also known as[Duck typing](https://en.wikipedia.org/wiki/Duck_typing)）。That is to say, TypeScript determines what type you are based on what you have, or whether the structure conforms to a certain type definition. As long as it conforms to a certain type definition structure, it is acceptable, without needing to specify a type at the time of definition like `java` or `c#` that, which must be specified as a certain type at the time of definition.
 
 ```ts
 type Cat = {
@@ -132,11 +139,12 @@ let hDog2: HuntDog = hDog; // ok
 cat = hDog; // ok
 hDog2 = cat; // error: Property 'hunt' is missing in type 'Cat' but required in type 'HuntDog'
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAwghsKBeKBvAUFLUIIFxQAUAZgPakAmBAzsAE4CWAdgOYCUyAfFAG6kMUA3OgC+w0JCgAJAK5NgAEVItkaTNlzACJclSi1GrDkm58Bw7FAAWcrUWPcDzFsLHp0E6AElq8RCll5JRUIAA9gCCYKalgEKAB+KHoZaAJiOAAbaghBKAB6PKS6FPcMiEQAY3xY-zVLTW0yShp6ZwcoCtImalIygDoM5UIAA00oABJUJooRYbZRYTLEK2DVDHrqnWb9VqMuDq6e-sGWEbHJ6dm2ABp1LBt5bXaAcjgmBgBbTOfbt3Ql6zBABMBECimUqhWylyBSgpAA1ugqrUoS58oUEehUUDVMiYYUIHQ6KQ6AQAArEyB0UBQZ4PYDPKAMGIfZnUZxMphJcDQZ5+RkAIxkiDoEAAjjIGKKKJzuZJnmDgs8gA) to experience it online.   
 
-Returning to `A extends B ? C : D`, as long as type A conforms to the definition of type B, or in other words, type A is a subset of type B (of course, any set is a subset of itself), the condition is true; otherwise, it's false. In this form, there's also a syntax that can be seen as pattern matching.
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAwghsKBeKBvAUFLUIIFxQAUAZgPakAmBAzsAE4CWAdgOYCUyAfFAG6kMUA3OgC+w0JCgAJAK5NgAEVItkaTNlzACJclSi1GrDkm58Bw7FAAWcrUWPcDzFsLHp0E6AElq8RCll5JRUIAA9gCCYKalgEKAB+KHoZaAJiOAAbaghBKAB6PKS6FPcMiEQAY3xY-zVLTW0yShp6ZwcoCtImalIygDoM5UIAA00oABJUJooRYbZRYTLEK2DVDHrqnWb9VqMuDq6e-sGWEbHJ6dm2ABp1LBt5bXaAcjgmBgBbTOfbt3Ql6zBABMBECimUqhWylyBSgpAA1ugqrUoS58oUEehUUDVMiYYUIHQ6KQ6AQAArEyB0UBQZ4PYDPKAMGIfZnUZxMphJcDQZ5+RkAIxkiDoEAAjjIGKKKJzuZJnmDgs8gA), experience online.
 
-#### 1.3.2 Pattern Matching
+Returning to `A extends B ? C : D` , as long as type A conforms to the definition of type B, or type A is a subset of type B (of course, any set is a subset of itself), the condition holds; otherwise, it does not hold. In this form, there is also a syntax that can be regarded as pattern matching.
+
+#### 1.3.2 Pattern matching
 
 ```ts
 type A = Promise<string>;
@@ -145,21 +153,21 @@ type B = A extends Promise<infer C> ? C : never; // string
 type T = [string, 1, null, A];
 type R = T extends [string, ...infer Rest] ? Rest : never; // [1, null, A]
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UAKAnA9gWwJYGcIB4dgUsA7AcwD4BuAKFEigCEFYoIAPYCUgEx2TpsefGQBmEFFADClKAH4ZUAFxRSEAG6TqUAPS6oREhVr1w0ACqsA2kbLkANFACMT0gFcANp6cwAunQM0ABKrFac3HwCtsT2TgB0ieKSUMEQRH4KqenAKmqa2noG1q5qXj6wfkA) to experience it online.   
 
-This syntax can identify whether the left side of `extends` conforms to the type structure on the right side. If it does, it can infer a certain part of it.
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UAKAnA9gWwJYGcIB4dgUsA7AcwD4BuAKFEigCEFYoIAPYCUgEx2TpsefGQBmEFFADClKAH4ZUAFxRSEAG6TqUAPS6oREhVr1w0ACqsA2kbLkANFACMT0gFcANp6cwAunQM0ABKrFac3HwCtsT2TgB0ieKSUMEQRH4KqenAKmqa2noG1q5qXj6wfkA), experience online.
 
+This syntax can identify `extends` whether the left side conforms to the type structure on the right side; if it conforms, a certain part can be inferred.
 
-#### 1.3.3 Local Constants
+#### 1.3.3 Local constants
 
-`C` and `Rest` in the above example are local constants. Using this, I can change variable names locally at any time:
+In the above example `C` and `Rest` is the local constant. With this, I can change the variable name locally at any time:
 
 ```ts
 type T = [string, 1, null, undefined];
 type R = T extends [string, ...infer Rest]
     ? Rest extends [1, ...infer Rest]
-        ? Rest extends [null, infer Rest] // The old name represents a different value in the new scope.
-            ? Rest extends infer Last // Changing names seems boring 🥱, but don't worry, we'll use this later.
+        ? Rest extends [null, infer Rest] // 旧名字，在新的作用域下代表的值变化了
+            ? Rest extends infer Last // 换名字，好无聊🥱，别担心，后面会用上的
                 ? Last
                 : never
             : never
@@ -167,16 +175,20 @@ type R = T extends [string, ...infer Rest]
     : never;
 // undefined
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAKlC8UDaBnYAnAlgOwOYBooBGQ7AVwBsLCzsATCAMxwjoF0BuAKFEigCUEsKBAAewCPRTI0WPIQB0SnIwjoBENGy5RdUAPwa0I8ZLrSkJKEoUq1R4Nr3ODDkxKnJyVQnfX9NRygAemCoQHPTQFgVQHVtQBh-wAp1QAbTQBC3QB15QApXQH31QGg5QGO5QAsI5MAeBUAN5UA0ZUAwuR0XGsMA4zEPcyg-KAAZAENjUKhAI2MY2MBfTUAD00ApAMA+DcBHXdjAaiVAUaNAYf1YwDgVQCN0wCx5dMAoOWTqmv3XTrQ9g5cALihsCAA3NRODi6vb9Hu9R5u753fn7h7aBmYVzoQA) to experience it online.   
 
-In [4.7](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#extends-constraints-on-infer-type-variables) and [4.8](https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#infer-types-template-strings), there were extensions and optimizations to this conditional expression, which we'll discuss later.
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAKlC8UDaBnYAnAlgOwOYBooBGQ7AVwBsLCzsATCAMxwjoF0BuAKFEigCUEsKBAAewCPRTI0WPIQB0SnIwjoBENGy5RdUAPwa0I8ZLrSkJKEoUq1R4Nr3ODDkxKnJyVQnfX9NRygAemCoQHPTQFgVQHVtQBh-wAp1QAbTQBC3QB15QApXQH31QGg5QGO5QAsI5MAeBUAN5UA0ZUAwuR0XGsMA4zEPcyg-KAAZAENjUKhAI2MY2MBfTUAD00ApAMA+DcBHXdjAaiVAUaNAYf1YwDgVQCN0wCx5dMAoOWTqmv3XTrQ9g5cALihsCAA3NRODi6vb9Hu9R5u753fn7h7aBmYVzoQA), experience online.
+
+In [4.7](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#extends-constraints-on-infer-type-variables), [4.8](https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#infer-types-template-strings) The two versions also have extensions and optimizations for this conditional expression, which will be discussed later.
 
 ### 1.4 Functions
-Shouldn't we be talking about loops now? Well... actually, there are no loops in TypeScript's type system 😓. But don't worry, there is a substitute. I think you can guess what it is...
-That's right, recursion! So, let's look at functions first.
+
+Shouldn't we talk about loops? Uh... actually, there are no loops in the TypeScript type system 😓. But don't worry, there are alternatives. I think you can guess...&#x20;
+&#x20;That's right, it's recursion! So we need to look at functions first.
 
 #### 1.4.1 Generics
-Before we look at functions, we need to understand generics. TypeScript's type system doesn't explicitly say "we provide functions for type programming." However, its generics offer the same capability.
+
+Before looking at functions, we need to look at generics. The TypeScript type system does not explicitly state 'we provide functions for type programming.' But its generics offer the same capability.
+
 ```ts
 function flatten<T>(arr: (T | T[])[]): T[] {
     let result: T[] = [];
@@ -193,12 +205,13 @@ function flatten<T>(arr: (T | T[])[]): T[] {
 console.log(flatten([1, 2, [3, 4], 5, [[6, 7], 8]])); // [1, 2, 3, 4, 5, 6, 7, 8]
 console.log(flatten(['abc', ['123', ['456', '789']], 'def'])); // ["abc", "123", "456", "789", "def"]
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/GYVwdgxgLglg9mABMANgQylApmAPAFQD4AKNAJzIC5Fj9EAfRfAbQF0BKN96l1xAbwBQiEYhRYoiMlgDOIFFB5tEAXkRsA3MNHA4ZGuMkAPRHGCJyZdgO2jRMc8QCCFNAE8AdDBkuy74kbs1kJ2oaLScgqqUrLyUB4QCBAYxKgY2GABQVphIgC+iFgoMlg2uaERcR4ADiAyABZZObl5toitdtJQIGRIlQparYKJYDJw4h4ocADmqeiYOMTMAIwANIgATOvMAMzrACys6wCs28wAbOsA7EeIABysHOwaiAD0r+prm+t7iPsn60uiCu6wewwQYwmU1maQWmWYAHI0AAjCAI7YI5YbHbo9QI-bHc64hFXO4ATgRj3WCIAJlhgJTsm8PswAEQoiCs9asrE7LmIVkE8781mkskiunAVmsIA) to experience it online.   
 
-This is the conventional usage - generics make it easier for us to reuse algorithms (and maintain type safety). In TypeScript's type system, generics allow us to reuse type declarations of the same form, such as `Promise<T>`. They can also be used as utility types. The official documentation provides several [Utility Types](https://www.typescriptlang.org/docs/handbook/utility-types.html), like `Required<Type>` and `Pick<Type, Keys>`. We can also implement our own utility types, which can be used like functions.
+> Click[here](https://www.typescriptlang.org/play?#code/GYVwdgxgLglg9mABMANgQylApmAPAFQD4AKNAJzIC5Fj9EAfRfAbQF0BKN96l1xAbwBQiEYhRYoiMlgDOIFFB5tEAXkRsA3MNHA4ZGuMkAPRHGCJyZdgO2jRMc8QCCFNAE8AdDBkuy74kbs1kJ2oaLScgqqUrLyUB4QCBAYxKgY2GABQVphIgC+iFgoMlg2uaERcR4ADiAyABZZObl5toitdtJQIGRIlQparYKJYDJw4h4ocADmqeiYOMTMAIwANIgATOvMAMzrACys6wCs28wAbOsA7EeIABysHOwaiAD0r+prm+t7iPsn60uiCu6wewwQYwmU1maQWmWYAHI0AAjCAI7YI5YbHbo9QI-bHc64hFXO4ATgRj3WCIAJlhgJTsm8PswAEQoiCs9asrE7LmIVkE8781mkskiunAVmsIA), experience online.
 
+This is the conventional usage—generics make it easier for us to reuse algorithms (and type-safe). In the TypeScript type system, generics can be used to reuse type declarations of the same form. For example, `Promise<T>`They can also be used as utility types, and the official library provides several, [Utility Types](https://www.typescriptlang.org/docs/handbook/utility-types.html)such as: `Required<Type>, Pick<Type, Keys>`We can also implement some utility types ourselves, which can be used like functions.
 
-#### 1.4.2 Type Tools — Functions
+#### 1.4.2 Type tools - Functions
+
 ```ts
 type PromiseValue<T> = T extends PromiseLike<infer V> ? V : never;
 
@@ -213,13 +226,15 @@ type TestF2 = First<[string[]]>; // string[]
 type TestF3 = First<[]>; // unknown
 type TestF4 = First<[], any>; // any
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBACgTgewLYEsDOEBqBDANgVwgB4AVAPigF4oSoIAPYCAOwBM1ZFUMAZFAa2IpmAMwhwomCgH5JUAFxRmEAG7iA3AChNoSDQhpgMTAEYqnZOix5CReJYxFDcYQHMyZdVAD03qM7cdcGgSAyNMACZze25rAmIYqyIAcjhkqAAfKGTXdKzkgCNkjy9fbLTM7NzKwuTtIL0AMRQ4Q1I6RhZ2KHxmfmYEAHdmAG0AXQAaKEa8XALsAGN+c17+oeYKaloGJjYOEeExCUapgDpzw-EoODCxqFlGhWnZ+aWtBpCwxrNqZtbgIgjVJ5Kog2pTZj4JAFcRjTw+PzAmrVfJFD76QyNKK-FptEYBZiucZw0p+AlEsbo0KYgDM5j+eJJCJ6fQGwypXwALPTcQDxlNsMwQPCyoKQEA) to experience it online.   
 
-Here, generic parameters act as function parameters. We can constrain types using `extends`, and generic parameters also support default values.
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBACgTgewLYEsDOEBqBDANgVwgB4AVAPigF4oSoIAPYCAOwBM1ZFUMAZFAa2IpmAMwhwomCgH5JUAFxRmEAG7iA3AChNoSDQhpgMTAEYqnZOix5CReJYxFDcYQHMyZdVAD03qM7cdcGgSAyNMACZze25rAmIYqyIAcjhkqAAfKGTXdKzkgCNkjy9fbLTM7NzKwuTtIL0AMRQ4Q1I6RhZ2KHxmfmYEAHdmAG0AXQAaKEa8XALsAGN+c17+oeYKaloGJjYOEeExCUapgDpzw-EoODCxqFlGhWnZ+aWtBpCwxrNqZtbgIgjVJ5Kog2pTZj4JAFcRjTw+PzAmrVfJFD76QyNKK-FptEYBZiucZw0p+AlEsbo0KYgDM5j+eJJCJ6fQGwypXwALPTcQDxlNsMwQPCyoKQEA), experience online.
 
-If we pass `Promise<Promise<number>>` to `PromiseValue<T>`, the result would be `Promise<number>`. If we want to get the innermost type, which is `number` in this case, what should we do? This is where recursion comes into play.
+Here, the generic parameter is like a function parameter, and through `extends` we can constrain types, and generic parameters also support default values.
+
+If we pass `PromiseValue<T>` to `Promise<Promise<number>>` the result is `Promise<number>`If at this point, we still want to obtain the innermost type, that is `number`What should we do? Then recursion should come into play.
 
 #### 1.4.3 Recursion
+
 ```ts
 type PromiseValue<T> = T extends PromiseLike<infer V> ? V : never;
 
@@ -229,12 +244,15 @@ type PromiseValueDeep<T> = T extends PromiseLike<infer V> ? PromiseValueDeep<V> 
 
 type TestPVD1 = PromiseValueDeep<Promise<Promise<number>>>; // number
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBACgTgewLYEsDOEBqBDANgVwgB4AVAPigF4oSoIAPYCAOwBM1ZFUMAZFAa2IpmAMwhwomCgH5JUAFxRmEAG7iA3AChNoSDQhpgMTAEYqnZOix5CReJYx2uVos3xIARuLI-1UAPT+FtzEbp7e2rrQ9iE4BBAAIhAQYKQU1LQMTGwcMVZ8gkTCYhJSULJ5GHGESSlEZYokWjrg0CQGRpgJZtSV1vG1qX1ODqHuXnA+ZH6BSuPiQA) to experience it online.   
 
-With recursion, we can now talk about loops 😄!
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBACgTgewLYEsDOEBqBDANgVwgB4AVAPigF4oSoIAPYCAOwBM1ZFUMAZFAa2IpmAMwhwomCgH5JUAFxRmEAG7iA3AChNoSDQhpgMTAEYqnZOix5CReJYx2uVos3xIARuLI-1UAPT+FtzEbp7e2rrQ9iE4BBAAIhAQYKQU1LQMTGwcMVZ8gkTCYhJSULJ5GHGESSlEZYokWjrg0CQGRpgJZtSV1vG1qX1ODqHuXnA+ZH6BSuPiQA), experience online.
 
-#### 1.4.4 Loops <=> Recursion
-As mentioned earlier, TypeScript's type system doesn't provide primitives for loops. However, recursion can replace loops, and they are equivalent. You heard that right, recursion and loops are equivalent! They can be converted to each other. Let's take an example of joining a number array into a string:
+With recursion, we can talk about loops! 😄
+
+#### 1.4.4 Loop <=> Recursion
+
+As mentioned earlier, the TypeScript type system does not provide primitive loops. However, recursion can replace loops; they are equivalent. You heard it right, recursion and loops are equivalent! The two can be converted into each other. Let's take an example of concatenating an array of numbers into a string:
+
 ```ts
 function join(arr: number[]): string {
     let result = '';
@@ -255,10 +273,10 @@ type Join<Arr extends number[], Result extends string = ''> =
         : Result;
 type test = Join<[1, 2, 3]>; // '123'
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/GYVwdgxgLglg9mABAKzjMAKAhgJxwLkTBAFsAjAUxwG0BdASkIGcod0BzRAbwChF-EAGwpREOCkxCDRAXkQByeQG4+A4HByIMw0QA9EcYIlw563VQIHjJ0xAGo5ulZYC+FsSJA4k1qVBVuEAhMcMIAdIJw7Bio6BjUAIwANIgATCkAzAz0SogA9HkKCakZ8jw8UACeAA4UiABSaGAAPACCeIgUulAUYAAmTESklDS0KQBKEn6d3b0DiCxsYJxyigB8iDLu7ZpdPf2D1OjAVIgAYilhV8enkyy07pYA-Ocz+-PE5FSPlgIvd6I9nNBp8RnQfr9fi9GuhmgCUgADAAkXDufhcKLOLgRawhkIEhDAFAAbt98b9CSSyfjCGjpCoqrVED0WJsGk1mokUulEFk1rkCkUSvIgA) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/GYVwdgxgLglg9mABAKzjMAKAhgJxwLkTBAFsAjAUxwG0BdASkIGcod0BzRAbwChF-EAGwpREOCkxCDRAXkQByeQG4+A4HByIMw0QA9EcYIlw563VQIHjJ0xAGo5ulZYC+FsSJA4k1qVBVuEAhMcMIAdIJw7Bio6BjUAIwANIgATCkAzAz0SogA9HkKCakZ8jw8UACeAA4UiABSaGAAPACCeIgUulAUYAAmTESklDS0KQBKEn6d3b0DiCxsYJxyigB8iDLu7ZpdPf2D1OjAVIgAYilhV8enkyy07pYA-Ocz+-PE5FSPlgIvd6I9nNBp8RnQfr9fi9GuhmgCUgADAAkXDufhcKLOLgRawhkIEhDAFAAbt98b9CSSyfjCGjpCoqrVED0WJsGk1mokUulEFk1rkCkUSvIgA), experience online.
 
-The code implemented with a loop above can also be achieved using recursion. However, our type version of `Join` looks a bit verbose (with two extra judgments 😔). Nevertheless, in version [4.7](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#extends-constraints-on-infer-type-variables), there's an improvement to this syntax. So it can be changed to:
+The code implemented above using loops can also be done with recursion. It's just that our type version `Join` seems a bit verbose (with two extra checks 😔). However, in [4.7](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#extends-constraints-on-infer-type-variables) the version with improvements, the syntax here can be changed to:
 
 ```ts
 function join(arr: number[]): string {
@@ -276,26 +294,29 @@ type Join<Arr extends number[], Result extends string = ''> =
         : Result;
 type test = Join<[1, 2, 3]>; // '123'
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/GYVwdgxgLglg9mABAKzjMAKAhgJxwLkTBAFsAjAUxwG0BdASkIGcod0BzRAbwChF-EAGwpREOCkxCDRAXkQByeQG4+A4HByIMw0QA9EcYIlw563VQIHjJ0xAGo5ulZYC+FsSJA4k1qVBVuEAhMcMIAdIJw7Bio6BjUAIwANIgATCkAzAz0SogA9HkKCakZ8jw8UACeAA4UiABSaGAAPACCeIgUulAUYAAmTESklDS0KQBKEn6d3b0DiCxsYJxyigB8iDLu7ZpdPf2D1OjAVIgAYjP788TkVClhD8enkyyXc4M3I3S07pYA-A0ms0XlAUgADAAkXBefhcULOLjBa1+AkIMOkKiqtUQPVecka6GaiRS6UQWTWuQKRRK8iAA) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/GYVwdgxgLglg9mABAKzjMAKAhgJxwLkTBAFsAjAUxwG0BdASkIGcod0BzRAbwChF-EAGwpREOCkxCDRAXkQByeQG4+A4HByIMw0QA9EcYIlw563VQIHjJ0xAGo5ulZYC+FsSJA4k1qVBVuEAhMcMIAdIJw7Bio6BjUAIwANIgATCkAzAz0SogA9HkKCakZ8jw8UACeAA4UiABSaGAAPACCeIgUulAUYAAmTESklDS0KQBKEn6d3b0DiCxsYJxyigB8iDLu7ZpdPf2D1OjAVIgAYjP788TkVClhD8enkyyXc4M3I3S07pYA-A0ms0XlAUgADAAkXBefhcULOLjBa1+AkIMOkKiqtUQPVecka6GaiRS6UQWTWuQKRRK8iAA), experience online.
 
-Now it looks much more concise, and the code comparison between the two conversions is easier to see. Mapping from loop to recursion:
+Now it looks much more concise, and the comparison of the code between the two conversions is also easier to see. From loop to recursion:
+
 > Loop termination condition -> Recursion termination condition
 > Loop accumulation variable result -> Recursion function "accumulation" parameter Result
 > Loop moving variable x -> Recursion function "moving" parameter Arr
 
-In pure functional programming languages, there are no loops; only recursion can be used as a substitute. But as we all know, recursion can quickly deepen the function call stack. When it reaches a certain depth, it will cause a stack overflow. So how do we solve this problem?
+In pure functional programming languages, there are no loops; recursion is the only alternative. However, as we all know, recursion can lead to a rapid deepening of the function call stack. Once a certain depth is reached, it will cause a stack overflow. So how can this problem be solved?
 
 The answer is tail recursion optimization.
 
-> Why are there no loops in pure functional programming languages? Is it because recursion is available, so there's no need for an additional set of constructs?
-> Well, or let me ask you, how can you implement a loop without variables?
-> ......
-> 😄 I think you know now, it's impossible!
-> Without variables, it's impossible to save state, so functional programming languages choose to "save" using function parameters.
+> Why are there no loops in pure functional programming languages? Is it because recursion is available, so there's no need for an additional mechanism?&#x20;
+> Well, or let me ask you, how can you implement a loop without variables?&#x20;
+> ……
+> 😄 I think you know, it's impossible!&#x20;
+> Without variables, you cannot maintain state, so functional programming languages choose to use function parameters to 'save' state.
 
-#### 1.4.5 Tail Recursion
-All the recursions we wrote above are tail recursions. Now let's look at one that isn't:
+#### 1.4.5 Tail recursion
+
+All the recursion we wrote above is tail recursion; now let's do one that is not:
+
 ```ts
 type TreeNode = {
     value: number;
@@ -335,40 +356,47 @@ type tree = Tree<1,
 
 type test = PreOrderTraverse<tree>; // [1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAKgThCA5A9gE2gXigbwFBSFQBuAhgDYCuEAXFAHaUC2ARhHANwFHkQBmwOvESoMUAD4NK5clyJQ4ASwDmAC0GwEydNEmMZXAL5c8oSJsQAeAGpQIAD2AR6aAM5TW7ADRQAMncdnNwttMT1pcihsfXIfACUApxd3YVDdKRkojPIAPiz8eTIqWihrOR5+DV9ywiU1DTijEzNoAAUEAHk4DDh4UmJ2VwhLGESglK1RCDzMbkJRhyTg1MtFej52Up81jbg-bfXNuJy5+SgAfigAbWsfADoH9ogunr6BuCHLXxz7x87u9hvQbDY4AXVO8joV1BJgA9LCzvIAIx4eGIqAIwgAHVRmPkACYzgA2XFnBFYxE4tFEADMRAArIiAOyk+QU9GYql4ogAFnRAA4iABOUzgaDALRZFZIrynFb42XokKWGmKpVEGJq9XKnk5H4Qogrel6rXKomm+Sag3zLSWJkW9Erfn67U2qxCvV65piqBOVzALJPF6AuD9YGWCWIHIcDEIq4yqAKqCqqA8nz0nzmqD2qD8nxC0FAA) to experience it online.   
 
-The difference between tail recursion and non-tail recursion is whether the function call is directly returned or embedded within an expression. [Tail call optimization](https://stackoverflow.com/questions/310974/what-is-tail-call-optimization) avoids stack overflow by reusing a single function call stack. This optimization is also present in TypeScript. If you jump to the online example above, you'll notice an error message for the line `? [V, ...PreOrderTraverse<L>, ...PreOrderTraverse<R>]`:
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAKgThCA5A9gE2gXigbwFBSFQBuAhgDYCuEAXFAHaUC2ARhHANwFHkQBmwOvESoMUAD4NK5clyJQ4ASwDmAC0GwEydNEmMZXAL5c8oSJsQAeAGpQIAD2AR6aAM5TW7ADRQAMncdnNwttMT1pcihsfXIfACUApxd3YVDdKRkojPIAPiz8eTIqWihrOR5+DV9ywiU1DTijEzNoAAUEAHk4DDh4UmJ2VwhLGESglK1RCDzMbkJRhyTg1MtFej52Up81jbg-bfXNuJy5+SgAfigAbWsfADoH9ogunr6BuCHLXxz7x87u9hvQbDY4AXVO8joV1BJgA9LCzvIAIx4eGIqAIwgAHVRmPkACYzgA2XFnBFYxE4tFEADMRAArIiAOyk+QU9GYql4ogAFnRAA4iABOUzgaDALRZFZIrynFb42XokKWGmKpVEGJq9XKnk5H4Qogrel6rXKomm+Sag3zLSWJkW9Erfn67U2qxCvV65piqBOVzALJPF6AuD9YGWCWIHIcDEIq4yqAKqCqqA8nz0nzmqD2qD8nxC0FAA), experience online.
+
+The difference between tail recursion and non-tail recursion is whether the function returns directly from a function call or if the function call is embedded within an expression.
+[Tail recursion optimization](https://stackoverflow.com/questions/310974/what-is-tail-call-optimization), is achieved by reusing a function call stack to avoid stack overflow. There is also such optimization in TypeScript. If you jump to the online demo above, you will find `? [V, ...PreOrderTraverse<L>, ...PreOrderTraverse<R>]` This line, TypeScript has an error prompt:
 
 `Type instantiation is excessively deep and possibly infinite.(2589)`
 
-Why? As the message suggests, the type instantiation depth is too great and possibly infinite. TypeScript needs to provide real-time code hints and error checking as we write code. Overly complex types would slow down this process, leading to an unacceptable decline in user experience. Therefore, TypeScript not only needs to avoid stack overflow but also ensure fast computation. Early versions limited recursion depth to 50 levels. In version [4.5](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5/#tailrec-conditional), this was optimized to 100 levels, and for tail recursion, it was increased to 1000 levels. Based on this, we can perform more complex type gymnastics than before.
+Why? As the prompt states: the depth of type instantiation is too large, which may be infinite. TypeScript needs to provide real-time code suggestions and error corrections while we write code. Overly complex types will inevitably hinder this process, leading to an unacceptable decline in user experience. Therefore, TypeScript must not only avoid stack overflow but also ensure calculation speed. The early versions had a limit of 50 levels for recursion depth. In [4.5](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5/#tailrec-conditional) At that time, optimizations were made, increasing to 100 levels; if it is tail recursion, it can increase to 1000 levels. Based on this, we can implement more complex gymnastics than before.
 
-However, ultimately, the restrictions here are stricter than in other programming languages, preventing us from performing long computations. This means that loops implemented based on this can only iterate a limited number of times 😓, and function calls cannot be too deep...
+However, ultimately, the limitations here are stricter than those of other programming languages, not allowing us to perform long-running computations. This means that the loops implemented based on it can only iterate a very limited number of times 😓, and function calls cannot be too deep...
 
-#### 1.4.6 First-Class Functions
-After seeing the above limitations, you might feel a bit disappointed (everything is a trade-off; nothing is perfect). But I have to tell you another unfortunate thing. It lacks the hallmark capability of functional languages—[First-Class Functions](https://en.wikipedia.org/wiki/First-class_function). That is, it cannot pass in or return functions, making it impossible to implement higher-order functions. However, fortunately, lacking this capability does not affect expressiveness, though it adds a lot of inconvenience 😓.
+#### 1.4.6 First-Class-Function
 
-Simply put, using `Function(arguments, Environment1) => return + environment2` can express equivalent things.
+After seeing the above limitations, you may feel a bit regretful (everything is a trade-off, nothing is perfect). But I must tell you, there is another unfortunate thing. It lacks the hallmark capabilities of functional programming languages— [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)That is, there is no way to pass in/out of functions, making it impossible to implement higher-order functions. However, fortunately, lacking this capability does not affect expressiveness. It just makes things a lot more troublesome 😓.
 
-This concludes the introduction to this functional programming language. Take a break. We'll start writing the interpreter soon 😄.
+In simple terms, using `Function(arguments, Environment1) => return + environment2` this method, equivalent things can be expressed.
 
-## 2. How to Implement the Toc Interpreter?
+That concludes the introduction to this functional programming language. Let's take a break. We are about to start writing the interpreter 😄.
 
-Before implementing the interpreter, the first trouble I encountered was how to implement arithmetic operations. After all, these basic operations must be supported! Even supporting only positive integer operations requires some tricks! Yes, we will only support positive integer operations.
+## 2. How to implement a Toc interpreter?
 
-### 2.1 Arithmetic Operations and Comparisons
-If you're facing this problem for the first time, it can be quite baffling. How do you implement the simplest operation, addition? I think I found the answer after Googling it.
+Before implementing the interpreter, the first troublesome issue I encountered was how to implement arithmetic operations. After all, these basic operations must be supported! Just supporting positive integer operations requires some tricks! Yes, we only support positive integer operations.
+
+### 2.1 Arithmetic operations and size comparisons
+
+If it's the first time facing this problem, it really is a bit puzzling. For the simplest case, how to implement addition? It seems that after Googling, I found the answer.
+
 ```ts
 type A = [1, 2, 3];
 type L1 = A['length']; // 3
 type L2 = ['a', number]['length']; // 2
 type L3 = []['length']; // 0
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UDaBGANFATBgzAXQG4AoUSKAGRQViQHIAbCAOwHNgALWwqAeh6hwlw0cpmp0AhrQxMArgFsARhABOeOo1YcuBXv0xCy5HOPUNmbTtz5QADEA) to experience it online.   
 
-Did the example code above inspire you on how to implement addition? Perhaps you've already figured it out... That's right, addition is about preparing two arrays of specified lengths, merging them, and then taking the length of the merged array.
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAglC8UDaBGANFATBgzAXQG4AoUSKAGRQViQHIAbCAOwHNgALWwqAeh6hwlw0cpmp0AhrQxMArgFsARhABOeOo1YcuBXv0xCy5HOPUNmbTtz5QADEA), experience online.
 
-So, I need a function that generates an array of a specified length:
+Does the example code above inspire you to implement addition? Perhaps you have already thought of it... That's right, addition involves preparing two arrays of specified lengths, then merging them, and finally taking the length of the merged array.
+
+So I need a function to generate an array of specified length:
+
 ```ts
 type InitArray<L extends number, A extends any[] = []> =
     A['length'] extends L
@@ -377,48 +405,49 @@ type InitArray<L extends number, A extends any[] = []> =
 type test_init_array_1 = InitArray<0>; // []
 type test_init_array_2 = InitArray<3>; // [any, any, any]
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEAoKPPYCA5ABtSAc2AALJSKIlyVXHIWmA-OxOn5ALliIU6LHjYCAdB+Rs+IIZIDcMqCQUCQUwAD6CA4RGE4gEQCMYvZIaJg4AAwBUAD0uRJCQeDQYZHRSLHxEQBMKfBp8dgAzDn5Ej7e-F2+QA) to experience it online.   
 
-Now we can implement addition:
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEAoKPPYCA5ABtSAc2AALJSKIlyVXHIWmA-OxOn5ALliIU6LHjYCAdB+Rs+IIZIDcMqCQUCQUwAD6CA4RGE4gEQCMYvZIaJg4AAwBUAD0uRJCQeDQYZHRSLHxEQBMKfBp8dgAzDn5Ej7e-F2+QA), experience online.
+
+Now addition can be implemented:
+
 ```ts
 type Add<N1 extends number, N2 extends number> = [...InitArray<N1>, ...InitArray<N2>]['length'];
 type test_add_1 = Add<1, 3>; // 4
 type test_add_2 = Add<0, 10>; // 10
 type test_add_3 = Add<19, 13>; // 32
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEAoKPPYCA5ABtSAc2AALJSKIlyVXHIWmA-OxOn5ALliIU6LHjYCAdB+Rs+IIZIDcMqCQUCQUwAD6CA4RGE4gEQCMYvZIaJg4AAwBUAD0uRJCQeDQYZHRSLHxEQBMKfBp8dgAzDn5Ej7e-F2+MsUhyGRk2AByyfrcVLSMzGwjdROG1PRMqNLi7h4NjhmjiZJsHm7b6c7zkkLKanCaOkKBwaUQ4bFDSSmDw4lsrf55BQAWfpPF4YN51cSfbCZNiJbJ-dpw4GhZ6RMFkCLND5DbCJACcsN+-ygzRqQA) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEAoKPPYCA5ABtSAc2AALJSKIlyVXHIWmA-OxOn5ALliIU6LHjYCAdB+Rs+IIZIDcMqCQUCQUwAD6CA4RGE4gEQCMYvZIaJg4AAwBUAD0uRJCQeDQYZHRSLHxEQBMKfBp8dgAzDn5Ej7e-F2+MsUhyGRk2AByyfrcVLSMzGwjdROG1PRMqNLi7h4NjhmjiZJsHm7b6c7zkkLKanCaOkKBwaUQ4bFDSSmDw4lsrf55BQAWfpPF4YN51cSfbCZNiJbJ-dpw4GhZ6RMFkCLND5DbCJACcsN+-ygzRqQA), experience online.
 
-With addition implemented, subtraction is also within reach. Again, we use two arrays. The minuend array decreases by one element each time, decreasing the number of times equal to the subtrahend, and then we take the length of the minuend array.
-
+Having implemented addition, subtraction is also a piece of cake. Still two arrays, the minuend array reduces by one element each time, reducing by the number of subtrahends, and then taking the length of the minuend array.
 
 ```ts
 type Sub<
     N1 extends number,
     N2 extends number,
-    A extends any[] = InitArray<N1>, // Minuend array
-    C extends any[] = [], // Counter array
+    A extends any[] = InitArray<N1>, // 被减数数组
+    C extends any[] = [], // 计数数组
 > = N2 extends C['length']
     ? A['length']
     : A extends [infer F, ...infer Rest extends any[]]
         ? Sub<N1, N2, Rest, [...C, any]>
-        : 0; // Minuend is less than subtrahend
+        : 0; // 被减数小于减数
 type test_sub_1 = Sub<10, 3>; // 7
 type test_sub_2 = Sub<18, 9>; // 9
 type test_sub_3 = Sub<9, 13>; // 0
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEAoKPPYCA5ABtSAc2AALJSKIlyVXHIWmA-OxOn5ALliIU6LHjYCAdB+Rs+IIZIDcMqCQUCQUwAD6CA4RGE4gEQCMYvZIaJg4AAwBUAD0uRJCQeDQYZHRSLHxEQBMKfBp8dgAzDn5Ej7e-F2+MsUhAMo0DNhWUAByyfrcVLSMzCxj43XThtT0TKxjHKs8PsL1DunOk5Js7YDVEYDzioAOpjeAI35jAMKcBnv8B+LC5wWAhdF3j2k4mWrxmUCeyjUcE0OiK5kUqg02l0YzsOy4awE0QAZswoAAxNgeNw4vEAJQg4VBa32Qjh1nkFiGI0mbGWbAp4VcxKePT8Y1Mdky-jyBWuN0A8DqAOLlbv1SpTIhRhkkUszsIlMmxWiL2gB2OWhBURJUMWqq4bqgAcbAAnG0CjaDWVjcrmuaRja2IltaKoJkgA) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAkgdgS2AQQE6oIYgDwBkoQAewEcAJgM5RwCuAtgEYSoA0UyBxplUGcIAbQC6UALxRhAPjEAoKPPYCA5ABtSAc2AALJSKIlyVXHIWmA-OxOn5ALliIU6LHjYCAdB+Rs+IIZIDcMqCQUCQUwAD6CA4RGE4gEQCMYvZIaJg4AAwBUAD0uRJCQeDQYZHRSLHxEQBMKfBp8dgAzDn5Ej7e-F2+MsUhAMo0DNhWUAByyfrcVLSMzCxj43XThtT0TKxjHKs8PsL1DunOk5Js7YDVEYDzioAOpjeAI35jAMKcBnv8B+LC5wWAhdF3j2k4mWrxmUCeyjUcE0OiK5kUqg02l0YzsOy4awE0QAZswoAAxNgeNw4vEAJQg4VBa32Qjh1nkFiGI0mbGWbAp4VcxKePT8Y1Mdky-jyBWuN0A8DqAOLlbv1SpTIhRhkkUszsIlMmxWiL2gB2OWhBURJUMWqq4bqgAcbAAnG0CjaDWVjcrmuaRja2IltaKoJkgA), experience online.
 
-😄，nice！
-With addition in place, multiplication is also easy. `A * B` is equivalent to adding `A` to itself `B` times, but we need to be careful that 0 multiplied by any number results in 0:
+😄, nice!&#x20;
+With addition, multiplication is also easy,`A * B` Equivalent to `B` individual `A` addition, but be careful that 0 multiplied by any number is always 0:
 
 ```ts
 type Mul<
     N1 extends number,
     N2 extends number,
-    A extends number = N1, // Result
-    C extends number = 1, // Counter number
+    A extends number = N1, // 结果
+    C extends number = 1, // 计数数字
 > = N1 extends 0
     ? 0
     : N2 extends 0
@@ -430,27 +459,29 @@ type test_mul_1 = Mul<11, 3>; // 33
 type test_mul_2 = Mul<8, 9>; // 72
 type test_mul_3 = Mul<9, 0>; // 0
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQmjJyiogAMiw4+ESklDT0MINsRPK4IIL6VQu8fA5Q67DGZriWNotYQ+x9axunAPywJ6frAFxQXdq9ffQiojD0syD6YR2uEO4eSRSZI9EC+KoPUHZArNBa-MpA6ReUFpCHAx5KRqFISfD5zPFfdrOaAAWRIJkQVwY6AO0w4YzoVKYU2G9K4tCpk1prNGXCqaHozUAy36AHPMqQBhFnsXk0KpBbGAQujAA6mSsA6toOFbUqVELJUi66053Znc9gG67rfVUw1QSUmohMK3mqAXGCO813MkUgUMRgTTLvamqapIcW5bg-Yl-AFkcnggSexCoeVY5rBYLw-6eGMmVHx8mIAAc9FqMOiAHY2pGytmPJU8xT6lB8k1olkgA) to experience it online.   
 
-However, at `Add<A, N1>`, there's a warning:
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQmjJyiogAMiw4+ESklDT0MINsRPK4IIL6VQu8fA5Q67DGZriWNotYQ+x9axunAPywJ6frAFxQXdq9ffQiojD0syD6YR2uEO4eSRSZI9EC+KoPUHZArNBa-MpA6ReUFpCHAx5KRqFISfD5zPFfdrOaAAWRIJkQVwY6AO0w4YzoVKYU2G9K4tCpk1prNGXCqaHozUAy36AHPMqQBhFnsXk0KpBbGAQujAA6mSsA6toOFbUqVELJUi66053Znc9gG67rfVUw1QSUmohMK3mqAXGCO813MkUgUMRgTTLvamqapIcW5bg-Yl-AFkcnggSexCoeVY5rBYLw-6eGMmVHx8mIAAc9FqMOiAHY2pGytmPJU8xT6lB8k1olkgA), experience online.
 
-`Type 'Add<A, N1>' does not satisfy the constraint 'number'.(2344)`.
+However `Add<A, N1>` Here is a reminder:
 
-This means that its result may not always be a `number`, so it's not safe. This could be due to potential outputs of `never` or `any` in extreme cases. We usually use a utility function similar to an assertion to handle this issue:
+`Type 'Add<A, N1>' does not satisfy the constraint 'number'.(2344)`。
+
+It means that its result is not always guaranteed `number`, so it is unsafe. Here it should be possible outputs `never` or `any` situations, which are extreme; we generally use a tool function similar to an assertion to handle this problem:
 
 ```ts
 type Safe<T, Type, Default extends Type = Type> = T extends Type ? T : Default;
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAyghgMwgHgCoBoqvBTARCBOAVwBtgoIAPYCAOwBMBnLHKAXlcgD4OtKa9Zl2gB+fgC4oBImWABuIA) to experience it online.   
 
-`Safe<T, U, D>` is mainly used to further confirm that `T` is of type `U`, otherwise it defaults to type `D`. With this, let's modify our code:
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAyghgMwgHgCoBoqvBTARCBOAVwBtgoIAPYCAOwBMBnLHKAXlcgD4OtKa9Zl2gB+fgC4oBImWABuIA), experience online.
+
+`Safe<T, U, D>` Mainly used to further confirm `T` is `U` type, otherwise please take `D` type. With it, we can modify it a bit:
 
 ```ts
 type Mul<
     N1 extends number,
     N2 extends number,
-    A extends number = N1, // Result
-    C extends number = 1, // Counter
+    A extends number = N1, // 结果
+    C extends number = 1, // 计数数字
 > = N1 extends 0
     ? 0
     : N2 extends 0
@@ -462,20 +493,21 @@ type test_mul_1 = Mul<11, 3>; // 33
 type test_mul_2 = Mul<8, 9>; // 72
 type test_mul_3 = Mul<9, 0>; // 0
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQAMryAGYQiAAq9AMJ9AAiED3yJCbALDj4RCMuAssQvKvzbEsJUAD8UANQAFxQE1MzwI4dUJoycoqIADJbixyUNPQwr+zyuCCCfRVQEbBxQcGwYxmXCWGxArALdhPMEQ1EHGAo1Hg053bSPJ70ESiGD0P4gfRhG5lSRSZIPEC+Kq4+nZArNQFUiDuDw06ReelpJm0vFKRqFIRk0n-KXk9rOaAAWRmiExDHQCO27y4tFVTB+RFIHzoqu+Grehq4VTQ9GagGW-QA55qqAML6rU0KpBcWAQujAA6mPsA6toODZq11ZVUHMOo056s3sSNY8ER1VRqAu2NEJjJhP7WBZhOnJUmZT0Jj0bp9RABSsllT0C00VRQcv9KtO3KN+s8NnRQAQDABaAdN3rQKw0CCc7lkGaMgSFxCoT1i5rBYITzxTkyC2fKgAc9Fq3agAHY2vLXFz19PKtui-UoPkmtEskA) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQAMryAGYQiAAq9AMJ9AAiED3yJCbALDj4RCMuAssQvKvzbEsJUAD8UANQAFxQE1MzwI4dUJoycoqIADJbixyUNPQwr+zyuCCCfRVQEbBxQcGwYxmXCWGxArALdhPMEQ1EHGAo1Hg053bSPJ70ESiGD0P4gfRhG5lSRSZIPEC+Kq4+nZArNQFUiDuDw06ReelpJm0vFKRqFIRk0n-KXk9rOaAAWRmiExDHQCO27y4tFVTB+RFIHzoqu+Grehq4VTQ9GagGW-QA55qqAML6rU0KpBcWAQujAA6mPsA6toODZq11ZVUHMOo056s3sSNY8ER1VRqAu2NEJjJhP7WBZhOnJUmZT0Jj0bp9RABSsllT0C00VRQcv9KtO3KN+s8NnRQAQDABaAdN3rQKw0CCc7lkGaMgSFxCoT1i5rBYITzxTkyC2fKgAc9Fq3agAHY2vLXFz19PKtui-UoPkmtEskA), experience online.
 
-Next, let's move on to division. The approach is similar, let's look at the code directly:
+Next, it's time for division. The idea is similar; let's look at the code directly:
+
 ```ts
 type Div<
     N1 extends number,
     N2 extends number,
-    A extends number = N1, // Result
-    C extends number = 0, // Counter
+    A extends number = N1, // 结果
+    C extends number = 0, // 计数数字
 > = N1 extends 0
     ? 0
     : N2 extends 0
-        ? never // Divisor cannot be 0
+        ? never // 除数不能为 0
         : A extends 0
             ? C
             : Div<N1, N2, Sub<A, N2>, Safe<Add<C, 1>, number>>;
@@ -483,11 +515,12 @@ type test_div_1 = Div<12, 3>; // 4
 type test_div_2 = Div<8, 9>; // 0
 type test_div_3 = Div<100, 33>; // 3
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAygrgIwDwCgrqgOQIxQgD2AgDsATAZymLgFsEIAnAGjQ0wCY9CSKrb7mrdAEEuRMpQCGxEAG0AulAC8UAJLEAlsGEMGkkEhwA+JlAD0ZqIGqIwPOKgB1M7gEb8hUAMJieUmQuVQFpiyhAQuiHZyNfDg8JN1kAcgAbEgBzYAALWPkXAH4oYTjE4hT0zIwoAC5cqN5ZDWIAM0YoADFTADp22oaGKAAlCHJgKq85eRLSjBz4ZBxTDlM+gdNZdtbXU2kQeSMXUoqABgBuc0tbO0B4HUA4uXsUUEgoIgGAfXJER9wVKaRsPdMAZiMjoEAOw3cDQB7AZ6vTgfRBfAAcpgAnADjlAkaC7hCoQhHr9fJ8kaZsP9AZY9ihMdAYJIGkgACqmelg0wAEQgdUkcHigwI4l4zLuKkFEHCwqGUBFUBy9PKUHZnO5wAOlNu0GEpFIhlwfM8fDojFmnF10WoBoYYr8K3UWh0egMxja7Rt2l0+kM7CM8nyyTSGRVavu-Uhkk1b18Gq12D+qMCABYqUGnqHSI8YblNUgflBvrHLN9E9iU3iI5nsESc6S0b92KqwWpNK77UgADISs0CUyiE28DY+FQKMUuPIJX3FCUtnYTXJT9AVF1290tpYrYTrGRbAP17G1LSPSRukDhlQLw9ZvN+TKBneN-eHtO+U-NquBWQbdcgD+ZROsjQAN1QUocHbfhDRcSIe0oDswNKbtuFNUDuhUGY0UAZb9ABzzFx3Eg-UBF8bNAhCOxAHVtFBLWAnCKVKHIqIwCoIPg3haPGaUqAgP9GkCQATNLsQBYOUAX4DAC45KBmPGCo4P5ShRJY9AclcWcxPlf9tSNUxPjXLBPTU2kICQSMkDWHMTFwxgjABQtg0eUh-2PJSAOwdgYzJKAE2vSzrL-B8VF-ADEXRC8KTcp4PJLbzlO+bNfhfSxfiAA) to experience it online.   
 
-Let's run it and see. Ah! Why are the values of `test2` and `test3` `1` and `4`, not the expected `0` and `3`? The reason is that in cases like `8 / 9`, we can't distinguish between `8 - 9` and `8 - 8`. If we could compare sizes, it would be easier.
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAygrgIwDwCgrqgOQIxQgD2AgDsATAZymLgFsEIAnAGjQ0wCY9CSKrb7mrdAEEuRMpQCGxEAG0AulAC8UAJLEAlsGEMGkkEhwA+JlAD0ZqIGqIwPOKgB1M7gEb8hUAMJieUmQuVQFpiyhAQuiHZyNfDg8JN1kAcgAbEgBzYAALWPkXAH4oYTjE4hT0zIwoAC5cqN5ZDWIAM0YoADFTADp22oaGKAAlCHJgKq85eRLSjBz4ZBxTDlM+gdNZdtbXU2kQeSMXUoqABgBuc0tbO0B4HUA4uXsUUEgoIgGAfXJER9wVKaRsPdMAZiMjoEAOw3cDQB7AZ6vTgfRBfAAcpgAnADjlAkaC7hCoQhHr9fJ8kaZsP9AZY9ihMdAYJIGkgACqmelg0wAEQgdUkcHigwI4l4zLuKkFEHCwqGUBFUBy9PKUHZnO5wAOlNu0GEpFIhlwfM8fDojFmnF10WoBoYYr8K3UWh0egMxja7Rt2l0+kM7CM8nyyTSGRVavu-Uhkk1b18Gq12D+qMCABYqUGnqHSI8YblNUgflBvrHLN9E9iU3iI5nsESc6S0b92KqwWpNK77UgADISs0CUyiE28DY+FQKMUuPIJX3FCUtnYTXJT9AVF1290tpYrYTrGRbAP17G1LSPSRukDhlQLw9ZvN+TKBneN-eHtO+U-NquBWQbdcgD+ZROsjQAN1QUocHbfhDRcSIe0oDswNKbtuFNUDuhUGY0UAZb9ABzzFx3Eg-UBF8bNAhCOxAHVtFBLWAnCKVKHIqIwCoIPg3haPGaUqAgP9GkCQATNLsQBYOUAX4DAC45KBmPGCo4P5ShRJY9AclcWcxPlf9tSNUxPjXLBPTU2kICQSMkDWHMTFwxgjABQtg0eUh-2PJSAOwdgYzJKAE2vSzrL-B8VF-ADEXRC8KTcp4PJLbzlO+bNfhfSxfiAA), experience online.
 
-How do we compare sizes? To be honest, when I first thought about this problem, I really had no idea 😓. Fortunately, I found the answer through Google. The method is to subtract 1 from both numbers simultaneously; whichever reaches 0 first is smaller. The case of equality is easier to handle. Let's look at the implementation:
+Let's run it and see, ah!`test2`, `test3` Why is the value `1` and `4`, not what we expected `0` and `3`. The reason lies in the fact that,`8 / 9` in such cases, we cannot distinguish `8 - 9` and `8 - 8` such differences. It would be easier if we could compare sizes.
+
+How do we compare sizes? To be honest, when I first thought about this problem, I really had no idea 😓. Fortunately, I found it on Google. The method is to simultaneously subtract 1 from both numbers; whoever reaches 0 first is smaller. The case of equality is easier to handle. Now let's look at the implementation:
 
 ```ts
 type Eq<A, B> =
@@ -507,19 +540,21 @@ type test_lt_1 = Lt<1, 3>;
 type test_lt_2 = Lt<3, 2>;
 type test_lt_3 = Lt<3, 3>;
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAygrgIwDwCgrqgOQIxQgD2AgDsATAZymLgFsEIAnAGjQ0wCY9CSKrb7mrdAEEuRMpQCGxEAG0AulAC8UAJLEAlsGEMGkkEhwA+JlAD0ZqIGqIwPOKgB1M7gEb8hUAMJieUmQuVQFpiyhAQuiHZyNfDg8JN1kAcgAbEgBzYAALWPkXAH4oYTjE4hT0zIwoAC5cqN5ZDWIAM0YoADFTADp22oaGKAAlCHJgKq85eRLSjBz4ZBxTDlM+gdNZdtbXU2kQeSMXUoqABgBuc0tbO0B4HUA4uXsUUEgoIgGAfXJER9wVKaRsPdMAZiMjoEAOw3cDQB7AZ6vTgfRBfAAcpgAnADjlAkaC7hCoQhHr9fJ8kaZsP9AZY9ihMdB1FodHoDAAZIZ8OiMUyiAjiXgbHwqBThJQuPIJZJpDLMhk7Ca5KXoCo07S6fRIBlLFbCdYyLYHKn3fqQ2paR6SJUgN6+BV05V7VGBBS67GGyEm+mPGFqTSK+lIUlo2QbTUgQOZXUAUQAjkgNVAAEICoXMmPZKAAChjzNEOWADDg0AqdUk8XIEAAlC584XizrdQzgFHmdRWcxYw3+Ix46UI1HTHHmdnc7KoDkC0WIIOKhzuNEKeNZ0P7jmx3PxhV05zPFAZ8u58PK0vt7OKrWkJ9o9gTLA4THiUYAQ79Y94pD3lBj9g-nfbuCH0+3b5j78pjsJ+YJ6k8v74ioAEfgcQA) to experience it online.   
 
-Now let's correct the division:
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAygrgIwDwCgrqgOQIxQgD2AgDsATAZymLgFsEIAnAGjQ0wCY9CSKrb7mrdAEEuRMpQCGxEAG0AulAC8UAJLEAlsGEMGkkEhwA+JlAD0ZqIGqIwPOKgB1M7gEb8hUAMJieUmQuVQFpiyhAQuiHZyNfDg8JN1kAcgAbEgBzYAALWPkXAH4oYTjE4hT0zIwoAC5cqN5ZDWIAM0YoADFTADp22oaGKAAlCHJgKq85eRLSjBz4ZBxTDlM+gdNZdtbXU2kQeSMXUoqABgBuc0tbO0B4HUA4uXsUUEgoIgGAfXJER9wVKaRsPdMAZiMjoEAOw3cDQB7AZ6vTgfRBfAAcpgAnADjlAkaC7hCoQhHr9fJ8kaZsP9AZY9ihMdB1FodHoDAAZIZ8OiMUyiAjiXgbHwqBThJQuPIJZJpDLMhk7Ca5KXoCo07S6fRIBlLFbCdYyLYHKn3fqQ2paR6SJUgN6+BV05V7VGBBS67GGyEm+mPGFqTSK+lIUlo2QbTUgQOZXUAUQAjkgNVAAEICoXMmPZKAAChjzNEOWADDg0AqdUk8XIEAAlC584XizrdQzgFHmdRWcxYw3+Ix46UI1HTHHmdnc7KoDkC0WIIOKhzuNEKeNZ0P7jmx3PxhV05zPFAZ8u58PK0vt7OKrWkJ9o9gTLA4THiUYAQ79Y94pD3lBj9g-nfbuCH0+3b5j78pjsJ+YJ6k8v74ioAEfgcQA), experience online.
+
+Next, let's get the division right:
+
 ```ts
 type Div<
     N1 extends number,
     N2 extends number,
-    A extends number = N1, // Result
-    C extends number = 0, // Counter
+    A extends number = N1, // 结果
+    C extends number = 0, // 计数数字
 > = N1 extends 0
     ? 0
     : N2 extends 0
-        ? never // Divisor cannot be 0
+        ? never // 除数不能为 0
         : Lt<A, N2> extends true
             ? C
             : Div<N1, N2, Sub<A, N2>, Safe<Add<C, 1>, number>>;
@@ -527,64 +562,71 @@ type test_div_1 = Div<12, 3>; // 4
 type test_div_2 = Div<8, 9>; // 0
 type test_div_3 = Div<100, 33>; // 3
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAygrgIwDwCgrqgOQIxQgD2AgDsATAZymLgFsEIAnAGjQ0wCY9CSKrb7mrdAEEuRMpQCGxEAG0AulAC8UAJLEAlsGEMGkkEhwA+JlAD0ZqIGqIwPOKgB1M7gEb8hUAMJieUmQuVQFpiyhAQuiHZyNfDg8JN1kAcgAbEgBzYAALWPkXAH4oYTjE4hT0zIwoAC5cqN5ZDWIAM0YoADFTADp22oaGKAAlCHJgKq85eRLSjBz4ZBxTDlM+gdNZdtbXU2kQeSMXUoqABgBuc0tbO0B4HUA4uXsUUEgoIgGAfXJER9wVKaRsPdMAZiMjoEAOw3cDQB7AZ6vTgfRBfAAcpgAnADjlAkaC7hCoQhHr9fJ8kaZsP9AZY9ihMdAYJIGkgACqmelg0wAEQgdUkcHigwI4l4zLuKkFEHCwqGUBFUBy9PKUHZnO5wAOlNu0GEpFIhlwfM8fDojFmnF10WoBoYYr8K3UWh0egMxja7Rt2l0+kM7CM8nyyTSGRVavu-Uhkk1b18Gq12D+qMCABYqUGnqHSI8YblNUgflBvrHLN9E9iU3iI5nsESc6S0b92KqwVAAKIARyQwlMACExS5RCbeO3slAABTtiWiHLABhwaAVTnxcgQACULhnkjnEBViYAMsBWxKzQIO3v+Iwu6Vm62O+Fe5QJ1OdhMoLP5-f0BUe9xohTxt-pfdJxAX3GCoR2vKAvx-CCcifACIIgiptyQT42xzExYDhdtiSMAFC2DR4eXDFQEOjKBSRwp58PTBDflMT0A3rbF8PxQid2okjsMTF07XdTcj3NUx335YYfBUBRTwwPIEl9YoJU3QCcmEQCKk4t0DE3JYVmQjYtjorFcNqLRHkkFSCLUTRXXtLM8z8TJA2xfSQ2M9NlIsqtAlkDZ1hkTzNjrO5WQ0AA3VBShwXiDxcSJQP3Q1uzCxoVBmNFAGW-QAc8xcdwouPboVGzQIQjsQB1bRQS1QtA8D0Bycq5Uij9eCq0ocmICAAsaQJABM0uxAFg5QBfgMALjkwMUqAEOQjgr1qm9-0Ahq3CmjAKn8oLErmNDkBGz1TBpOlIyQNYUNMaKLWw2zcNIQKTIWr52BjMkoATY6nlOgK018C7EXRKyKXuyFHpLFQLu+bNflcyxfiAA) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAygrgIwDwCgrqgOQIxQgD2AgDsATAZymLgFsEIAnAGjQ0wCY9CSKrb7mrdAEEuRMpQCGxEAG0AulAC8UAJLEAlsGEMGkkEhwA+JlAD0ZqIGqIwPOKgB1M7gEb8hUAMJieUmQuVQFpiyhAQuiHZyNfDg8JN1kAcgAbEgBzYAALWPkXAH4oYTjE4hT0zIwoAC5cqN5ZDWIAM0YoADFTADp22oaGKAAlCHJgKq85eRLSjBz4ZBxTDlM+gdNZdtbXU2kQeSMXUoqABgBuc0tbO0B4HUA4uXsUUEgoIgGAfXJER9wVKaRsPdMAZiMjoEAOw3cDQB7AZ6vTgfRBfAAcpgAnADjlAkaC7hCoQhHr9fJ8kaZsP9AZY9ihMdAYJIGkgACqmelg0wAEQgdUkcHigwI4l4zLuKkFEHCwqGUBFUBy9PKUHZnO5wAOlNu0GEpFIhlwfM8fDojFmnF10WoBoYYr8K3UWh0egMxja7Rt2l0+kM7CM8nyyTSGRVavu-Uhkk1b18Gq12D+qMCABYqUGnqHSI8YblNUgflBvrHLN9E9iU3iI5nsESc6S0b92KqwVAAKIARyQwlMACExS5RCbeO3slAABTtiWiHLABhwaAVTnxcgQACULhnkjnEBViYAMsBWxKzQIO3v+Iwu6Vm62O+Fe5QJ1OdhMoLP5-f0BUe9xohTxt-pfdJxAX3GCoR2vKAvx-CCcifACIIgiptyQT42xzExYDhdtiSMAFC2DR4eXDFQEOjKBSRwp58PTBDflMT0A3rbF8PxQid2okjsMTF07XdTcj3NUx335YYfBUBRTwwPIEl9YoJU3QCcmEQCKk4t0DE3JYVmQjYtjorFcNqLRHkkFSCLUTRXXtLM8z8TJA2xfSQ2M9NlIsqtAlkDZ1hkTzNjrO5WQ0AA3VBShwXiDxcSJQP3Q1uzCxoVBmNFAGW-QAc8xcdwouPboVGzQIQjsQB1bRQS1QtA8D0Bycq5Uij9eCq0ocmICAAsaQJABM0uxAFg5QBfgMALjkwMUqAEOQjgr1qm9-0Ahq3CmjAKn8oLErmNDkBGz1TBpOlIyQNYUNMaKLWw2zcNIQKTIWr52BjMkoATY6nlOgK018C7EXRKyKXuyFHpLFQLu+bNflcyxfiAA), experience online.
 
-Good job! Everything has turned out as expected!
+Good job! Everything has arrived as expected!
 
-Now that we've implemented `Lt`, the other comparison functions shouldn't be difficult. I'll leave this part for you, the reader, to try.
+The above has been implemented `Lt`, then the other comparison functions are not difficult, so I'll leave this part for you, the reader, to try.
 
-At the end of this section, I want to say that there's actually another approach to implementing arithmetic operations and comparisons. When I first considered implementing addition, I only thought of this approach—using strings.
+In this section, I would like to say that there is actually another approach to implementing arithmetic operations and size comparisons. When I first considered the implementation of addition, I only thought of this approach—using strings to implement it.
 
-For addition, it's about adding digit by digit (ones place, tens place, etc.) using a lookup table, including carry processing. The result is still a numeric string.
+For addition, it involves looking up values in a table bit by bit (like units, tens, etc.), including carry handling. The result is still a numeric string.
 
-For less-than comparison, first compare the string lengths; the shorter one is smaller. If the lengths are the same, compare digit by digit using a lookup table, starting from the most significant digit.
+For less-than comparisons, first compare the lengths of the strings; the shorter one is smaller. If the lengths are the same, compare bit by bit starting from the highest place.
 
-This approach for size comparison is completely fine. But for addition, converting from numbers to strings is easy. However, the reverse is not so straightforward. But in version [4.8](https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#infer-types-template-strings), this problem was solved.
+This approach for size comparison is completely fine. However, for addition, converting from numbers to strings is easy, but the reverse is quite challenging. Nevertheless,[4.8](https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#infer-types-template-strings) the version issue has been resolved.
+
 ```ts
 type SN = '123' extends `${infer N extends number}` ? N : never; // 123
 ```
 
-So everything is perfect! You might ask, this approach sounds complicated, and compared to the previous array implementation, it seems to have no advantages. It's true that it's complex, but it does have advantages. We mentioned earlier that TypeScript type computations have a recursion depth limit. The array implementation can quickly hit this limit, while the string-based approach doesn't hit the limit even with very large numbers.
+So everything is perfect! You might ask, this solution sounds complicated, and compared to the previous array implementation, it seems to have no advantages. It is indeed complex, but there are advantages. As we mentioned earlier, TypeScript's type operations have a recursion depth limit. The array implementation can quickly hit the limit, while the string solution does not encounter the limit even with large numbers.
+
 ```ts
 type test_add_1 = Add<999, 999>; // 1998
 type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and possibly infinite.(2589)
 ```
-> Click [here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQmjJyiogAMiw4+ESklDT0MINsRPK4IIL6VQu8fA5Q67DGZriWNotYQ+x9axunAPywJ6frAFxQXdq9ffQiojD0syD6YR2uEO4eSRSZI9EC+KoPUHZArNBa-MpA6ReUFpCHAx5KRqFISfD5zPFfdrORL-ZI+PzVJC1an0am1GFFakADnhpPKqXSlMQdNyWT5DKgABUElAge5ZsBJPJJQB7XCiohYADG-wIkgAbhATCAoHAIBAwFBZnAoGAZQQ1RRtaLcAAzRE4YQACkYAFYmbUAJRAA) to experience it online.   
 
+> Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQmjJyiogAMiw4+ESklDT0MINsRPK4IIL6VQu8fA5Q67DGZriWNotYQ+x9axunAPywJ6frAFxQXdq9ffQiojD0syD6YR2uEO4eSRSZI9EC+KoPUHZArNBa-MpA6ReUFpCHAx5KRqFISfD5zPFfdrORL-ZI+PzVJC1an0am1GFFakADnhpPKqXSlMQdNyWT5DKgABUElAge5ZsBJPJJQB7XCiohYADG-wIkgAbhATCAoHAIBAwFBZnAoGAZQQ1RRtaLcAAzRE4YQACkYAFYmbUAJRAA), experience online.
 
-If you want to experience the string version, you can go directly to the [Toc](https://github.com/huanguolin/Toc) repository to access the interpreter. Enter `type Result = Toc<'99999 + 99999;'>` to try it out. This is because `Toc` uses the string version under the hood. The code can be found [here](https://github.com/huanguolin/Toc/tree/master/type-Toc/utils/math/fast).
+If you want to experience the string version, you can go directly to the repository. [Toc](https://github.com/huanguolin/Toc) Click here to go to the interpreter. Input `type Result = Toc<'99999 + 99999;'>` to experience it. Because `Toc` the underlying implementation uses the string version. The code is in[here](https://github.com/huanguolin/Toc/tree/master/type-Toc/utils/math/fast)。
 
 Alright, now we should be ready to start implementing the interpreter.
 
-### 2.2 解释器
+### 2.2 Interpreter
 
-我们的解释器主要分三步：词法分析，语法分析，执行。
+Our interpreter is mainly divided into three steps: lexical analysis, syntax analysis, and execution.
 
 ![interpreter-3-steps](https://github.com/huanguolin/toc/blob/master/docs/imgs/interpreter-3-steps.png)
 
-另外为了对比，也为了照顾想我一样非科班出身的人，我会讲两个版本的实现（个人感觉直接看一门熟悉的语言来实现解释器会更好接受一点）：
-* 用 ts（你可以理解为用 js）实现的，在 [ts-Toc](https://github.com/huanguolin/Toc/tree/master/ts-Toc) 下。
-* 用 ts 类型系统实现的，在 [type-Toc](https://github.com/huanguolin/Toc/tree/master/type-Toc) 下。
+Additionally, for comparison and to accommodate those like me who are not from a formal computer science background, I will discuss two versions of the implementation (I personally feel that looking at an implementation in a familiar language is easier to accept):
 
-我在讲一个特性时，会先讲 ts 版，然后说 type 版。在实现 ts 版本时，不会考虑要“翻译”为 type 版，而放弃对它来说最自然的方法。这样做的目的，一是为了好理解（特别是非科班的同学）；二是为了对比，能看到在语言“贫瘠”的情况下，我们如何“绕”。
+* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/Toc/tree/master/ts-Toc) the following.
+* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/Toc/tree/master/type-Toc) the following.
 
-#### 2.2.1 Toc 的语法
-在实现一门语言时，先要知道它的语法，`Toc` 的语法定义已经定义在 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md)。但是对于没有编译原理基础的人来说，对那些符号要表达什么还是很困惑的（比如我🤦）。我们在这里以表达式为引子，做一个简要的解释。
+when I discuss a feature, I will first explain the TypeScript version, and then the type version. When implementing the TypeScript version, I will not consider translating it into the type version, but will abandon the most natural method for it. The purpose of this approach is primarily for better understanding (especially for non-computer science students); The second is for comparison, to see how we 'navigate' in a 'poor' language context.
 
-我们常常看到下面这样的表达式，这些都是我们熟悉，且被 `Toc` 支持的：
+#### 2.2.1 Syntax of Toc
+
+When implementing a language, one must first understand its syntax.`Toc` The syntax definition has already been established in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md)。However, for those without a foundation in compiler theory, the meaning of those symbols can still be quite confusing (like me 🤦). Here, we will use expressions as a starting point to provide a brief explanation.
+
+We often see expressions like the following, which are familiar to us and are `Toc` supported:
+
 ```js
 // Toc 支持的表达式
 1 + (10 - 2 * 3) < 4 == false
 ```
 
-`Toc` 的表达式包含的要素：
-* 字面量，即基础数据类型：数字，布尔，字符串和 `null`
-* 一元表达式，即只有一个操作数的表达式：仅逻辑反 ！
-* 二元表达式，即有两个操作数的表达式：有数学表达式(+, -, *, /, %)和逻辑表达式(&&, ||, ==, !=, >, >=, <, <=)
-* 括号表达式，即用圆括号括起来的表达式：()
+`Toc` The elements contained in expressions:
 
-如果我们用语法定义来翻译上面这段话：
+* Literals, which are basic data types: numbers, booleans, strings, and `null`
+* Unary expressions, which are expressions with only one operand: logical negation !
+* Binary expression, which is an expression with two operands: it includes mathematical expressions (+, -, \*, /, %) and logical expressions (&&, ||, ==, !=, >, >=, <, <=)
+* Parenthesis expression, which is an expression enclosed in parentheses: ()
+
+If we translate the above paragraph using a grammar definition:
+
 ```sh
 expression     → literal
                | unary
@@ -598,24 +640,29 @@ operator       → "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">="
                | "+" | "-" | "*" | "/" | "%" ;
 grouping       → "(" expression ")" ;
 ```
-其中，`NUMBER` 和 `STRING` 代表任何数字、字符串。带引号的都是终止符。当然 `literal` 也都是终止符。终止符是什么意思呢？就是它无法再继续展开成更基本的单位。上面的 `expression`, `unary`, `binary`, `grouping` 都是可以继续展开的，所以是非终止符。如何展开，就代表了相印的语法规则。
 
-你可能注意到，上面的这段语法描述和 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中的并不完全一样。不过这仅仅是形式的不同，语法含义是一样的。只是这里为了简单没有包含优先级的信息。 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中的描述不仅包含了优先级信息，而且为了易于实现，做了一些调整。不过，所要表达语法规则是一致的。关于优先级的部分，我们在语法分析的部分会重点讲解。基于现在认识，我想你已经能看懂 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) 中绝大数的规则了。可以开始词法分析啦😺。
+Where,`NUMBER` and `STRING` represents any number or string. Those in quotes are terminal symbols. Of course, `literal` are also terminal symbols. What does terminal symbol mean? It means that it cannot be further expanded into more basic units. The above `expression`, `unary`, `binary`, `grouping` can all be further expanded, so they are non-terminal symbols. How to expand represents the corresponding grammar rules.
 
-#### 2.2.2 词法分析
-词法分析的关键是分词——就是把输入的代码拆成一个一个有序的语法符号（token）。这里要处理的主要问题是，在哪里拆开？哪些字符要连到一起作为一个语法符号？我们取上面表达式的例子：
+You may have noticed that the syntax description above is not exactly the same as that in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) However, this is merely a difference in form; the syntactic meaning is the same. It is just that for simplicity, the information about precedence has not been included here. [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) The description in the other document not only includes precedence information but has also made some adjustments for ease of implementation. However, the syntactic rules being expressed are consistent. We will focus on the part about precedence in the syntax analysis section. Based on your current understanding, I believe you can already comprehend the vast majority of the rules in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) You can start lexical analysis now 😺.
+
+#### 2.2.2 Lexical Analysis
+
+The key to lexical analysis is tokenization—breaking the input code into ordered syntax symbols (tokens). The main issue to address here is where to break? Which characters should be grouped together as a single syntax symbol? Let's take the example of the expression above:
+
 ```js
 1 + (10 - 2 * 3) < 4 == false
 // 拆分成：
 ['1', '+', '(', '10', '-', '2', '*', '3', ')', '<', '4', '==', 'false']
 ```
-做这个拆分可以用正则，也可以逐字符来分析。这里我选取后者，不仅是因为 ts 类型系统中没有正则，逐字符分拆的代码也很自然简单，且高效！
 
-##### 2.2.2.1 分词（ts版）
+This splitting can be done using regular expressions or by analyzing character by character. Here I choose the latter, not only because the TypeScript type system does not support regular expressions, but also because the character-by-character splitting code is natural, simple, and efficient!
 
-上面的字符串数组一般不建议直接作为 `Tokens` 输出给语法分析器。常规的做法是定义一个 `Token` 的结构来描述。不仅仅包含原始的词素(`lexeme`)，还应该包含必要信息，比如：是字符串还是数字，是操作符还是关键字等。正常还要包含 `debug` 需要的行号、列号等信息。我们这里为了简单，只包含最主要的信息，没有 `debug` 信息。
+##### 2.2.2.1 Tokenization (ts version)
 
-要定义 `Token`，先要定义它有多少种类：
+The string array above is generally not recommended to be used directly as `Tokens` output to the syntax analyzer. The conventional approach is to define a `Token` structure to describe it. This should not only include the original tokens (`lexeme`), but also contain necessary information, such as: whether it is a string or a number, whether it is an operator or a keyword, etc. Normally, it should also include `debug` the required line number, column number, and other information. Here, for simplicity, we only include the most essential information, without `debug` additional information.
+
+To define `Token`, we first need to define how many types there are:
+
 ```ts
 type TokenType =
     | 'identifier'
@@ -652,8 +699,8 @@ type TokenType =
     | 'EOF'; // 结束标志
 ```
 
+The following is `Token` the definition:
 
-下面是 `Token` 的定义：
 ```ts
 class Token {
     type: TokenType; // 像操作符、关键字（包含 true, false, null 等）用这个可以直接区分。
@@ -668,8 +715,8 @@ class Token {
 }
 ```
 
+Next, we will scan character by character to produce `Token` and place it into `tokens` an array. The input is `source`, we use `index` to represent the current scanning position.`scan` The core of the method is a loop,`index` constantly moving forward and obtaining a character. Then, in `switch` we make a decision: what kind of syntax token is this character?
 
-接下来我们来逐字符扫描，产生 `Token` 放到 `tokens` 数组。输入是 `source`, 我们用 `index` 来代表当前的扫描位置。`scan` 方法的核心是一个循环，`index` 不断后移并拿到一个字符。然后在 `switch` 中做决断，这个字符是一个什么语法标记？
 ```ts
 class Scanner {
     private source: string;
@@ -712,11 +759,13 @@ class Scanner {
 }
 ```
 
-上面代码展示了扫描器的架子。`scan` 方法中展示了处理最简单的 `Token` 处理——单个字符便可确定的直接构造添加即可。现在我们来看麻烦一点的：
-* 像 !=, ==, >=, <= 这样，必须要先看第二个字符是否匹配 =, 否则应该是 !, =, >, <
-* 像 &&, || 这样，必须两个字符都匹配，仅仅匹配第一个字符的话直接报错（我们不支持位运算哦）
+The code above shows the framework of the scanner.`scan` The method demonstrates the handling of the simplest `Token` processing—direct construction that can be determined by a single character. Now let's look at something a bit more complicated:
 
-这段代码也不复杂：
+* like !=, ==, >=, <=, which must first check if the second character matches =, otherwise it should be !, =, >, <
+* For characters like && and ||, both characters must match; if only the first character matches, an error is reported (we do not support bitwise operations).
+
+This piece of code is not complicated:
+
 ```ts
 // ...
 switch (c) {
@@ -760,8 +809,8 @@ switch (c) {
 // ...
 ```
 
+For whitespace characters, simply skip them:
 
-对于空白字符，直接跳过即可：
 ```ts
 // ...
 switch (c) {
@@ -775,8 +824,8 @@ switch (c) {
 // ...
 ```
 
+When a double quote is encountered, it is considered a string, and then it 'falls into' a local loop, continuously moving backward. `index`, until the next double quote is found. However, it is necessary to consider escape sequences and the situation where the end of the code is reached without finding a matching quote; the compiler must be able to recognize erroneous code and report it, rather than crashing!
 
-当看到双引号时，认为是字符串，然后“陷入”一个局部循环，不断后移 `index`, 知道找到下一个双引号。不过要考虑转义和到了代码结尾也没找到的情况，编译器要能识别错误代码并报告，而不是奔溃！
 ```ts
 class Scanner {
     // ...
@@ -837,8 +886,8 @@ const ESCAPE_CHAR_MAP = {
 } as const;
 ```
 
+The handling of numbers and identifiers is somewhat simpler than that of strings. If the current character is a digit, it is considered a number. `Token`, and then the end of the number is found to obtain the complete number. If the current character is a letter character or an underscore character, it is considered an identifier. `Token`Then find the end of the identifier to obtain the complete identifier. Note that the identifier can contain digits after the second character. Before constructing the identifier, `Token` it is necessary to check if it is a keyword; if so, what is constructed is a keyword. `Token` That's it.
 
-对于数字和标志符的处理比字符串要简单一些。如果当前字符是一个数字字符，则认为是数字 `Token`，然后找到数字末尾得到完整数字。如果当前字符是一个字母字符或者下划线字符，则认为是标志符 `Token`，然后找到标识符末尾得到完整的标志符。要注意的是标志符从第二个字符以后可以是数字。标志符在构造 `Token` 前，还要判断是不是关键字，是的话构造的就是关键字的 `Token` 了。
 ```ts
 // ...
 switch (c) {
@@ -856,13 +905,12 @@ switch (c) {
 // ...
 ```
 
+This is the complete tokenization in the TypeScript version. Isn't it simple? 😄. For the complete code, please see [ts-scanner](https://github.com/huanguolin/toc/blob/expr/ts-toc/Scanner/index.ts).
 
-以上就是 ts 版本的分词的全部了。是不是很简单😄。完整代码，请看 [ts-scanner](https://github.com/huanguolin/toc/blob/expr/ts-toc/Scanner/index.ts).
+##### 2.2.2.2 Tokenization (type version)
 
+Now it's the Type version. First, `Token` the definition:
 
-##### 2.2.2.2 分词（type版）
-
-现在该 type 版了。首先是 `Token` 的定义：
 ```ts
 // TokenType 和 ts 版完全一致，在此省略。
 
@@ -886,8 +934,8 @@ interface BuildToken<
 type EOF = BuildToken<'EOF', ''>;
 ```
 
+it can also analyze character by character. So how do we take a character?
 
-它也可以逐字符来分析。那么怎么取一个字符呢？
 ```ts
 type FirstChar<T extends string> =
     T extends `${infer First}${infer Rest}`
@@ -901,14 +949,14 @@ type test_first_char_5 = FirstChar<test_first_char_4[1]>; // ['2', '']
 type test_first_char_6 = FirstChar<test_first_char_5[1]>; // never
 ```
 
-以上就是逐字符取出的代码。和 ts 版中 `scan` 函数的循环取出比呢？有相似之处，又明显的不同。
-相似是两者都是一个字符一个字符的取出来。差异是，ts 版中依靠的是 `index` 直接来取相应位置的字符，随着 `index` 值增加，而取的字符位置逐渐后移。类型系统中却没有一个机制可以直接取某个位置的字符。如果我们非要实现，也能利用上面逐字符取加上计数的办法达到类似的效果。但是效率很低，`index` 每后移一位，就要从头遍历一遍。
+This is the code for extracting characters one by one. How does it compare to the TypeScript version? `scan` There are similarities and obvious differences. The similarity is that both extract one character at a time. The difference is that in the TypeScript version, it relies on `index` Directly access the corresponding character at the position, as the `index` value increases, the character position gradually shifts. In the type system, there is no mechanism to directly access a character at a specific position. If we must implement it, we can use the above method of accessing characters one by one along with counting to achieve a similar effect. However, the efficiency is very low,`index` as each shift requires traversing from the beginning again.
 
-所以我们不要 `index` 后移的方案。就直接每次取一个字符来做“检测”。类型系统没有 `switch` 语句，只能用条件语句一个一个检查。还要把取剩下的字符串保留下来，下一个循环需要它。但是像 `!=` 这样的需要后看一位，又要再取一个……这做肯定是可以做出来的，但是想想代码写出来的样子，啊，很混乱😫……思路不清晰！
+Therefore, we should avoid `index` the shifting scheme. Instead, we directly take one character each time for 'detection.' The type system has no `switch` statements, so we can only check one by one using conditional statements. We also need to keep the remaining string for the next loop. However, for cases like `!=` this, where we need to look back one position and take another character... this can certainly be done, but just think about how messy the code would look, ah, very chaotic 😫... the thought process is unclear!
 
-别急，我来重新梳理一下。一个一个取字符是没问题的。但是要让代码可读性好，可以把解析不同种类 `token` 的代码，按种类抽成一个一个的函数。那选用哪个函数还要做一个预判断？那不又是一堆的条件判断……额，或许我们不需要预判断。直接挨个尝试解析，解出来就进行下一个循环，否则就换下一个种类。
+Don't worry, I'll reorganize it. Taking characters one by one is not a problem. However, to ensure good code readability, we can abstract the parsing of different types of code into separate functions. But which function to choose requires a preliminary judgment? That would lead to a bunch of conditional judgments... Well, perhaps we don't need a preliminary judgment. `token` of code, abstracted by type into separate functions. But which function to choose requires a preliminary judgment? That would lead to a bunch of conditional judgments... Well, perhaps we don't need a preliminary judgment. Directly try to parse one by one; if successful, proceed to the next loop; otherwise, switch to the next type.
 
-嗯，不错😄！那怎么知道能解析出来呢？当然是看返回值了。别忘了我们有模式匹配，如果返回值符合成功的结构，就解出来了，我们顺便从里面拿到 `Token` 和 `Rest` 字符串。`Token` 追加到结果数组中，`Rest` 用于下一个循环的入参。
+Hmm, not bad 😄! So how do we know if it can be parsed? Of course, we look at the return value. Don't forget we have pattern matching; if the return value matches the structure of success, then it has been parsed, and we can conveniently extract from it. `Token` and `Rest` String.`Token` Append to the result array,`Rest` Input parameters for the next loop.
+
 ```ts
 // S 是 sourceCode, A 是存放结果的 array
 type Scan<S extends string, A extends Token[] = []> =
@@ -930,8 +978,8 @@ type ScanBody<S extends string, A extends Token[] = []> =
                     : ScanError<`Unknown token at: ${S}`>; // 尝试完所有情况，也无法解析，则得到一个错误
 ```
 
+Above is the large framework. Among them are some utility functions,`Push` which need not be mentioned. The focus is `ScanSuccess` and `ScanError`that they are necessary to understand how to interpret the results. They actually use more fundamental result wrapping functions, which will be needed for subsequent syntax analysis and execution.
 
-上面就是大的架子。其中有些工具函数，`Push` 应该不用说了。重点是 `ScanSuccess` 和 `ScanError`。有它们才知道解析的结果如何。它们其实使用了更基础的结果包装函数，后面的语法分析和执行，都要用到。
 ```ts
 // 全局结果包装🔧函数
 type ErrorResult<E> = { type: 'Error', error: E };
@@ -941,15 +989,15 @@ type SuccessResult<R> = { type: 'Success', result: R };
 type NoWay<Name extends string> = `[${Name}] impossible here!`;
 ```
 
+Now let's look at `ScanSuccess` and `ScanError`：
 
-再来看 `ScanSuccess` 和 `ScanError`：
 ```ts
 type ScanError<M extends string> = ErrorResult<`[ScanError]: ${M}`>;
 type ScanSuccess<T extends Token, R extends string> = SuccessResult<{ token: T, rest: R }>;
 ```
 
+a question: can we do without these result wrapping functions? Of course we can! However, it would be verbose and prone to errors. More importantly, using tools has the following advantages:
 
-有个问题，不用这些结果包装函数可以吗？当然是可以的！但是会很啰嗦，还容易手误。更重要的是，用工具还有如下的优势：
 ```ts
 // 这里 T 和 R 的类型是确定的，不需要进一步限定。因为 ScanSuccess 在定义时就限定了类型。
 type test = ScanNumber<S> extends ScanSuccess<infer T, infer R>
@@ -958,8 +1006,8 @@ type test = ScanNumber<S> extends ScanSuccess<infer T, infer R>
 type test = ScanNumber<S> extends { token: T extends Token, rest: R extends string }
 ```
 
+Alright, back to the main topic. Let's take a look at the specific parsing functions, starting with `ScanNumber`, which is quite simple:
 
-好了，回归正题。我们看看具体的解析函数，先是 `ScanNumber`，很简单：
 ```ts
 type ScanNumber<S extends string, N extends string = ''> =
     S extends `${infer C extends NumChars}${infer R extends string}`
@@ -969,8 +1017,8 @@ type ScanNumber<S extends string, N extends string = ''> =
             : ScanSuccess<BuildToken<'number', N>, S>;
 ```
 
+`ScanOperator` It gets a bit more complex, with a focus on pattern matching. It should be noted that single-character operators are placed at the end, and longer matches should be prioritized:
 
-`ScanOperator` 要复杂一些，重点在模式匹配。要注意的是单字符的操作符放到最后，要优先匹配更长的：
 ```ts
 type ScanOperator<S extends string> =
     S extends OpGteOrLte<infer C1, infer C2, infer R>
@@ -1008,14 +1056,14 @@ type OpAnd<C1 extends '&', C2 extends '&', R extends string> = `${C1}${C2}${R}`;
 type OpOr<C1 extends '|', C2 extends '|', R extends string> = `${C1}${C2}${R}`;
 ```
 
+`ScanIdentifier` and `ScanString` It's similar, so I won't post the code again; please refer to the complete version. [type-Scanner](https://github.com/huanguolin/toc/blob/expr/type-toc/scanner/index.d.ts)。
 
-`ScanIdentifier` 和 `ScanString` 也是类似的，就不再贴代码了，完整版请看 [type-Scanner](https://github.com/huanguolin/toc/blob/expr/type-toc/scanner/index.d.ts)。
+Thus, our lexical analysis is now fully completed. Are we gradually getting into the groove? 😊Next, let us 'climb' the highest 'peak' of this session—syntax analysis!
 
-至此，我们的词法分析已经全部完成。是不是渐入佳境😊。接下来，就让我们“攀登”本次最高的“山峰”——语法分析！
+#### 2.2.3 Syntax Analysis
 
+For you, and for me, to smoothly complete this task, we will start with handling expressions. Let's first look at a simple arithmetic operation:
 
-#### 2.2.3 语法分析
-为了你，也为了我，能平滑的完成这件事情，我们从搞定表达式开始。先看一个简单的四则运算：
 ```ts
 10 - 2 * 3 + 1
 // 按照优先级，对应的抽象语法树:
@@ -1028,8 +1076,8 @@ type OpOr<C1 extends '|', C2 extends '|', R extends string> = `${C1}${C2}${R}`;
 //    2   3
 ```
 
+Why is it this tree and not another? It is because operations with higher precedence must be executed first. In the syntax tree, operations can only be performed when all operands are leaf nodes (at this point, they are all literals and cannot be further expanded into other expressions). During evaluation, start from the deepest operator node, proceeding left to right, moving towards the root of the tree:
 
-为什么是这样的树，而不是另外一个呢？是因为优先级高的要先运算，在语法树中，只有操作数都是叶子节点（此时它们都是字面量，无法继续展开为别的表达式）时，才能运算。运算时，从最深的运算符节点开始，先左后右，向树根靠拢：
 ```ts
 //     +
 //    / \
@@ -1052,12 +1100,13 @@ type OpOr<C1 extends '|', C2 extends '|', R extends string> = `${C1}${C2}${R}`;
 //     5
 ```
 
+Before constructing such a syntax tree, we need to define the nodes of the syntax tree. The above expression contains two basic types of expressions:
 
-在构建这样的语法树之前，需要先定义语法树的节点。上面的表达式中包含了两种基础的表达式：
-* 字面量表达式
-* 二元表达式
+* Literal expression
+* Binary expression
 
-此外我们还有一元表达式和分组表达式。所以我们先定义表达式类型和表达式的接口：
+In addition, we also have unary expressions and grouping expressions. Therefore, we first define the expression types and the interface for expressions:
+
 ```ts
 type ExprType =
     | 'group'
@@ -1070,8 +1119,8 @@ interface IExpr {
 }
 ```
 
+Next, we will define literal, unary, binary, and grouping expressions in turn:
 
-下面，我们依次来定义字面量、一元、二元、分组表达式：
 ```ts
 type ValueType =
     | string
@@ -1122,8 +1171,8 @@ class GroupExpr implements IExpr {
 }
 ```
 
+Now, returning to `10 - 2 * 3 + 1` this expression, the expected syntax tree should be represented as:
 
-现在回到 `10 - 2 * 3 + 1` 这个表达式，期望的语法树应该表示为：
 ```ts
 const mulExpr = new BinaryExpr(
     new LiteralExpr(2),
@@ -1144,8 +1193,8 @@ const addExpr = new BinaryExpr(
 const expression = addExpr;
 ```
 
+But we need to generate this using code!`Parser` The input is `Token` an array, and the output is an expression (which is the root node of the syntax tree). The skeleton code is as follows:
 
-可是我们要用代码来产生这个！`Parser` 的输入是 `Token` 数组，输出是一个表达式（就是语法树的根节点）。架子代码如下：
 ```ts
 class Parser {
     private tokens: Token[];
@@ -1166,33 +1215,37 @@ class Parser {
 }
 ```
 
-##### 2.2.3.1 递归下降
+##### 2.2.3.1 Recursive Descent
 
-`expression` 函数怎么实现呢？这就是语法分析的关键了。学过编译原理的同学知道，语法分析有很多算法。但是手写语法分析，简单又实用，必须要掌握的，莫属[递归下降](https://en.wikipedia.org/wiki/Recursive_descent_parser)了。它是[自顶向下语法分析](https://en.wikipedia.org/wiki/Top-down_parsing)的一种。
+`expression` How to implement a function? This is the key to syntax analysis. Students who have studied compiler principles know that there are many algorithms for syntax analysis. However, handwritten syntax analysis, simple and practical, is a must-master.[Recursive descent](https://en.wikipedia.org/wiki/Recursive_descent_parser)It is[Top-down syntax analysis](https://en.wikipedia.org/wiki/Top-down_parsing)a type of.
 
-为什么递归下降是自顶向下呢？因为递归下降从 `expression` 开始，逐步展开为更具体的表达式，直到无法展开为止。
+Why is recursive descent top-down? Because recursive descent starts from `expression` the beginning and gradually unfolds into more specific expressions until it can no longer be unfolded.
 
-我们配合例子，一步一步来，会更好理解递归下降。
+Let's work through an example step by step; it will help us better understand recursive descent.
 
-假如只考虑四则运算，加上数字，只有三个优先级，从低到高排列：
-1. 加性运算(additive)：+，-
-2. 乘性运算(factor)：*, /
-3. 字面量(literal): NUMBER
+If we only consider arithmetic operations, along with numbers, there are only three priority levels arranged from low to high:
 
-前面的例子，`10 - 2 * 3 + 1`, 如果用递归下降来考虑，可以看成：
+1. Additive operations: +, -
+2. Multiplicative operations: \*, /
+3. Literal: NUMBER
+
+In the previous example,`10 - 2 * 3 + 1`, if we consider it using recursive descent, it can be seen as:
+
 ```ts
 10 - factor_1 + 1
 // factor_1 = 2 * 3
 ```
 
-如果是 `10 / 5 - 2 * 3 + 1`，就看成：
+If it is `10 / 5 - 2 * 3 + 1`, it can be seen as:
+
 ```ts
 factor_1 - factor_2 + 1
 // factor_1 = 10 / 5
 // factor_2 = 2 * 3
 ```
 
-或者：
+Or:
+
 ```ts
 factor_1 - factor_2 + factor_3
 // factor_1 = 10 / 5
@@ -1200,7 +1253,8 @@ factor_1 - factor_2 + factor_3
 // factor_3 = 1
 ```
 
-注意，这一步很关键，我们把问题抽象化了，变成只有一种优先级的运算。任何四则运算都可以抽象成这样，我们再看几个例子：
+Note that this step is crucial; we have abstracted the problem to involve only one type of operation with a single priority. Any arithmetic operation can be abstracted this way, and let's look at a few more examples:
+
 ```ts
 2 + 3
 factor_1 + factor_2
@@ -1216,7 +1270,8 @@ factor_1
 // factor_1 = 5
 ```
 
-所以我只需要考虑相同优先级的运算，直接从左到右即可。假设有 `factor_1 - factor_2 + factor_3`, 得到的代码树如下：
+Therefore, I only need to consider operations of the same priority, processing them directly from left to right. Suppose there are `factor_1 - factor_2 + factor_3`, the resulting code tree is as follows:
+
 ```ts
 factor_1 - factor_2 + factor_3
 //          +
@@ -1226,7 +1281,8 @@ factor_1 - factor_2 + factor_3
 // factor_1  factor_2
 ```
 
-注意相同优先级，从左到右计算，相当于说从左到右，优先级依次降低。所以最右边的运算是根。所以对于加性运算的递归下降代码如下：
+Note that operations of the same priority are calculated from left to right, which means that from left to right, the priority decreases sequentially. Thus, the rightmost operation is the root. Therefore, the recursive descent code for additive operations is as follows:
+
 ```ts
 class Parser {
     // ...
@@ -1282,9 +1338,10 @@ class Parser {
 }
 ```
 
-你可以把上面举的多个例子套进去看看。
+You can try plugging in the multiple examples mentioned above.
 
-同理，我们处理乘性运算也是一样：
+Similarly, we handle multiplicative operations in the same way:
+
 ```ts
 2 * 3 / 4
 literal_1 * literal_2 / literal_3
@@ -1297,7 +1354,8 @@ literal_1
 // literal_1 = 5
 ```
 
-代码和加性运算几乎一样：
+The code is almost the same as for additive operations:
+
 ```ts
 class Parser {
     // ...
@@ -1330,7 +1388,8 @@ class Parser {
 }
 ```
 
-最后到只考虑数字的字面量就更简单了：
+Finally, it becomes simpler when we only consider numeric literals:
+
 ```ts
 class Parser {
     // ...
@@ -1345,24 +1404,28 @@ class Parser {
 }
 ```
 
-如果你看懂了上面，你就看懂了递归下降。现在我们来总结递归下降算法是怎么做的：
-1. 将表达式按照优先级从低到高排列；
-2. 从最低的优先级开始解析，向最高优先级“下降”；
-3. 解析某种优先级的运算时，只“看到”相同优先级的运算符，且操作数都是更高优先级的运算。
-4. “下降”最终会落到无法继续实施表达式展开的字面量上。
+If you understood the above, you have grasped recursive descent. Now let's summarize how the recursive descent algorithm works:
 
-上面我们实现了四则运算的递归下降代码，用语法定义来描述这个过程就是：
+1. Arrange expressions by priority from low to high;
+2. Start parsing from the lowest priority and 'descend' to the highest priority;
+3. When parsing an operation of a certain priority, only the operators of the same priority are 'seen', and the operands are all operations of higher priority.
+4. The 'descent' will ultimately lead to a literal where expression expansion can no longer continue.
+
+Above, we have implemented the recursive descent code for arithmetic operations, and to describe this process using syntax definitions is:
+
 ```shell
 expression      → additive ;
 additive        → factor ( ( "-" | "+" ) factor )* ;
 factor          → literal ( ( "/" | "*" ) literal )* ;
 literal         → NUMBER ;
 ```
-> 现在去看 [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md), 是不是能看懂更多了😂
 
-##### 2.2.3.2 完整的表达式语法分析(ts版本)
+> Now let's take a look [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md), can you understand more now? 😂
 
-现在，要实现完整的表达式语法分析，我们先将表达式按照优先级从低到高排列：
+##### 2.2.3.2 Complete Expression Syntax Analysis (ts version)
+
+Now, to implement complete expression syntax analysis, we first arrange the expressions in order of precedence from low to high:
+
 ```ts
 // 表达式按照优先级由低到高：
 // logic or:    ||                  左结合
@@ -1375,7 +1438,8 @@ literal         → NUMBER ;
 // primary:     literal group
 ```
 
-注意到吗？`primary: literal group`, `literal` 和 `group` 一个优先级？答案肯定的。而且这两个在一起了，原来叫 `literal` 的函数名字就必须要改了。我们来看看代码吧：
+Do you notice?`primary: literal group`, `literal` and `group` One precedence? The answer is definitely yes. And when these two are together, it was originally called `literal` The function name must be changed. Let's take a look at the code:
+
 ```ts
 class Parser {
     // ...
@@ -1421,10 +1485,10 @@ class Parser {
 }
 ```
 
+Next, the code for logical operations and comparison operations is completely consistent with addition and multiplication; it just needs to be written in order of precedence, so I won't elaborate further. Finally, there is only one unary operator left. This one is a bit special, let's take a look.
 
-下面，逻辑运算，比较运算的代码和加法乘法完全一致，只需要按照优先级顺序编写即可，就不再赘述。最后只剩下一个一元运算符了。这个有点特殊，我们来看一下。
+What is special about it? Unary? Uh... pay attention to its associativity, which is different from binary operations; it is right associative. For example:
 
-它特殊在那里呢？一元？额……注意它的结合性，和二元运算都不一样，它是右结合，举个例子：
 ```ts
 !!false
 
@@ -1448,7 +1512,8 @@ primary_1 = false
 //  false
 ```
 
-看到吗，`!` 后面还可以是一个 `!` 表达式，它在递归自己，这就是它与众不同的地方。代码如下：
+Do you see,`!` it can also be followed by an `!` expression, which is recursively calling itself; this is what makes it unique. The code is as follows:
+
 ```ts
 class Parser {
     // ...
@@ -1463,12 +1528,12 @@ class Parser {
     // ...
 ```
 
+Alright, that concludes the TypeScript version of the expression syntax analysis; see the complete code at [ts-Parser-expression](https://github.com/huanguolin/toc/blob/0f32d4cecf0314e12cd1798293048c2a7e56bfe6/ts-toc/Parser/index.ts#L167)。
 
-好了，以上就是 ts 版本的表达式语法分析，完整代码见 [ts-Parser-expression](https://github.com/huanguolin/toc/blob/0f32d4cecf0314e12cd1798293048c2a7e56bfe6/ts-toc/Parser/index.ts#L167)。
+##### 2.2.3.3 Complete Expression Syntax Analysis (type version)
 
-##### 2.2.3.3 完整的表达式语法分析(type版本)
+Referring to the TypeScript version, let's implement the Type version of the expression syntax analysis. First, let's define the Type version of the expression type. Among `ExprType`, `IExpr` and `ValueType`the two, they are completely consistent. You can directly refer to the TypeScript version; I will omit it here.
 
-参照 ts 版本，我们来实现 type 版的表达式语法分析。首先来定义 type 版的表达式类型。其中 `ExprType`, `IExpr` 和 `ValueType`， 二者是完全一致的。可直接看 ts 版的，这里省略。
 ```ts
 // `ExprType`, `IExpr` 和 `ValueType` 的定义请直接参考 ts 版的。
 
@@ -1522,8 +1587,8 @@ interface BuildUnaryExpr<
 }
 ```
 
+The implementation of recursive descent in the Type version is consistent with that in TypeScript. So let's directly implement the complete version:
 
-type 版实现递归下降和 ts 是一致的。所以我们直接上手实现完整版：
 ```ts
 // 表达式按照优先级由低到高：
 // logic or:    ||                  左结合
@@ -1536,8 +1601,8 @@ type 版实现递归下降和 ts 是一致的。所以我们直接上手实现�
 // primary:     literal group
 ```
 
+Let's first look at the skeleton code:
 
-我们先来看架子代码：
 ```ts
 // 依然需要 result 包装工具函数。
 type ParseExprError<M extends string> =
@@ -1558,8 +1623,8 @@ type ParseExpr<Tokens extends Token[]> = ParseLogicOr<Tokens>;
 // ...
 ```
 
+In order, we will first implement `ParseLogicOr`the ts version of the code next to it for translation:
 
-按顺序，首先实现 `ParseLogicOr`。我们把 ts 版本的代码贴在旁边来翻译：
 ```ts
 // ts 版本代码，作为翻译对照。
 class Parser {
@@ -1579,8 +1644,8 @@ class Parser {
 }
 ```
 
+Translate to type version:
 
-翻译为 type 版本：
 ```ts
 type ParseLogicOr<Tokens extends Token[], R = ParseLogicAnd<Tokens>> =
     R extends ParseExprSuccess<infer Left, infer Rest>
@@ -1594,7 +1659,8 @@ type ParseLogicOrBody<Left extends Expr, Tokens extends Token[]> =
         : ParseExprSuccess<Left, Tokens>;
 ```
 
-这里为了避免函数过长已经缩进过深，多出来一个辅助函数。另外将 `R = ParseLogicAnd<Tokens>` 利用函数默认参数是为了方便，函数内部产生局部常量要麻烦一些:
+Here, to avoid the function being too long and indented too deeply, an additional helper function has been added. Additionally, `R = ParseLogicAnd<Tokens>` using default parameters for functions is for convenience; generating local constants inside the function is a bit more troublesome:
+
 ```ts
 type ParseLogicOr<Tokens extends Token[]> =
     ParseLogicAnd<Tokens> extends infer R ?
@@ -1604,9 +1670,10 @@ type ParseLogicOr<Tokens extends Token[]> =
         : NoWay<'ParseLogicAnd'>; // 这里用 NoWay 替代 never.
 ```
 
-如果不用默认参数，缩进会深一些，因为多了一个无用的分支。这里 `NoWay` 替代 `never` 是为什么呢？如果你写的代码有问题，结果返回了一个 never ...... 当代码量大时，你不知道返回的 `never` 是哪里产生的！别问我是怎么知道的……我不想勾起那痛苦的调试回忆。
+If you don't use default parameters, the indentation will be deeper because of an extra useless branch. Here, `NoWay` instead `never` is why? If the code you wrote has issues, and the result returns a never ...... when the codebase is large, you won't know where the return came from! `never` Don't ask me how I know this... I don't want to bring up those painful debugging memories.
 
-那我们为什么不不这样写呢？
+Then why don't we write it this way?
+
 ```ts
 type ParseLogicOr<Tokens extends Token[]> =
     ParseLogicAnd<Tokens> extends ParseExprSuccess<infer Left, infer Rest>
@@ -1621,9 +1688,10 @@ type ParseLogicOr<Tokens extends Token[]> =
         : ParseLogicAnd<Tokens>; // error
 ```
 
-第一个写法，外界无法得到底层的错误，这显然是不太好的。我们的解释器虽然没有提供详尽的错误信息（比如行号等），但是也不能说的太模糊。直接将底层的错误抛出，避免了错误信息越来越模糊。第二个逻辑上是OK的。但是直观上会让 ts 的编译器做更多的事。我不太确定 ts 的编译器有没有对这个情况做优化。如果有的话就是我多虑了。所以我还是保守的选择了函数默认参数或者局部常量的方式。
+The first writing method does not allow the outside world to obtain the underlying errors, which is clearly not very good. Although our interpreter does not provide detailed error messages (such as line numbers, etc.), it cannot be too vague either. Directly throwing the underlying errors avoids the error messages becoming increasingly obscure. The second approach is logically OK. However, intuitively, it may require the TypeScript compiler to do more work. I am not quite sure if the TypeScript compiler has optimized for this situation. If it has, then I am overthinking it. So I still conservatively chose the method of default parameters for functions or local constants.
 
-额，差点忘记了。还有工具函数：
+Oh, I almost forgot. There are also utility functions:
+
 ```ts
 type OpOrKeywordTokenType = Exclude<TokenType, 'number' | 'identifier' | 'EOF'>
 
@@ -1637,8 +1705,8 @@ type TokenLike<T extends OpOrKeywordTokenType | Partial<Token>> =
 type Match<T, R extends Token[]> = [T, ...R];
 ```
 
+As for the remaining binary operation parsing code, I think I don't need to say much. Let's take a look directly at `unary` and `primary` the code:
 
-剩下的二元操作解析代码，我想我不用说了。我们直接来看 `unary` 和 `primary` 的代码吧：
 ```ts
 type ParseUnary<Tokens extends Token[]> =
     Tokens extends Match<infer Op extends TokenLike<'!'>, infer Rest>
@@ -1675,19 +1743,20 @@ type KeywordValueMapping = {
 };
 ```
 
-上面解析 `group` 的那段代码，你应该感受到了，语言特性贫瘠带来的代码冗长。这是没办法的事情。后面你会习惯的😂。
+The code above parses `group` that segment of code, you should have felt the verbosity brought about by the impoverished language features. This is unavoidable. You'll get used to it later 😂.
 
-好了，以上就是我们语法分析表达式的全部了，完整的代码见 [type-ParseExpr](https://github.com/huanguolin/toc/blob/expr/type-toc/parser/ParseExprHelper.d.ts)。关于 `var` 语句, `if` 语句, `block` 语句, 函数, `for` 循环语句等特性，我们会在打通 `执行` 一关后，慢慢加上的。我们已经啃了语法分析最核心的部分了。后续或许代码会更多，核心“科技”却没多多少。
+Alright, that's all for our syntax analysis of expressions. The complete code can be found in [type-ParseExpr](https://github.com/huanguolin/toc/blob/expr/type-toc/parser/ParseExprHelper.d.ts). Regarding `var` statements, `if` statements, `block` statements, functions, `for` loop statements, and other features, we will gradually add them after clearing `执行` a level. We have already tackled the most core part of syntax analysis. In the future, there may be more code, but the core 'technology' won't change much.
 
+#### 2.2.4 Execution
 
-#### 2.2.4 执行
-终于到最后一个阶段了。完成它，我们就能得到一个完整的解释器，虽然暂时只能支持表达式，但这已经做出了很大成果。
+Finally, we have reached the last stage. If we complete this, we will have a complete interpreter. Although it can only support expressions for now, this is already a significant achievement.
 
-如你所料，这里并不难。不过我们还不能马上开始 ts 版的执行器。前面说过，ts 版要用最自然的方式。使用面向对象来操作 AST，是一个著名设计模式的经典应用场景。如果你知道 [如何修改C#的表达式树](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/expression-trees/how-to-modify-expression-trees#:~:text=You%20can%20use%20the%20ExpressionVisitor%20class%20to%20traverse%20an%20existing%20expression%20tree%20and%20to%20copy%20each%20node%20that%20it%20visits.)，或者你把玩过 [Roslyn](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/), 你一定见过像 [SymbolVisitor](https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.symbolvisitor?view=roslyn-dotnet-4.3.0) 类中的那些 `Visit` 开头的 `API`。没错，我说的就是访问者模式。使用它，这里才更“自然”，或者“对味”。
+As you might expect, this is not difficult. However, we cannot immediately start on the TypeScript version of the executor. As mentioned earlier, the TypeScript version should be implemented in the most natural way. Using object-oriented programming to manipulate the AST is a classic application scenario of a well-known design pattern. If you know [how to modify C#'s expression trees](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/expression-trees/how-to-modify-expression-trees#:~:text=You%20can%20use%20the%20ExpressionVisitor%20class%20to%20traverse%20an%20existing%20expression%20tree%20and%20to%20copy%20each%20node%20that%20it%20visits.), or if you have played around with [Roslyn](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/), you must have seen something like [SymbolVisitor](https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.symbolvisitor?view=roslyn-dotnet-4.3.0) those in the class `Visit` that start with `API`. That's right, I'm referring to the visitor pattern. Using it makes this more 'natural' or 'fitting'.
 
-##### 2.2.4.1 访问者模式与ts-Interpreter
+##### 2.2.4.1 Visitor Pattern and ts-Interpreter
 
-如果我们直接开始我们的执行器代码，我们可能写出如下的代码：
+If we directly start our executor code, we might write code like the following:
+
 ```ts
 if (expr instanceof BinaryExpr) {
     // ...
@@ -1721,11 +1790,12 @@ class UnaryExpr implements IExpr {
 }
 ```
 
-诚然，这样的代码是可以工作的。但都不够优雅或者灵活。我们的解释器只有三步：词法分析，语法分析，执行。假如我们未来增加了静态检查的部分。一般是增加一步，放在语法分析与执行之间。如果是使用上面前两种的做法，只需要新写一个类，但冗长的 `if-else` 或者 `switch` 语句又要来一遍？如果是最后一种写法，那我们不得不修改每个 `Expr` 类，为它新添加一个方法。或许你觉的这可以接受，但是让一类操作，分散在各个地方。特别是这种类有多达几十上百，甚至上千时，维护起来是很头疼的。
+Indeed, such code can work. However, it is neither elegant nor flexible enough. Our interpreter consists of three steps: lexical analysis, syntax analysis, and execution. If we were to add a static analysis component in the future, it would generally involve adding a step placed between syntax analysis and execution. If we use the first two approaches mentioned above, we only need to write a new class, but it would be verbose. `if-else` or `switch` Do we have to repeat the statement again? If we use the last approach, we would have to modify each `Expr` class to add a new method for it. Perhaps you think this is acceptable, but it disperses a type of operation across various places. Especially when there are dozens, hundreds, or even thousands of such classes, maintaining them can be quite a headache.
 
-那我们来看看访问者模式是如何解决这些问题：
+Now let's take a look at how the visitor pattern solves these problems:
 
-首先我们要新增一个接口，并给 `IExpr` 添加一个方法：
+First, we need to add a new interface, and give `IExpr` add a method:
+
 ```ts
 interface IExprVisitor<T> {
     visitBinaryExpr: (expr: BinaryExpr) => T;
@@ -1742,8 +1812,8 @@ interface IExpr {
 }
 ```
 
+Then the expression class needs to implement these `accept` methods:
 
-然后表达式类需要实现这些 `accept` 方法：
 ```ts
 class LiteralExpr implements IExpr {
     // 其他代码省略……
@@ -1774,9 +1844,10 @@ class GroupExpr implements IExpr {
 }
 ```
 
-每个只需要调用与自己对应的那个方法即可。是不是很容易。
+Each only needs to call the method corresponding to itself. Isn't it easy?
 
-接下来我们就能实现 `Interpreter` 类了：
+Next, we can implement `Interpreter` the class:
+
 ```ts
 class Interpreter implements IExprVisitor<unknown> {
 
@@ -1806,9 +1877,10 @@ class Interpreter implements IExprVisitor<unknown> {
 }
 ```
 
-简直不敢相信，现在，只要完成 `visitBinaryExpr` 函数，就完工了！
+I can hardly believe it, now, we just need to complete `visitBinaryExpr` the function, and it will be done!
 
-在完成它之前。我们来看看访问者模式是怎么做到的。我们看看如果我选择用 `switch` 来干这个事情：
+Before we finish it, let's take a look at how the visitor pattern achieves this. Let's see if I choose to use `switch` to do this:
+
 ```ts
 class Interpreter {
 
@@ -1849,10 +1921,10 @@ class Interpreter {
 }
 ```
 
+Perhaps you might think that writing this way is also good, at least it's easy to understand. Easy to understand is indeed an advantage. However, as the variety of expressions increases,`switch` the `case` will become longer and longer. Suppose we want to implement a `Resolve` class that can perform static checks (for example, if a variable is added later, it can check whether the variable is defined when used). If written this way, `switch` the code will repeat itself. However, the visitor pattern eliminates this part. In comparison, the visitor pattern implements a specific `Expr` type that will 'automatically' call the corresponding method. Haha, automatically? In fact, each `Expr` type's `accept` method calls the corresponding method.
 
-或许你会觉得这样写也很好啊，至少好理解。好理解的确是优点。但随着表达式种类增多，`switch` 的 `case` 会越来越长。假如现在要实现一个 `Resolve` 类，它能做静态检查（比如后面加了变量，这里可以检查变量在使用时有没有定义）。这样写的话 `switch` 代码会再来一遍。但是访问者模式就免去了这个部分。这样对比的话，访问者模式实现了特定的 `Expr` 类型会“自动”调用与之配对的方法。哈哈，自动？实际上是每个 `Expr` 类型的 `accept` 方法中调用了那个对应的方法。
+I think you already `get` appreciated the beauty of the visitor pattern, now it's time to complete `visitBinaryExpr` the method.
 
-我想你已经 `get` 了访问者模式的美妙，现在是时候来完成 `visitBinaryExpr` 方法了。
 ```ts
 class Interpreter implements IExprVisitor<unknown> {
     // ...
@@ -1892,9 +1964,10 @@ class Interpreter implements IExprVisitor<unknown> {
 }
 ```
 
-上面特别要注意的是，`&&` 和 `||` 具有短路效果，不能先把右操作数求出来。目前你还感觉不到差异，有了变量和函数之后，就可以看到效果了。另外一个要注意的是，我们的 `+` 可以支持字符串连接和数字相加，要分别处理，但是不允许混合。完整的代码见 [ts-Interpreter](https://github.com/huanguolin/toc/blob/expr/ts-toc/Interpreter/index.ts);
+It is particularly important to note that,`&&` and `||` it has a short-circuit effect and cannot evaluate the right operand first. Currently, you may not feel the difference, but once we have variables and functions, you will see the effect. Another thing to note is that our `+` interpreter can support string concatenation and number addition, which need to be handled separately, but mixing them is not allowed. For complete code, see [ts-Interpreter](https://github.com/huanguolin/toc/blob/expr/ts-toc/Interpreter/index.ts);
 
-我们做完了吗？实际上还差一步，我们还没有把 `Scanner`, `Parser` 和 `Interpreter` 组合到一起。如果是 `node.js` 环境，可以写一个 `REPL`([Read–eval–print loop](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop))：
+Are we done? In fact, we are still one step away; we have not yet `Scanner`, `Parser` and `Interpreter` combined everything together. If it is `node.js` an environment, we can write a `REPL`([Read–eval–print loop](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop))：
+
 ```ts
 import { Interpreter } from './Interpreter';
 import { Parser } from './Parser';
@@ -1934,12 +2007,12 @@ function toc(source: string) {
 }
 ```
 
-
-好了，我们得到了一个可以执行 `toc` 程序的程序。你可以输入一段代码，并查看输出了😄。
+Alright, we have created a program that can execute `toc` other programs. You can input a piece of code and see the output 😄.
 
 ##### 2.2.4.2 type-Interpreter
 
-接下来实现我们的 type 版本。但是这里没法实现访问者模式，甚至没有 `switch` 可用。我们只能用类似 `if-elseif` 一般的条件判断来实现：
+Next, we will implement our type version. However, we cannot implement the visitor pattern here, not even `switch` is available. We can only use something like `if-elseif` general conditional statements to implement:
+
 ```ts
 type Interpret<E extends Expr, R = InterpretExpr<E>> =
     R extends InterpretExprSuccess<infer V>
@@ -1961,7 +2034,8 @@ type RuntimeError<M extends string> = ErrorResult<`[RuntimeError]: ${M}`>;
 type InterpretExprSuccess<Value extends ValueType > = SuccessResult<{ value: Value }>;
 ```
 
-通过参考 ts 版本，实现 type 也不难。而且对于 `LiteralExpr` 和 `GroupExpr` 的执行，我们并没有另起函数，直接就返回结果了。现在只剩下 `UnaryExpr` 和 `BinaryExpr`。我们先看 `EvalUnaryExpr`:
+By referring to the TypeScript version, implementing type is not difficult. Moreover, for `LiteralExpr` and `GroupExpr` execution, we did not create another function; we directly returned the result. Now only `UnaryExpr` and `BinaryExpr`is left. Let's first look at `EvalUnaryExpr`:
+
 ```ts
 type EvalUnaryExpr<
     E extends UnaryExpr,
@@ -1986,8 +2060,8 @@ type IsFalse<T> =
             : false;
 ```
 
+Finally, there is `EvalBinaryExpr`, which is more complicated, but it only involves calling specific implementation functions based on the operator type.
 
-最后是 `EvalBinaryExpr`，它比较麻烦，但也只是按照操作符类型来调用具体的实现函数。
 ```ts
 type EvalBinaryExpr<
     E extends BinaryExpr,
@@ -2083,9 +2157,10 @@ type IsStrings<N1 extends string, N2 extends string> = [N1, N2];
 type IsNumbers<N1 extends number, N2 extends number> = [N1, N2];
 ```
 
-虽然很麻烦。但是我们还是做到了！[完整代码](https://github.com/huanguolin/toc/blob/expr/type-toc/interpreter/InterpretExpr.d.ts)。
+Although it is quite troublesome, we still managed to do it\![Complete code](https://github.com/huanguolin/toc/blob/expr/type-toc/interpreter/InterpretExpr.d.ts)。
 
-现在把 `Scan`, `Parse` 和 `Interpret` 串起来就大功告成了! 但是并不是你想的那样串起来：
+Now, putting `Scan`, `Parse` and `Interpret` together will be a great achievement! But it is not as simple as you might think to put it together:
+
 ```ts
 type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
@@ -2099,16 +2174,16 @@ type Toc<Source extends string> =
         : NoWay<'Toc-Scan'>;
 ```
 
-为什么不是 `type Toc<S extend string> = Interpret<Parse<Scan<S>>>` ? 因为错误无法展示出来。ts 中有异常机制，有错误抛出来外面可以捕获。这里没有异常，错误只能用函数返回值层层传递出去。
+Why not? `type Toc<S extend string> = Interpret<Parse<Scan<S>>>` ? Because errors cannot be displayed. In TypeScript, there is an exception mechanism where errors can be thrown and caught outside. Here, there is no exception; errors can only be passed out through function return values layer by layer.
 
-好了，我们最终还是得到一个完整的 [type-Interpreter](https://github.com/huanguolin/toc/blob/expr/type-toc/index.d.ts)。
+Well, we finally have a complete one. [type-Interpreter](https://github.com/huanguolin/toc/blob/expr/type-toc/index.d.ts)。
 
-现在终于从 0 到 1 了。过程或许艰难痛苦，但是结果甚是喜人——我们预期的都实现了。也验证了 ts 类型系统是图灵完备的。后面我们还会继续“攀登”一个一个的“小山峰”，你会看到在这个“贫瘠”的语言土壤下，也可以结出丰硕的“特性”果实。
+Now we have finally gone from 0 to 1. The process may be arduous and painful, but the result is quite gratifying — everything we expected has been realized. It also verifies that the TypeScript type system is Turing complete. In the future, we will continue to 'climb' one 'small peak' at a time, and you will see that even in this 'barren' linguistic soil, we can still bear the fruitful 'characteristics'.
 
+#### 2.2.5 Statements
 
-#### 2.2.5 语句
-我们有了表达式，但还没有语句。现在可以搭建支持语句的“世界”了。这里有变量声明语句，条件语句，循环语句，块语句，当然还有表达式语句。我们用不支持变量和循环的语言可以打造支持变量和循环的语言！
-我们的词法分析已经包含了整个语言所需的词素。后续的特性添加只需从语法分析开始。我们先来看看语句的语法表述:
+We have expressions, but we don't have statements yet. Now we can build a 'world' that supports statements. Here we have variable declaration statements, conditional statements, loop statements, block statements, and of course, expression statements. We can create a language that supports variables and loops using a language that does not support them! Our lexical analysis already includes all the tokens needed for the entire language. Subsequent feature additions only need to start from syntax analysis. Let's first take a look at the syntax representation of statements:
+
 ```shell
 # declarations
 declaration    → funDecl
@@ -2136,9 +2211,11 @@ ifStmt         → "if" "(" expression ")" statement
                  ( "else" statement )? ;
 block          → "{" declaration* "}" ;
 ```
-额，为什么最上面是 `declaration`?
-难到不都是语句吗?
-都划到 `statement` 下不行吗？像下面这样：
+
+Uh, why is the top one `declaration`?
+Aren't they all statements?
+Can't they all be categorized under `statement` the bottom? Like this:
+
 ```shell
 # statements
 statement      → funDecl
@@ -2164,25 +2241,28 @@ block          → "{" statement* "}" ;
 
 ```
 
-我先回答第二个问题，的确，他们都是语句。
-然后回答第三个问题，作为语言设计者，我可以允许自己认为可行的语法方案。如果我想都划到 `statement` 下，那当然也可以。可是这里我不想，回答了我为什么不想，也就回答了第一个问题。
-这两种所允许的语法是不太一样的。如果都统一到 `statement` 下，它就允许下面的写法：
+I'll answer the second question first; indeed, they are all statements.&#x20;
+Then answer the third question. As a language designer, I can allow myself to consider feasible syntax schemes. If I want to categorize everything under `statement` that, of course, I can. But here I don't want to. Answering why I don't want to also answers the first question.&#x20;
+&#x20;The two types of allowed syntax are quite different. If everything is unified under `statement` that, it would allow the following writing:
+
 ```ts
 if (x > 10) var a = 0;
 ```
 
-这回造成什么问题呢？`a` 定义与否只有在运行时才能得知，如果 `x > 10` 的条件成立，则 `a` 定义了，否则是为定义。这样在这个语句之后，让使用变量 `a` 变得很困难。这种问题同样存在于 `for` 与 `fun` 的组合：
+What problems would this cause?`a` Definition or not can only be known at runtime. If `x > 10` the condition holds, then `a` it is defined; otherwise, it is undefined. This makes it very difficult to use the variable `a` after this statement. This problem also exists in `for` And `fun` Combination of:
+
 ```ts
 for (; false ;) fun test() {}
 ```
 
-所以我拒绝这种让人困惑不已的语法。我们选取有 `declaration` 的那一套语法规则。它将能产生变量（函数名也是变量哟）划为 `declaration`，然后可以递归下降到 `statement`。`if`, `for` 等语句下的从句只能是 `statement`。`block` 语句内部可以是 `declaration`。
+Therefore, I refuse this confusing syntax. We select the set of `declaration` syntax rules that can produce variables (function names are also variables). `declaration`Then we can recursively descend to `statement`。`if`, `for` clauses under statements like `statement`。`block` Statements can internally be `declaration`。
 
-好了，搞清楚这些问题，我们对处理语句进行支持了。先从最简单的语句——表达式语句开始。
+Alright, having clarified these issues, we have supported the handling of statements. Let's start with the simplest statement—expression statements.
 
-##### 2.2.5.1 表达式语句
+##### 2.2.5.1 Expression Statements
 
-类似表达式，我们需要先定义语句的类型。
+Similar to expressions, we need to first define the types of statements.
+
 ```ts
 type StmtType =
     | 'fun'
@@ -2207,7 +2287,8 @@ interface IStmtVisitor<T> {
 }
 ```
 
-这次我们要一并把执行阶段需要的访问者模式的接口等都准备好。接着是定义 `ExprStmt`:
+This time we will also prepare the interfaces needed for the visitor pattern in the execution phase. Next is to define `ExprStmt`:
+
 ```ts
 class ExprStmt implements IStmt {
     type: 'expression' = 'expression';
@@ -2223,8 +2304,8 @@ class ExprStmt implements IStmt {
 }
 ```
 
+Then, we need to modify `parse` the function:
 
-然后，我们要修改 `parse` 函数了：
 ```ts
 class Parser {
     // ...
@@ -2245,7 +2326,7 @@ class Parser {
 }
 ```
 
-`parse` 函数的输出从表达式变成了语句的数组。`statement` 函数在一个一个解析语句。那我们加入表达式语句：
+`parse` The output of the function has changed from an expression to an array of statements.`statement` The function parses statements one by one. Now we add expression statements:
 
 ```ts
 class Parser {
@@ -2273,9 +2354,10 @@ class Parser {
 }
 ```
 
-😄很简单吧！
+😄 It's quite simple, right!
 
-我们再来看 type 版。先从语句定义开始，`StmtType` 完全一致，其他的如下：
+Let's take a look at the type version. Starting with the definition of statements,`StmtType` completely consistent, the others are as follows:
+
 ```ts
 interface Stmt {
     type: StmtType;
@@ -2291,8 +2373,8 @@ interface BuildExprStmt<E extends Expr> extends ExprStmt {
 }
 ```
 
+The same modifications are needed `Parse` for the function:
 
-同样的要修改 `Parse` 函数：
 ```ts
 type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
     Tokens extends [EOF]
@@ -2309,8 +2391,8 @@ type ParseStmtSuccess<R extends Stmt, T extends Token[]> =
     SuccessResult<{ stmt: R, rest: T }>;
 ```
 
+`ParseStmt` and `ParseExprStmt` It's also quite simple:
 
-`ParseStmt` 和 `ParseExprStmt` 也同样简单：
 ```ts
 type ParseStmt<Tokens extends Token[]> = ParseExprStmt<Tokens>;
 
@@ -2322,20 +2404,22 @@ type ParseExprStmt<Tokens extends Token[], R = ParseExpr<Tokens>> =
         : R; // error
 ```
 
-以上我们完成了表达式语句的语法分析部分，这是一个简单愉快的开始。接下来要让它能执行起来。
+So far, we have completed the syntax analysis part of expression statements, which is a simple and pleasant start. Next, we need to make it executable.
 
-说起执行，有一个问题，语句是没有值的。对于表达式，我们执行的结果是一个值。对于语句往往是其他副作用（比如修改变量，操作IO等），并不会像表达式一样得到一个值作为结果。当然这只是通常意义的语句效果。在我们这里，情况特殊，我们想要语句像表达式一样，最终会得到一个值的结果。为什么要这样呢？主要是考虑到 ts type 中并没有什么能操作 IO 这样能带来副作用的能力。我们无法通过类似 `console.log` 的方式“看”到程序执行带来的“变量”等的变化。可以观察程序执行效果的唯一的方式是返回值。
-* 表达式语句的返回值是表达式的值；
-* 多个语句的值是最后一个语句的值；
-* var 语句的值是变量的值；
-* if 语句的值是其为真对应语句的值，没有对应语句或者空语句时值为 `null`;
-* for 语句的值是其循环块对应语句最后一次执行的值；
-* 块语句的值是其内部最后一个语句的值，空块的值是 `null`；
-* 空语句的值是 `null`;
-* 函数定义语句的值是函数；
-* 函数执行的返回值是最后执行语句的值（是的，没有 `return` 也有返回值）。
+Speaking of execution, there is a problem: statements do not have values. For expressions, the result of execution is a value. Statements often have other side effects (such as modifying variables, performing I/O operations, etc.), and do not yield a value as a result like expressions do. Of course, this is just the typical effect of statements. Here, the situation is special; we want statements to behave like expressions, ultimately yielding a value. Why is this the case? Mainly because the ts type does not have any capability to operate on IO, which can cause side effects. We cannot 'see' the changes in 'variables' brought about by program execution in a similar way. `console.log` The only way to observe the effects of program execution is through return values.
 
-现在我们开始实现执行。首先需要调整 `interpret` 函数，它的入参从表达式变成了语句数组。`Interpreter` 类还要实现 `IStmtVisitor<unknown>` 接口。
+* The return value of an expression statement is the value of the expression;
+* The value of multiple statements is the value of the last statement;
+* The value of a var statement is the value of the variable;
+* The value of an if statement is the value of the corresponding statement when it is true; if there is no corresponding statement or it is an empty statement, the value is `null`;
+* The value of the for statement is the value of the last executed statement in its loop block;
+* The value of a block statement is the value of its last internal statement, and the value of an empty block is `null`；
+* The value of an empty statement is `null`;
+* The value of a function definition statement is the function;
+* The return value of a function execution is the value of the last executed statement (yes, there is no `return` return value).
+
+Now we begin to implement execution. First, we need to adjust `interpret` the function, changing its parameters from expressions to an array of statements.`Interpreter` Classes also need to implement `IStmtVisitor<unknown>` interfaces.
+
 ```ts
 class Interpreter implements IExprVisitor<unknown>,
                              IStmtVisitor<unknown> {
@@ -2353,8 +2437,8 @@ class Interpreter implements IExprVisitor<unknown>,
 }
 ```
 
+Regarding `visitExprStmt` the implementation of the function, it's exceptionally simple 😄:
 
-对 `visitExprStmt` 函数的实现，异常简单😄：
 ```ts
 class Interpreter implements IExprVisitor<unknown>,
                              IStmtVisitor<unknown> {
@@ -2368,9 +2452,10 @@ class Interpreter implements IExprVisitor<unknown>,
 }
 ```
 
-这就搞定了？😄没错！
+Is that all done? 😄 That's right!
 
-那么，type 版会有这么简单吗？我们来看看：
+So, will the type version be this simple? Let's take a look:
+
 ```ts
 type Interpret<
     Stmts extends Stmt[],
@@ -2389,7 +2474,7 @@ type InterpretStmtSuccess<Value extends ValueType> =
     SuccessResult<{ value: Value }>;
 ```
 
-这套路和 `Parse` 一样。`InterpretStmt` 和 `InterpretExprStmt` 也是一样的简单：
+This pattern and `Parse` The same.`InterpretStmt` and `InterpretExprStmt` It's also just as simple:
 
 ```ts
 type InterpretStmt<S extends Stmt> =
@@ -2406,12 +2491,12 @@ type InterpretExprStmt<
         : R; // error
 ```
 
-😄大功告成！
+😄Great job done!
 
+##### 2.2.5.2 var Statements
 
-##### 2.2.5.2 var 语句
+Now let's support a very critical feature—variables. First, let's look at the statement type definition for declaring variables:
 
-现在我们来支持很关键的特性——变量。首先是声明变量的语句。先看语句类型定义：
 ```ts
 class VarStmt implements IStmt {
     type: 'var' = 'var';
@@ -2429,7 +2514,8 @@ class VarStmt implements IStmt {
 }
 ```
 
-`var` 属于 `declaration`，所以又要修改 `parse` 了。另外语法分析时，和表达式那边有优先级不同。这里要进入变量表达式的解析函数，需要前看是否是 `var` 关键字，如果是的话必然是变量声明。
+`var` Belongs to `declaration`, so it needs to be modified again. `parse` Additionally, during syntax analysis, the precedence differs from that of expressions. Here, we need to enter the parsing function for variable expressions and check ahead to see if it is a `var` keyword; if so, it must be a variable declaration.
+
 ```ts
 class Parser {
     // ...
@@ -2458,8 +2544,8 @@ class Parser {
 }
 ```
 
+Next, let's look at `varDeclaration`the specific implementation. When declaring a variable, initialization is optional. Only after 'seeing' the `=` will the initialization expression be parsed:
 
-再看 `varDeclaration`的具体实现。声明变量时，初始化是可选的。只有“看”到 `=` 后，才会解析初始化表达式：
 ```ts
 class Parser {
     // ...
@@ -2479,10 +2565,10 @@ class Parser {
 }
 ```
 
+With the experience of expressions, these now seem very simple, right? 😂
 
-有了表达式的历练，现在这些看起来都很简单，对吧😂。
+Next, let's look at the type version of syntax analysis, but first, we need to define the statement types:
 
-再来看 type 版的语法分析, 还是先定义语句类型：
 ```ts
 interface VarStmt extends Stmt {
     type: 'var';
@@ -2496,7 +2582,8 @@ interface BuildVarStmt<N extends Identifier, E extends Expr | null> extends VarS
 }
 ```
 
-接下来是 `ParseStmt` 和 `ParseVarStmt` 函数：
+Next is `ParseStmt` and `ParseVarStmt` for the function:
+
 ```ts
 type Parse<Tokens extends Token[], Stmts extends Stmt[] = []> =
     Tokens extends [EOF]
@@ -2526,13 +2613,14 @@ type ParseVarStmt<Tokens extends Token[]> =
         : ParseStmtError<'Expect var name.'>;
 ```
 
-`ParseVarStmt` 看起来很麻烦，但是它是按照 ts 版翻译过来的。由于 type 系统的语法糖少，写起来有些啰嗦。不过，还是能完成任务的。
+`ParseVarStmt` It seems quite complicated, but it has been translated from the TypeScript version. Due to the syntactic sugar being less in the type system, it can be somewhat verbose. However, it can still accomplish the task.
 
-我们完成了语法分析。该实现执行了。试想一下 `var a = 1; a + 2;`, 这个结果我们都知道是 3，因为 a 代表的值是 1。但表达式在执行时，是如何知道 a 代表的值是 1 呢？这就需要保存这个映射关系，然后表达式执行的时候，就能查到了。那么保存这个映射关系的就是环境。
+We have completed the syntax analysis. The implementation has executed. Just imagine `var a = 1; a + 2;`, this result we all know is 3, because the value represented by a is 1. But how does the expression know that a represents the value 1 during execution? This requires saving this mapping relationship, so that when the expression is executed, it can be looked up. The entity that saves this mapping relationship is the environment.
 
-##### 2.2.5.3 环境
+##### 2.2.5.3 Environment
 
-环境可以存储当前变量对应的值。另外为了方便使用，我们建一个新类 `Environment`，并提供方便变量定义，查询以及赋值的接口。内部用 `Map` 来做存储。需要注意的是，定义变量时，如果已经存在就要提示已经定义的错误；查询时，没找到变量，要提示未定义的错误；赋值也是考虑未定义错误。
+The environment can store the current values corresponding to the variables. Additionally, for convenience, we create a new class. `Environment`and provide convenient interfaces for variable definition, querying, and assignment. Internally, we use `Map` for storage. It is important to note that when defining a variable, if it already exists, an error indicating that it has already been defined should be prompted; when querying, if the variable is not found, an error indicating that it is undefined should be prompted; assignment also considers the undefined error.
+
 ```ts
 class Environment {
     private store: Map<string, ValueType>;
@@ -2570,15 +2658,16 @@ class Environment {
 }
 ```
 
+Haha, the TypeScript version of `Environment` is easy to implement. What about the type version?
 
-哈哈，ts 版本的 `Environment` 很容易实现。type 版本呢？
+First, without variables, it means we cannot modify. Thus, we can only return a new `Environment`. For storage, we use objects, `set` when replacing object properties, we return a new object. The code for replacing object properties is as follows:
 
-首先，没有变量，意味着没法修改。这样我们只能返回一个新的 `Environment`。存储我们用对象, `set` 时就是替换对象属性，并返回新对象。替换对象属性的代码如下：
 ```ts
 type ReplaceObjProp<O extends {}, K extends string, V extends unknown> = Omit<O, K> & { [Key in K]: V };
 ```
 
-掌握这个方法后，可以很方便的实现一个 `Map` 供 type 版的 `Environment`使用：
+After mastering this method, it will be very convenient to implement one. `Map` For the type version of `Environment`Usage:
+
 ```ts
 // 为了避免和 js 原生的 Map 重名，取名为 TocMap
 type TocMap = { [key: string]: ValueType };
@@ -2600,7 +2689,8 @@ type MapHas<
 > = K extends keyof M ? true : false;
 ```
 
-接下来，实现 `Environment` 就容易了：
+Next, implement `Environment` It will be easy:
+
 ```ts
 interface Environment {
     store: TocMap;
@@ -2639,10 +2729,10 @@ type EnvAssign<
     : RuntimeError<`Undefined variable '${Key}'.`>;
 ```
 
+Type version of `Environment` Is also ready. Now let's go back to implement `var` The execution part of the statement, starting with the ts version.
 
-type 版的 `Environment` 也准备好了。我们现在回头来实现 `var` 语句的执行部分，先是 ts 版。
+When the interpreter is initialized, it automatically creates an environment. So for `Interpreter` Make some adjustments to the class:
 
-解释器初始化时，就默认产生了一个环境。所以对 `Interpreter` 类做一点调整：
 ```ts
 class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     private environment: Environment;
@@ -2654,8 +2744,8 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
+Next is to implement `visitVarStmt` It is important to note that`Toc` All uninitialized variables are given `null` As the default initial value:
 
-接下来就是实现 `visitVarStmt` 了，要注意的是，`Toc` 对没有初始化的变量一律给 `null` 作为默认初始值：
 ```ts
 class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     // ...
@@ -2673,9 +2763,10 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
-😄很顺利！
+😄 Very smooth!
 
-再来实现 type 版。同样初始要有一个环境：
+Now let's implement the type version. Similarly, we need to have an environment at the beginning:
+
 ```ts
 type Interpret<
     Stmts extends Stmt[],
@@ -2690,18 +2781,19 @@ type Interpret<
         : LastResult;
 ```
 
-相信你感受到了，加 Env 不是那么容易的。我们要修改很多地方 😂。为什么呢？因为没有变量！我们无法修改全局，或者能访问的某个局部变量。所以一旦有修改 Env 的情况时，必须返回一个新的 Env。这样的话，某个函数怎么知道，它拿到的是最新的 Env 呢？🤷 只能在每个需要的函数上加一个入参 Env, 在调用它时传给它最新的 Env。😂在这里，我真的很想念变量啊！没办法，我们还要继续前行。我们只能绕。现在来总结一下，要加 Env, 要做哪些事情呢？简单来说就是：
+I believe you have felt that adding Env is not that easy. We need to modify many places 😂. Why? Because there are no variables! We cannot modify the global or access a certain local variable. Therefore, whenever there is a modification to Env, a new Env must be returned. In this case, how does a function know that it has the latest Env? 🤷 It can only add an Env parameter to each required function and pass the latest Env to it during the call. 😂 Here, I really miss variables! There's no way around it; we must continue moving forward. We can only take detours. Now, let's summarize what needs to be done to add Env: simply put, it is:
 
-**需要 Env 的函数，必须有 Env 的入参，返回值也必须包含 Env。**
+**Functions that require Env must have Env as a parameter, and the return value must also include Env.**
 
-到底我们需要修改多少函数呢？—— 可以说是 `Interpret` 相关的几乎所有函数😂。这里我们先贴一下关于 `Result` 的工具函数：
+How many functions do we need to modify? — It can be said that `Interpret` Almost all related functions 😂. Here we will first paste about `Result` the utility functions:
+
 ```ts
 type InterpretStmtSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
 type InterpretExprSuccess<Value extends ValueType, Env extends Environment> = SuccessResult<{ value: Value, env: Env }>;
 ```
 
+Then there is `InterpretStmt` and `InterpretExpr`:
 
-然后是 `InterpretStmt` 和 `InterpretExpr`:
 ```ts
 type InterpretStmt<S extends Stmt, Env extends Environment> =
     S extends ExprStmt
@@ -2720,8 +2812,8 @@ type InterpretExpr<E extends Expr, Env extends Environment> =
                     : RuntimeError<`Unknown expression type: ${E['type']}`>;
 ```
 
-
 `InterpretExprStmt`:
+
 ```ts
 type InterpretExprStmt<
     S extends ExprStmt,
@@ -2733,8 +2825,8 @@ type InterpretExprStmt<
         : R; // error
 ```
 
+Referring to the above, you should have no problem modifying other functions. Next, we will complete the type version of `VarStmt` the execution function:
 
-参考以上，其他函数的修改你应该不会有问题了。接下来我们就来完成 type 版的 `VarStmt` 执行函数：
 ```ts
 type InterpretVarStmt<
     S extends VarStmt,
@@ -2753,8 +2845,8 @@ type WrapVarStmtResult<V extends ValueType, Env> = Env extends Environment
     : Env; // error
 ```
 
+Of course, don't forget,`InterpretStmt` to modify it and call `InterpretVarStmt`:
 
-当然别忘记了，`InterpretStmt` 要修改一下，调用 `InterpretVarStmt`:
 ```ts
 type InterpretStmt<S extends Stmt, Env extends Environment> =
     S extends VarStmt
@@ -2764,12 +2856,12 @@ type InterpretStmt<S extends Stmt, Env extends Environment> =
             : InterpretStmtError<`Unsupported statement type: ${S['type']}`>;
 ```
 
-终于完成了声明变量的执行代码了😀。可是现在我们还不能跑起来耍耍，因为没有使用变量的地方，我们看不到效果，除非 debug。对于 ts 版还好说，type 版是没法 debug 的。所以接下来我们就来完成对变量赋值以及表达式中引用变量的支持。
+Finally, we have completed the execution code for declaring variables 😀. But now we still can't run it for fun, because there are no places using variables, and we can't see the effect unless we debug. It's okay for the ts version, but the type version cannot be debugged. So next, we will complete the support for variable assignment and referencing variables in expressions.
 
+##### 2.2.5.4 Variable Expressions and Assignment Expressions
 
-##### 2.2.5.4 变量表达式和赋值表达式
+Earlier, when we did the syntax analysis of expressions, there was a priority list. Now we will add these two new types of expressions:
 
-前面我们做表达式的语法分析时，有一个优先级列表。现在我们加入这两种新的表达式：
 ```ts
 // 表达式按照优先级由低到高：
 // assign:      =                   右结合            <-- 新增
@@ -2783,10 +2875,10 @@ type InterpretStmt<S extends Stmt, Env extends Environment> =
 // primary:     literal group identifier             <-- 新增 identifier
 ```
 
+With it, we can directly follow the previous approach. Let's first look at the variable expression. Ha, a variable expression is an expression that is a variable. For example `var a = 2; a;`, here the expression of the second statement is a variable expression.
 
-有了它我们直接按照之前套路来就可以了。我们先来看变量表达式。哈，变量表达式就是表达式是一个变量。举例 `var a = 2; a;`, 这里第二个语句的表达式就是一个变量表达式。
+First, define the type:
 
-先定义类型：
 ```ts
 type ExprType =
     | 'group'
@@ -2816,8 +2908,8 @@ class VariableExpr implements IExpr {
 }
 ```
 
+Synchronous definition type version:
 
-同步定义 type 版：
 ```ts
 // ExprType 和 ts 版一样
 
@@ -2831,8 +2923,8 @@ interface BuildVariableExpr<T extends Identifier> extends VariableExpr {
 }
 ```
 
+Next is the syntax analysis, first the TypeScript version:
 
-接下来是语法分析，先 ts 版：
 ```ts
 class Parser {
     // ...
@@ -2865,8 +2957,8 @@ class Parser {
 }
 ```
 
+Type version:
 
-type 版：
 ```ts
 type ParsePrimary<Tokens extends Token[]> =
     Tokens extends Match<infer E extends Token, infer R>
@@ -2890,9 +2982,9 @@ type ParsePrimary<Tokens extends Token[]> =
         : ParseExprError<`ParsePrimary fail`>;
 ```
 
+Alright, now let's support assignment expressions. First, define the type,&#x20;
+TypeScript version:
 
-好了，现在来支持赋值表达式。先定义类型，
-ts 版本：
 ```ts
 class AssignExpr implements IExpr {
     type: ExprType = 'assign';
@@ -2910,7 +3002,8 @@ class AssignExpr implements IExpr {
 }
 ```
 
-type 版本：
+Type version:
+
 ```ts
 interface AssignExpr extends Expr {
     type: 'assign';
@@ -2924,8 +3017,8 @@ interface BuildAssignExpr<N extends Identifier, E extends Expr> extends AssignEx
 }
 ```
 
+Now let's proceed with the syntax analysis. It has the lowest precedence, so the expression starts by calling it, which then calls the logical OR function. Its associativity is right associative, just like logical NOT `!` so we can directly copy the code😀:
 
-下面进行语法分析。它的优先级最低，所以表达式起始就调用它，它再调用逻辑或函数。它的结合性是右结合，和逻辑反 `!` 一样，所以可以直接抄代码😀：
 ```ts
 class Parser {
     // ...
@@ -2952,8 +3045,8 @@ class Parser {
 }
 ```
 
+Similarly, the type version of the code:
 
-同理，type 版的代码：
 ```ts
 type ParseExpr<Tokens extends Token[]> = ParseAssign<Tokens>;
 
@@ -2972,13 +3065,12 @@ Tokens extends Match<TokenLike<'='>, infer Rest>
     : ParseExprSuccess<Left, Tokens>;
 ```
 
+Ha! Now we can start "playing" (玩) with variables😀.
 
-哈！现在可以开始"耍"(玩)变量了😀。
+##### 2.2.5.5 Scope
 
+The next thing we need to implement is block statements. An important feature of block statements is variable shadowing. What does that mean? Please see the example below:
 
-##### 2.2.5.5 作用域
-
-我们下一个要实现的是块语句。它有一个重要的特点就是变量覆盖。什么意思呢？请看下面的例子：
 ```ts
 var a = 1;
 {
@@ -2998,9 +3090,10 @@ var a = 1;
 a; // 1
 ```
 
-上面的代码大家已经司空见惯了。变量覆盖就是子作用域的变量屏蔽了父作用域的同名变量。那怎么实现这个效果呢？每个语句块都是一个新的作用域，作用域的实现其实就是环境。
+The code above is something everyone is already familiar with. Variable shadowing means that a variable in a child scope masks a variable with the same name in the parent scope. So how do we achieve this effect? Each statement block is a new scope, and the implementation of scope is essentially the environment.
 
-只不过当前，我们的 `Environment` 没有父子嵌套的情况。现在我们就来支持它，只需要添加一个指向父环境的变量即可。最外面的环境的父环境为 `null`, 这里我把指向父环境的变量命名为 `outer`（我把父环境称为外部环境而已😀）:
+However, currently, our `Environment` does not have parent-child nesting. Now we will support it; we just need to add a variable pointing to the parent environment. The parent environment of the outermost environment is `null`, here I name the variable pointing to the parent environment as `outer`(I just refer to the parent environment as the external environment 😀):
+
 ```ts
 class Environment {
     private store: Map<string, ValueType>;
@@ -3015,8 +3108,8 @@ class Environment {
 }
 ```
 
+At the same time, the APIs provided to the outside need to be adjusted. But `define` No need, because the definition only needs to focus on the current scope.`get` If it cannot be found in the current scope, then look to the outer environment.`assign` The same applies:
 
-同时，对外提供的 api 都要做一些调整。但 `define` 不用，因为定义只用关注当前作用域。`get` 在当前作用域找不到，就向外环境找。`assign` 也是一样：
 ```ts
 class Environment {
     // ...
@@ -3054,8 +3147,8 @@ class Environment {
 }
 ```
 
+For the type version, it is also the same. First, add a constant pointing to the outer environment:
 
-type 版， 也是一样。先添加指向外围环境的常量：
 ```ts
 interface Environment {
     store: TocMap;
@@ -3071,8 +3164,8 @@ interface BuildEnv<
 }
 ```
 
+Then modify `EnvGet` and `EnvAssign` 's implementation:
 
-再修改 `EnvGet` 和 `EnvAssign` 的实现：
 ```ts
 type EnvGet<
     Env extends Environment,
@@ -3106,13 +3199,12 @@ type EnvAssign<
         : RuntimeError<`Undefined variable '${Key}'.`>;
 ```
 
+Finally, don't forget to create and modify the initial `Environment` when it needs to pass a `outer` parameter, since it is the outermost layer, so directly give `null` Value.
 
-最后别忘了，创建修改初始 `Environment` 时，需要传一个 `outer` 参数，由于是最外层，所以直接给 `null` 值。
+##### 2.2.5.6 Block statement
 
+Now we can start implementing the syntax analysis for block statements. First, let's define the type, TypeScript version:
 
-##### 2.2.5.6 block 语句
-
-现在我们可以开始实现块语句的语法分析了。首先来定义类型, ts 版：
 ```ts
 class BlockStmt implements IStmt {
     type: 'block' = 'block';
@@ -3128,8 +3220,8 @@ class BlockStmt implements IStmt {
 }
 ```
 
+Type version:
 
-type 版：
 ```ts
 interface BlockStmt extends Stmt {
     type: 'block';
@@ -3141,8 +3233,8 @@ interface BuildBlockStmt<Stmts extends Stmt[]> extends BlockStmt {
 }
 ```
 
+Now let's look at the syntax analysis code. TypeScript version:
 
-现在来看语法分析代码。ts 版：
 ```ts
 class Parser {
     // ...
@@ -3174,8 +3266,8 @@ class Parser {
 }
 ```
 
+Type version:
 
-type 版：
 ```ts
 type ParseStmt<Tokens extends Token[]> =
     // 新增开始
@@ -3199,8 +3291,8 @@ type ParseBlockStmtBody<SR, Stmts extends Stmt[]> =
         : SR; // error
 ```
 
+Syntax analysis is done. Next, let's write the execution phase. For the TypeScript version, it is to implement `visitBlockStmt`。Before executing statements within a block, a new environment must be created, and after execution, it must be restored to the previous environment.
 
-语法分析搞定。再来写执行阶段。对于 ts 版，就是实现 `visitBlockStmt`。在执行块内语句之前，要产生一个新环境，执行完之后，还要恢复到之前的环境。
 ```ts
 class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     // ...
@@ -3225,8 +3317,8 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
+Now for the Type version. See how to ensure that executing block statements uses a new environment, and after execution, the old environment is used. There is a trap here. You cannot translate it according to the TypeScript version of the code. The two have significant differences at the language level; there are no variables here, and it is impossible to modify the existing environment. For example, if a variable in the external environment is modified within a block statement, then after the block statement is executed, although it reverts to the previous environment. But for the TypeScript version, is the restored environment exactly the same as the original? Of course not; the value of that variable has changed. Therefore, the restoration is merely a reference restoration. So how should this be handled in the type version? According to this example, after modifying the external environment, the type version should `Env` generate a new one,`outer` and the external environment it points to is also newly generated, containing the new value of the variable. Therefore, after executing the block statement, the 'restored' external environment is `Env['outer']`。
 
-下面该 type 版。看这里如何保证执行块语句用新环境，执行完后用旧环境。这里又个陷阱。你不能按照 ts 版本的代码来翻译。二者从语言层面有重大差异，这里没有变量，无法修改已有的环境。举个例子，在块语句中修改了外部环境的某个变量，那么块语句执行完后，虽然恢复到之前的环境。但对于 ts 版本来说，恢复的环境和原来还完全一样吗？当然不一样了，里面的那个变量的值变了。所以说恢复，仅仅是引用恢复。那么对于 type 版，该怎么处理呢？按照这个例子，修改外部环境后，type 版中的 `Env` 要新生成一个，`outer` 指向的外部环境也是新生成的，它包含了变量的新值。所以在执行完块语句后，要“恢复”的外部环境就是 `Env['outer']`。
 ```ts
 type InterpretStmt<S extends Stmt, Env extends Environment> =
     S extends VarStmt
@@ -3254,14 +3346,14 @@ type InterpretBlockStmtBody<
         : RV; // error
 ```
 
+Ah! We have completed the block statement. This is a significant step forward, and the subsequent `if` statements,`for` statements, as well as functions, all require it.
 
-啊！我们完成块语句了。着前进了一大步，后续的 `if` 语句，`for` 语句，还有函数都需要它。
+##### 2.2.5.7 If statement
 
-##### 2.2.5.7 if 语句
+Speaking of support for conditional control, we currently have `Toc` it already. That's right, it's logical AND and logical OR. Through their short-circuiting ability, you can already implement something similar to `if-else` the statement. However, I think you have deeply felt that when implementing the type version of `Toc` it, the syntax lacking 'sugar' is verbose and tedious to write. Therefore, we still need to implement `if` the statement.
 
-说到对条件控制的支持，我们目前的 `Toc` 就已经有了。没错，就是逻辑与和逻辑或。通过它们的短路能力，你已经可以实现类似 `if-else` 语句的能力了。但是我想你在实现 type 版的 `Toc` 时，已经深深感觉到，缺“糖”的语法写起来有多么啰嗦和枯燥。所以我们还是要实现 `if` 语句。
+As before, let's first define the type of statement:
 
-还是一样，先定义语句的类型：
 ```ts
 class IfStmt implements IStmt {
     type: 'if' = 'if';
@@ -3284,8 +3376,8 @@ class IfStmt implements IStmt {
 }
 ```
 
+Type version:
 
-type 版本：
 ```ts
 interface IfStmt extends Stmt {
     type: 'if';
@@ -3305,8 +3397,8 @@ interface BuildIfStmt<
 }
 ```
 
+Now we begin syntax analysis.
 
-现在开始语法分析。
 ```ts
 class Parser {
     // ...
@@ -3339,14 +3431,16 @@ class Parser {
 }
 ```
 
-不知道你有没有意识到一个问题。就是 `if-else` 配对问题。比如代码：
+I don't know if you are aware of a problem. That is `if-else` the pairing problem. For example, the code:
+
 ```ts
 var a = 1;
 if (a > 1) if (a == 1) a = 0; else a = 10;
 a; // ?
 ```
 
-你认为 `a` 值因该是什么呢？我们列出两种结果对应的配对：
+What do you think `a` the value should be? Let's list the pairs corresponding to two results:
+
 ```ts
 // a = 1 对应如下：
 if (a > 1) {
@@ -3367,9 +3461,10 @@ if (a > 1) {
 }
 ```
 
-哪个是对的呢？哦，我们是语言设计者，或许应该说，我们要哪个？我的答案是和常见的语言一致。也就是采取第一种。常见的语言都是采用，将 `else` 与最接近 `if` 配对。这样的话，我们的代码就不用修改了，它已经是如此！
+Which one is correct? Oh, we are the language designers, perhaps we should say, which one do we want? My answer is consistent with common languages. That is to adopt the first one. Common languages all adopt, which `else` pairs with the closest `if` pairing. In this way, our code does not need to be modified; it already is as such!
 
-好了，该实现 type 版了：
+Alright, it's time to implement the type version:
+
 ```ts
 type ParseStmt<Tokens extends Token[]> =
     Tokens extends Match<TokenLike<'{'>, infer Rest>
@@ -3403,9 +3498,10 @@ type ParseIfStmt<
     : ParseStmtError<'Expect "(" before if condition.'>;
 ```
 
-`ParseIfStmt` 看起来是目前 type 版中最复杂的函数了。主要原因是，语法细节一旦增多，在 type 下描述起来就啰嗦。后面的 `for` 和 `fun` 更是如此。
+`ParseIfStmt` It seems to be the most complex function in the current type version. The main reason is that once the syntax details increase, it becomes verbose to describe under type. The following `for` and `fun` That's even more so.
 
-现在来看执行阶段。ts 版仍然是实现对应的“访问”函数：
+Now let's look at the execution phase. The TypeScript version still implements the corresponding 'visit' function:
+
 ```ts
 class Interpreter {
     // ...
@@ -3424,9 +3520,10 @@ class Interpreter {
 }
 ```
 
-很简洁吧。
+Pretty concise, right?
 
-现在看看 type 版：
+Now let's take a look at the Type version:
+
 ```ts
 type InterpretStmt<S extends Stmt, Env extends Environment> =
     S extends VarStmt
@@ -3454,12 +3551,12 @@ type InterpretIfStmt<
     : NoWay<'InterpretIfStmt'>;
 ```
 
-还好，type 版也算简洁。
+Fortunately, the Type version is also relatively concise.
 
+##### 2.2.5.8 For statement
 
-##### 2.2.5.8 for 语句
+`for` Statements have more syntax details than `if` statements. This means that it will be a bit more troublesome during syntax analysis. Let's first look at type definitions:
 
-`for` 语句有着比 `if` 语句更多语法细节。这意味着，它在语法分析时会更麻烦一些。我们先来看看类型定义：
 ```ts
 class ForStmt implements IStmt {
     type: 'for' = 'for';
@@ -3485,8 +3582,8 @@ class ForStmt implements IStmt {
 }
 ```
 
+Type version:
 
-type 版：
 ```ts
 interface ForStmt extends Stmt {
     type: 'for';
@@ -3509,8 +3606,8 @@ interface BuildForStmt<
 }
 ```
 
+Next is syntax analysis:
 
-接下来是语法分析：
 ```ts
 class Parser {
     // ...
@@ -3564,8 +3661,8 @@ class Parser {
 }
 ```
 
+We can see that this is longer than `if` the statement. It can be anticipated that the Type version will be comparatively longer. Fortunately, it can be split into smaller functions here, so it doesn't look too 'explosive':
 
-我们可以看到，这个比 `if` 语句要长一些。可以预见 type 版本会比较长。好在这里比较好拆分为更小的函数，这样看起来不至于很“爆炸”：
 ```ts
 type ParseStmt<Tokens extends Token[]> =
     Tokens extends Match<TokenLike<'{'>, infer Rest>
@@ -3632,8 +3729,8 @@ type ParseForStmtFromBody<
     : BR; // error
 ```
 
+Now let's start writing the execution code:
 
-现在开始编写执行代码：
 ```ts
 class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     // ...
@@ -3670,7 +3767,8 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
-`for` 语句有类似 `block` 语句需要新建环境的问题。所以在 type 版本中，要注意这方面的正确处理：
+`for` Statements are similar `block` The issue of needing to create a new environment for statements. Therefore, in the type version, attention must be paid to the correct handling of this aspect:
+
 ```ts
 type InterpretStmt<S extends Stmt, Env extends Environment> =
     S extends VarStmt
@@ -3730,7 +3828,8 @@ type InterpretForStmtFromConditionValue<
     : InterpretStmtSuccess<BV, Safe<NewEnv['outer'], Environment>>;
 ```
 
-哈！我们艰难的完成 `for` 语句。至此我们的 `Toc` 解释器已经[图灵完备](https://en.wikipedia.org/wiki/Turing_completeness)了。拥有了分支和循环，我们的 `Toc` 程序从理论上就可求解任何[可计算问题](https://en.wikipedia.org/wiki/Computable_function)。现实的情况是，`ts-toc` 的确可以。但 `type-toc` 却不行。为什么呢？我在前面讲类型系统中的递归时，提到过，类型系统中的递归是有最大深度限制的。这意味者一个比较耗时的计算问题，是无法在这种有限的“时间”下完成的。现在你可以去试试，`type-toc` 写的 `for` 循环能循环多少次？我自己编写了一个简单的测试，如下：
+Ha! We have completed it with difficulty `for` Statements. Thus, our `Toc` interpreter is already[to be Turing complete.](https://en.wikipedia.org/wiki/Turing_completeness)done. With branches and loops, our `Toc` program can theoretically solve any[computable problem](https://en.wikipedia.org/wiki/Computable_function). The reality is that,`ts-toc` it can indeed. But `type-toc` it cannot. Why? I mentioned earlier that the recursion in the type system has a maximum depth limit. This means that a relatively time-consuming computational problem cannot be completed within this limited 'time.' Now you can try it out,`type-toc` Written `for` How many times can the loop iterate? I wrote a simple test as follows:
+
 ```ts
 type Result = Toc<`
     var x = 0;
@@ -3740,23 +3839,22 @@ type Result = Toc<`
 `>
 ```
 
-
-当我把 `i < 5` 改为 `i < 6` 就会提示：
+When I change `i < 5` to `i < 6` it will prompt:
 
 `Type instantiation is excessively deep and possibly infinite.ts(2589)`
 
-😂确实很遗憾！不过我们至少验证了我们的想法——ts 的类型系统是可以实现解释器的。或许在未来，随着 ts 编译器的不断改善，这种限制会逐渐减小。或者作为的读者的你，有什么好的优化方法能改善当前的局面，也请随时告诉我，我很想知道😊！
+😂 Indeed, it's quite unfortunate! However, we have at least validated our idea—that the type system of TypeScript can implement an interpreter. Perhaps in the future, as the TypeScript compiler continues to improve, these limitations will gradually diminish. Or as a reader, if you have any good optimization methods to improve the current situation, please feel free to let me know; I would love to hear it 😊!
 
-好了，我们休整后，就向本次的终点——函数出发。
+Alright, after our break, let's head towards the destination of this session—functions.
 
+#### 2.2.6 Function
 
-#### 2.2.6 函数
+Before that, although we can smoothly write programs, we still cannot reuse code. One of the core principles of software engineering is [Don't repeat yourself](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)I have designed `Toc` the function as [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function), hoping it has strong abstraction and expressive capability.
 
-在此之前，虽然可以顺利编写程序，但却没办法复用代码。软件工程的核心之一就是 [Don't repeat yourself](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)。我把 `Toc` 的函数设计成 [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)，希望它有较强的抽象和表达能力。
+##### 2.2.6.1 Function statement
 
-##### 2.2.6.1 函数语句
+As before, let's first define the function statement type:
 
-和前面一样，我们先来定义函数语句类型：
 ```ts
 class FunStmt implements IStmt {
     type: 'fun' = 'fun';
@@ -3776,8 +3874,8 @@ class FunStmt implements IStmt {
 }
 ```
 
+Type version:
 
-type 版：
 ```ts
 interface FunStmt extends Stmt {
     type: 'fun';
@@ -3797,8 +3895,8 @@ interface BuildFunStmt<
 }
 ```
 
+Next is syntax analysis:
 
-接下来是语法分析：
 ```ts
 class Parser {
     // ...
@@ -3840,8 +3938,8 @@ class Parser {
 }
 ```
 
+Type version, since the syntax of the function is a bit complex, the code here will be considerably longer:
 
-type 版，由于函数的语法复杂一点，所以这里代码就要长不少：
 ```ts
 type ParseDecl<Tokens extends Token[]> =
     Tokens extends Match<TokenLike<'var'>, infer Rest>
@@ -3893,8 +3991,8 @@ type ParseFunParamsCore<
     : ParseStmtError<`Expect param name, but got: ${Tokens[0]['type']}`>;
 ```
 
+It's time for the execution phase. The results of the previous expression evaluations or other statement executions are all basic data types. Now, when we declare a function, the variable assigned to the function name will no longer be a basic type, but a function object. What does this function object contain? First, it must contain `FunStmt`, because `FunStmt` it records the function's parameters and function body; without this information, it cannot be executed during the function call. Is that enough? Our function supports closures; please see the example below:
 
-该执行阶段了。前面的表达式计算或者其他语句执行，最终的结果都是基础数据类型。现在声明一个函数，那么赋给函数名这个变量的，将不再是一个基础类型了，而是一个函数对象。这个函数对象包含什么呢？首先，必然包含了 `FunStmt`， 因为 `FunStmt` 记录了函数的参数、函数体，没有这些信息就无法在函数调用时执行。这样就够了吗？我们的函数支持闭包，请看下面的例子：
 ```ts
 var inc3;
 {
@@ -3908,7 +4006,7 @@ var inc3;
 inc3(2);
 ```
 
-`inc3(2)` 执行的结果是5, 它其实是调用的 `inc` 函数，`inc` 函数记住了它所处环境中变量 `n` 的值，或者说 `inc` 函数记住了它的环境。所以函数对象还应该包含一个函数所处的环境。
+`inc3(2)` The result of execution is 5, which is actually a call to `inc` the function,`inc` the function remembers the values of variables in its environment `n` or rather `inc` the function remembers its environment. Therefore, the function object should also contain the environment in which the function resides.
 
 ```ts
 class FunObject {
@@ -3922,8 +4020,8 @@ class FunObject {
 }
 ```
 
+Type version:
 
-type 版：
 ```ts
 type FunObject = {
     declaration: FunStmt;
@@ -3939,8 +4037,8 @@ type BuildFunObj<
 };
 ```
 
+`FunObject` has already been defined. But there is still a problem; we just said that this object needs to be assigned to a variable, so we need to modify `ValueType` Well, this means that the value type of the variable has increased, and the expression can also include function object types for operations:
 
-`FunObject` 已经定义出来了。但是还有个问题，我们刚说这个对象要赋给变量，那么我们需要修改 `ValueType` 了，就是说变量的值类型增加了，表达式中也可以包含函数对象类型来运算了：
 ```ts
 type ValueType =
     | FunObject
@@ -3950,7 +4048,8 @@ type ValueType =
     | null;
 ```
 
-这样和 `literal` 有关的两个地方需要修改，下面只列举 ts 版：
+This is related to `literal` the two places that need to be modified, below are only listed in the TypeScript version:
+
 ```ts
 class LiteralExpr implements IExpr {
     type: ExprType = 'literal';
@@ -3972,8 +4071,8 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
+Alright, now let's implement `visitFunStmt` for the function:
 
-好了，现在我们来实现 `visitFunStmt` 函数：
 ```ts
 class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     // ...
@@ -3988,7 +4087,7 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
-是不是很简单！在来看 type 版：
+Isn't it very simple! Now let's look at the Type version:
 
 ```ts
 type InterpretStmt<S extends Stmt, Env extends Environment> =
@@ -4019,15 +4118,17 @@ type InterpretFunStmt<
     : NoWay<'InterpretFunStmt'>;
 ```
 
-也很简单对不对！
+It's also quite simple, isn't it!
 
-不过还有个问题，请看下面的代码：
+But there is still a problem, please see the code below:
+
 ```ts
 fun a() {}
 a; // 这里输出什么呢？
 ```
 
-你或许说输出函数对象呀！是的没错。但是给人“看”这个对象恐怕不太好，需要显示成一个便于人阅读的形式。所以要添加一个 `toString` 的函数，用来显示这是一个函数，包含它的名字和参数名列表。
+You might say to output the function object! That's correct. However, showing this object to people might not be very good; it needs to be displayed in a format that is easy for people to read. So we need to add a `toString` function to show that this is a function, including its name and parameter name list.
+
 ```ts
 class FunObject {
     // ...
@@ -4040,9 +4141,10 @@ class FunObject {
 }
 ```
 
-这样以后， ts-toc 输出到控制台时，就会自动调用 `toString` 方法。
+This way, when ts-toc outputs to the console, it will automatically call the `toString` method.
 
-再来看看 type 版，也是添加一个 `toString` 方法：
+Now let's take a look at the type version, which also requires adding a `toString` methods:
+
 ```ts
 type FunObjToString<
     F extends FunObject,
@@ -4065,7 +4167,8 @@ type Combine<
     : `${A}, ${B}`;
 ```
 
-这里要注意的是，type-toc 并不会自动调用这个函数，所以我们要修改 `Toc` 函数：
+Here it should be noted that type-toc will not automatically call this function, so we need to modify `Toc` for the function:
+
 ```ts
 type Toc<Source extends string> =
     Scan<Source> extends infer Tokens
@@ -4085,21 +4188,20 @@ type Toc<Source extends string> =
         : NoWay<'Toc-Scan'>;
 ```
 
+Alright, we have completed the function declaration statement. Now there is just one last step—function call. A function call is an expression, and next we will handle it.
 
-好了，以上我们就完成了函数的声明语句。现在还差最后一步——函数调用。函数调用是一个表达式，接下来就来处理它。
+##### 2.2.6.2 Call expression
 
+To support function expressions, we first need to add this type:
 
-##### 2.2.6.2 call 表达式
-
-要支持函数表达式，首先要加入这个类型：
 ```ts
 type ExprType =
     // ...
     | 'call'; // <-- 新增
 ```
 
+When calling a function, there are mainly the caller and the function parameters (which can be null). Accordingly, we define the expression type:
 
-函数调用时，主要有被调用者和函数参数（当然可空）。依此我们定义表达式类型：
 ```ts
 class CallExpr implements IExpr {
     type: ExprType = 'call';
@@ -4117,8 +4219,8 @@ class CallExpr implements IExpr {
 }
 ```
 
+Type version:
 
-type 版：
 ```ts
 interface CallExpr extends Expr {
     type: 'call';
@@ -4132,8 +4234,8 @@ interface BuildCallExpr<Callee extends Expr, Args extends Expr[]> extends CallEx
 }
 ```
 
+Next, we will add function calls to the expression precedence list:
 
-接下来我们把函数调用加入到表达式优先级列表中：
 ```ts
 // 表达式按照优先级由低到高：
 // logic or:    ||                  左结合
@@ -4147,8 +4249,8 @@ interface BuildCallExpr<Callee extends Expr, Args extends Expr[]> extends CallEx
 // primary:     literal group
 ```
 
+With this, I can start writing the routine code for syntax analysis:
 
-有了它，我就可以开始写语法分析的套路代码：
 ```ts
 class Parser {
     // ...
@@ -4187,8 +4289,8 @@ class Parser {
 }
 ```
 
+Below is the type version:
 
-下面是 type 版：
 ```ts
 type ParseCall<Tokens extends Token[], CR = ParsePrimary<Tokens>> =
     CR extends ParseExprSuccess<infer Callee, infer Rest>
@@ -4216,10 +4318,10 @@ type ParseArgs<Tokens extends Token[], Args extends Expr[] = []> =
         : NoWay<'ParseArgs-ParseExpr'>;
 ```
 
+Now it should handle execution.`call` When executing an expression, we first need to evaluate the parameters, as parameters are also expressions. During the evaluation of parameters, the environment is `call` the environment in which the expression resides. When the function body is executed, a new environment is created. It is important to note that this newly created environment's outer environment is not `call` the environment in which the expression resides, but rather the environment in which the function object was generated. This environment is stored within the function object. Additionally, the binding of actual parameters to formal parameters occurs in the new environment. That is, variables are defined according to the formal parameter list, and the values of the variables are the values of the actual parameters. After the function body execution is completed, the environment must return to `call` The environment in which the expression resides.
 
-下面该处理执行了。`call` 表达式执行时，先要对参数进行求值，因为参数也是表达式。参数求值的过程中，环境是 `call` 表达式所处的环境。函数体执行的时候，新建了一个环境。要注意的是，这个新建环境的外部环境不是 `call` 表达式所处的环境，而是函数对象生成时所处的环境。这个环境存储在函数对象中。另外实参与形参的绑定，就是在新环境中。即按照形参列表来定义变量，变量的值是实参的值。函数体执行完成之后，环境要回到 `call` 表达式所处的环境。
+The code executed by the function body is highly similar to the code executed by block statements, so we extract a `executeBlock` function for reuse:
 
-函数体执行的代码和块语句执行的代码高度相似，所以抽出一个 `executeBlock` 函数来复用：
 ```ts
 class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     // ...
@@ -4249,8 +4351,8 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
+Additionally, we extract the core code executed by the function into a function `execute`, and place it in `FunObject` so that `visitFunStmt` it becomes very simple:
 
-另外我们把函数执行的核心代码抽一个函数 `execute`， 放到 `FunObject` 中去，这样 `visitFunStmt` 就很简单了：
 ```ts
 class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
     // ...
@@ -4270,8 +4372,8 @@ class Interpreter implements IExprVisitor<unknown>, IStmtVisitor<unknown> {
 }
 ```
 
+Finally, let's take a look at `execute` 's implementation:
 
-最后我们看看 `execute` 的实现：
 ```ts
 class FunObject {
     // ...
@@ -4296,10 +4398,10 @@ class FunObject {
 }
 ```
 
+The above completes ts-toc.
 
-以上，ts-toc 就完成了。
+Next, let's look at the type version; we first need to modify `InterpretExpr`:
 
-下面来看 type 版, 先要修改 `InterpretExpr`:
 ```ts
 type InterpretExpr<E extends Expr, Env extends Environment> =
                         // ...
@@ -4313,7 +4415,8 @@ type InterpretExpr<E extends Expr, Env extends Environment> =
 
 ```
 
-`EvalCallExpr` 函数的实现并不容易，特别是环境的处理：
+`EvalCallExpr` The implementation of the function is not easy, especially the handling of the environment:
+
 ```ts
 type EvalCallExpr<
     E extends CallExpr,
@@ -4340,7 +4443,8 @@ type GetParamsLength<Callee extends FunObject> = GetParams<Callee>['length'];
 type GetBodyStmts<Callee extends FunObject> = Callee['declaration']['body']['stmts'];
 ```
 
-其中要注意的不仅有注释写的 "函数body执行完要回到CallerEnv"。还要注意到最终要返回的 `CallerEnv` 是从哪里来的？它是从 `InjectArgsToEnv` 函数执行的结果中拿到的。为什么呢？前面说过，type 中没有变量，我们不能像 ts 版中，保留一个引用就可以了。环境在发生变化后，总是产生一个新的值。函数的实参是在 `InjectArgsToEnv` 中求值的，求值过程中有可能修改 `CallerEnv`，所以要返回它。为什么有可能修改 `CallerEnv`？因为实参中的表达式有可能包含赋值表达式。`InjectArgsToEnv` 返回的另一个环境是 `FunScopeEnv`，这个正是函数体执行需要的环境，它里面包含了形参变量对应的值（实参）。
+Among the things to note is not only the comment stating "the function body must return to CallerEnv". We must also pay attention to where the final return value comes from. `CallerEnv` It is obtained from `InjectArgsToEnv` the result of the function execution. Why? As mentioned earlier, there are no variables in the type; we cannot simply retain a reference as in the ts version. The environment always produces a new value after it changes. The actual parameters of the function are in `InjectArgsToEnv` In evaluation, it is possible to modify during the evaluation process `CallerEnv`Therefore, it needs to return it. Why is modification possible? `CallerEnv`? Because the expressions in the actual parameters may contain assignment expressions.`InjectArgsToEnv` The returned environment is `FunScopeEnv`, which is exactly the environment needed for the execution of the function body, containing the values corresponding to the formal parameter variables (actual parameters).
+
 ```ts
 
 type InjectArgsToEnv<
@@ -4367,8 +4471,8 @@ type InjectArgsToEnvSuccess<
 > = SuccessResult<{ callerEnv: CallerEnv, funScopeEnv: FunScopeEnv }>;
 ```
 
+We have completed the function call! However, if you test with the code below, you will find that you cannot get the expected result:
 
-以上我们完成了函数调用！但是如果你用下面的代码去检验，却发现无法得到期待的结果：
 ```ts
 fun fib(n) {
     if (n >= 2) {
@@ -4381,13 +4485,14 @@ fun fib(n) {
 fib(3);
 ```
 
-它并不是提示： `Type instantiation is excessively deep and possibly infinite.`
+It does not prompt: `Type instantiation is excessively deep and possibly infinite.`
 
-它的输出是： `[RuntimeError]: Undefined variable 'fib'."`
+Its output is: `[RuntimeError]: Undefined variable 'fib'."`
 
-🤔❓怎么会这样？如果你多次实验，你会发现，我们实现的 `type-toc` 无法支持函数递归！！问题出在哪里呢？
+🤔❓ How could this happen? If you experiment multiple times, you will find that our implementation of `type-toc` cannot support function recursion!! Where is the problem?
 
-问题出在 `FunScopeEnv` 上，它里面没有包含 `fib` 变量。所以递归的时候找不到自己。为什么会不包含自己呢？我们回到函数声明的执行函数：
+The problem lies in `FunScopeEnv` Above, it does not contain `fib` Variables. So when recursing, it cannot find itself. Why is it not able to include itself? Let's return to the execution function of the function declaration:
+
 ```ts
 type InterpretFunStmt<
     S extends FunStmt,
@@ -4400,7 +4505,8 @@ type InterpretFunStmt<
     : NoWay<'InterpretFunStmt'>;
 ```
 
-通过上面的代码，你会发现这个问题似乎无解：构建函数需要一个包含该函数的 Env 。没有变量的确是做不到的。这就是为什么相同的代码，`ts-toc` 没有这个问题。说到这里，`ts-toc` 和 `type-toc` 在这里有较大的差异，不仅仅是 `type-toc` 无法递归。请看下面的代码：
+From the code above, you will find that this problem seems unsolvable: constructing a function requires an Env that contains that function. It is indeed impossible without variables. This is why the same code,`ts-toc` does not have this problem. Speaking of which,`ts-toc` and `type-toc` there is a significant difference here, not just `type-toc` unable to recurse. Please look at the code below:
+
 ```ts
 var a = 1;
 fun test() { a + b; }
@@ -4408,66 +4514,64 @@ var b = 10;
 test();
 ```
 
-这段代码，`ts-toc` 执行的结果是 11；而 `type-toc` 报错说 `[RuntimeError]: Undefined variable 'b'."`。从这个行为来看也不能说谁对谁错，关键取决于语言设计者希望是哪个结果。类似上面的代码在 `js` 中会得到和 `ts-toc` 一样的[结果](https://www.typescriptlang.org/play?#code/DYUwLgBAhhC8EEYDcAoAZgVwHYGMwEsB7LCMEAZzAAoBKCAbwgCdwMmSYBqCAIyQgC+KUJB5xEABlQ5i5QqAB0wQgHMqZSrRpIgA)；但在 `C#` 中却是类似 `type-toc` 的[结果](https://dotnetfiddle.net/TAPdr5)。
+This piece of code,`ts-toc` the result of execution is 11; while `type-toc` the error message says `[RuntimeError]: Undefined variable 'b'."`。From this behavior, it cannot be said who is right or wrong; the key depends on what result the language designer hopes for. Similar code above in `js` In the middle will get and `ts-toc` the same[result](https://www.typescriptlang.org/play?#code/DYUwLgBAhhC8EEYDcAoAZgVwHYGMwEsB7LCMEAZzAAoBKCAbwgCdwMmSYBqCAIyQgC+KUJB5xEABlQ5i5QqAB0wQgHMqZSrRpIgA)；but in `C#` it is similar `type-toc` of[result](https://dotnetfiddle.net/TAPdr5)。
 
-我在这里更倾向于 `type-toc` 的行为。因为这样的代码更好理解和维护。但我不打算处理 `ts-toc` 在这里的不一致😂。我们还是回到 `type-toc` 无法递归的问题上。真的就实现不了递归了吗？
+I tend to prefer `type-toc` behavior. Because such code is easier to understand and maintain. But I do not intend to deal with `ts-toc` the inconsistencies here 😂. Let's return to `type-toc` the problem of not being able to recurse. Can we really not implement recursion?
 
-其实，我们可以在执行这边下功夫。执行函数体的时候，`FunScopeEnv` "注入"了函数的参数变量。我们在这个时候注入函数变量不行吗？当然是可以的。我们只需要将下面这句
+In fact, we can work on the execution side. When executing the function body,`FunScopeEnv` "inject" the function's parameter variables. Can't we inject function variables at this time? Of course we can. We just need to replace the following sentence
 
 ```ts
 ? InjectArgsToEnv<GetParams<Callee>, E['arguments'], Env, BuildEnv<{}, Callee['environment']>> extends infer EE
 ```
 
+with
 
-替换为
 ```ts
 ? InjectArgsToEnv<GetParams<Callee>, E['arguments'], Env, BuildEnv<{ [k in GetFunName<Callee>]: Callee }, Callee['environment']>> extends infer EE
 ```
 
+The key is:
 
-关键就是：
 ```ts
 BuildEnv<{ [k in GetFunName<Callee>]: Callee }, Callee['environment']>
 ```
 
+when constructing the execution environment of the function body, directly bind the function's variables.
 
-在构建函数体执行环境时，直接将函数的变量绑定进去。
+Indeed, this has achieved recursion. But after changing it this way, writing many simple and non-recursive functions will encounter issues. `Type instantiation is excessively deep and possibly infinite.`, let alone recursive functions. After removing recursion support, these simple non-recursive functions can execute normally again. I tried various modifications to support recursion, but the results were the same. So in the end, in the `toc` repository,[Code](https://github.com/huanguolin/toc/blob/9acb2e989a861620346d19d4b0f1779000ff0ccf/type-toc/interpreter/InterpretExpr.d.ts#L42)I commented out the code that supports recursion. If you know how to solve this problem, please be sure to let me know, or directly propose it. `pr`。
 
-的确，这样就实现了递归。可是改成这样以后，写很多简单且不递归的函数都会出现 `Type instantiation is excessively deep and possibly infinite.`，更别说递归的函数了。去掉递归支持后这些简单不递归的函数又都能正常执行了。我尝试了多种修改来支持递归，得到的效果一样。所以最后在 `toc` 仓库的[代码](https://github.com/huanguolin/toc/blob/9acb2e989a861620346d19d4b0f1779000ff0ccf/type-toc/interpreter/InterpretExpr.d.ts#L42)中，我把支持递归的代码注释掉了。如果你知道怎么解决这个问题，请务必告诉我，或者直接提 `pr`。
+Alright, although there are some regrets, we ultimately completed this challenging task. We successfully implemented an interpreter for the Toc language using TypeScript's type system! This type gymnastics has finally come to an end, thank you!
 
-好了，虽然有些许遗憾，但我们最终完成了这个艰难的任务。我们用 TypeScript 的类型系统成功实现了一个 Toc 语言的解释器！这个类型体操终于谢幕，谢谢！
+#### 2.2.7 Unfinished business
 
-#### 2.2.7 未尽事宜
+In the end, we not only have the regret of recursion not being well supported, but also some other unfinished matters. For example, functions do not `return` support statements, and loops are also unsupported. `break`If we want to make this language more complete, these must be supported. Otherwise, we cannot terminate functions or loops in advance; we can only rely on conditional branches to work around it, which will be quite painful. They can be implemented, but it's troublesome; they need to be carried around like the environment and must be checked at some critical paths.
 
-到最后，我们不仅有递归无法良好支持的遗憾。还有一些其他的未尽事宜。比如，函数没有 `return` 语句的支持，循环也不支持 `break`。如果要让这个语言更完善，这是一定要支持的。否则无法提前结束函数，或者循环，只能靠条件分支来绕，会很痛苦。它们是可以实现的，就是麻烦，需要像环境一样到处都带着，还要在一些关键路径去判断。
+Additionally, the support for errors is quite rough, lacking even line number information, making it difficult to locate errors in longer programs. Another issue is the absence of composite data types and objects (or at least there are no `struct`), which are essential in modern languages like arrays. However, as an attempt, the current results can at least illustrate the issues. If you really want to implement a playable language, you should avoid choosing TypeScript's type system 😂.
 
-另外对错误的支持也很粗略，连行号信息也没有，程序长一点，就不好找到错误了。还有一个就是，没有复合数据类型，没有对象（或者至少有个 `struct`），数组这些现代语言的必须品。不过作为一次尝试，以现在的结果可以说明问题就可以。若真的要自己实现一个可玩的语言，应该不要选择 TypeScript 的类型系统 😂。
+Alright, if you're interested in implementing these, feel free to reach out. `pr`。
 
-好了，如果你感兴趣去实现这些，欢迎提 `pr`。
+## 3. Summary
 
+Finally, let's summarize.&#x20;
+First, we discussed that TypeScript's type system is a functional programming language, focusing on the language features it provides:
 
-## 3. 总结
+* There are no variables, only global constants and local constants.
+* There are conditional branches, and there is also pattern matching.
+* There are functions, and generic parameters are function input parameters. Function parameters also support constrained types and default values. However, functions are not [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)。
+* There are no loops, but equivalent effects can be achieved through function recursion.
 
-最后，我们来总结一下。
-首先我们围绕着 TypeScript 的类型系统是一门函数式语言，讨论了它提供的语言特性：
+Next, we will discuss how to implement `Toc` an interpreter for the language:
 
-* 没有变量，有全局常量和局部常量。
-* 有条件分支，还有模式匹配。
-* 有函数，泛型参数就是函数入参，函数参数还支持限定类型和默认值。但函数不是 [First-Class-Function](https://en.wikipedia.org/wiki/First-class_function)。
-* 没有循环，但可以通过函数的递归实现等价的效果。
+* First, we discuss how to implement arithmetic operations and comparison operations using TypeScript's type system.
+* Then we implement the interpreter, unfolding in three phases: lexical analysis, syntax analysis, and execution. For ease of understanding, we first implement it in TypeScript, and then 'translate' it into the type system implementation. In the syntax analysis phase, we introduce the recursive descent algorithm. The execution phase introduces the visitor pattern. In the implementation, we mastered the syntax analysis methods for expressions and statements, how to implement scope, and the implementation methods for functions and closures. Through the comparison of the two 'languages', we also learned about the shortcomings of type systems when used as languages.
 
-接着我们围绕用 TypeScript 的类型系统实现 `Toc` 语言的解释器：
-* 首先讨论了用 TypeScript 的类型系统怎么实现四则算术运算和比较运算。
-* 接着实现解释器，按照词法分析、语法分析、执行三个阶段展开。为了方便理解，每次先用 TypeScript 来实现，之后再“翻译”为类型系统的实现。语法分析阶段，介绍了递归下降算法。执行阶段介绍了访问者模式。在实现中，我们掌握了表达式和语句的语法分析方法，作用域如何实现，函数以及闭包的实现方法。通过两种“语言”的对比实现，也了解到型系统作为语言来用时的不足。
+Well, that is all I want to say. I hope you like it.
 
-好了，以上就是我要说的全部内容。希望你能喜欢。
+> Due to my limited understanding and the rush of time, there are still many shortcomings and even errors. Everyone is welcome to discuss and correct.
 
-> 由于自身的认知有限，以及时间上的仓促，其中还有很多的不足，甚至错误。欢迎大家讨论指正。
-
-
-## 4. 参考
+## 4. References
 
 1. [*Crafting Interpreters*](http://craftinginterpreters.com)
-2. [TypeScript 类型体操天花板，用类型运算写一个 Lisp 解释器](https://zhuanlan.zhihu.com/p/427309936?utm_campaign=shareopn&utm_medium=social&utm_oi=639544332005281792&utm_psn=1549037572080553985&utm_source=wechat_session)
+2. [TypeScript type gymnastics ceiling, writing a Lisp interpreter with type operations.](https://zhuanlan.zhihu.com/p/427309936?utm_campaign=shareopn\&utm_medium=social\&utm_oi=639544332005281792\&utm_psn=1549037572080553985\&utm_source=wechat_session)
 3. [Implementing Arithmetic Within TypeScript’s Type System](https://itnext.io/implementing-arithmetic-within-typescripts-type-system-a1ef140a6f6f)
 4. [How to Troubleshoot Types?](https://www.reddit.com/r/typescript/comments/sglwk6/how_to_troubleshoot_types/)
