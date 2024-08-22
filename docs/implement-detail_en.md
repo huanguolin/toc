@@ -602,8 +602,8 @@ Our interpreter is mainly divided into three steps: lexical analysis, syntax ana
 
 Additionally, for comparison and to accommodate those like me who are not from a formal computer science background, I will discuss two versions of the implementation (I personally feel that looking at an implementation in a familiar language is easier to accept):
 
-* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/toc/tree/main/ts-toc) the following.
-* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/toc/tree/main/type-toc) the following.
+* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-toc](https://github.com/huanguolin/toc/tree/main/ts-toc) the following.
+* Implemented using TypeScript's type system, in [type-toc](https://github.com/huanguolin/toc/tree/main/type-toc) the following.
 
 when I discuss a feature, I will first explain the TypeScript version, and then the type version. When implementing the TypeScript version, I will not consider translating it into the type version, but will abandon the most natural method for it. The purpose of this approach is primarily for better understanding (especially for non-computer science students); The second is for comparison, to see how we 'navigate' in a 'poor' language context.
 

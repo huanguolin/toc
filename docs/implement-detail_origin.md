@@ -550,8 +550,8 @@ type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and 
 ![interpreter-3-steps](imgs/interpreter-3-steps.png)
 
 另外为了对比，也为了照顾想我一样非科班出身的人，我会讲两个版本的实现（个人感觉直接看一门熟悉的语言来实现解释器会更好接受一点）：
-* 用 ts（你可以理解为用 js）实现的，在 [ts-Toc](https://github.com/huanguolin/toc/tree/main/ts-toc) 下。
-* 用 ts 类型系统实现的，在 [type-Toc](https://github.com/huanguolin/toc/tree/main/type-toc) 下。
+* 用 ts（你可以理解为用 js）实现的，在 [ts-toc](https://github.com/huanguolin/toc/tree/main/ts-toc) 下。
+* 用 ts 类型系统实现的，在 [type-toc](https://github.com/huanguolin/toc/tree/main/type-toc) 下。
 
 我在讲一个特性时，会先讲 ts 版，然后说 type 版。在实现 ts 版本时，不会考虑要“翻译”为 type 版，而放弃对它来说最自然的方法。这样做的目的，一是为了好理解（特别是非科班的同学）；二是为了对比，能看到在语言“贫瘠”的情况下，我们如何“绕”。
 
