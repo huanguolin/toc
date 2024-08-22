@@ -54,7 +54,7 @@ TypeScript is a superset of JavaScript, primarily adding static type checking to
 
 Does dynamicity and static checking seem to be in conflict? However, the ts team and community have provided a way to balance both. That is, when the ts compiler cannot make an inference, it allows the developer to tell ts how to infer. The type description that informs ts (simply put, it describes what the output type should be based on different input types) is consistent with the corresponding js code logic (since considering types often simplifies things). Therefore, ts's type system must be powerful enough[to be Turing complete.](https://github.com/microsoft/TypeScript/issues/14833)to be competent.
 
-The type system of ts is a functional programming language. Type gymnastics refers to using this programming language to play tricks. What we are going to play today is to use it to implement an interpreter for another language (I named this language[Toc](https://github.com/huanguolin/Toc)) (If you want to experience this interpreter, please go to[Toc](https://github.com/huanguolin/Toc)the repository, it's easy to find the entrance 😊).`Toc` The language is `C` style syntax, close to `js`. Dynamic typing, with basic types including numbers, booleans, strings, and `null`, supporting variables, expressions, block statements,`if-else` conditional statements,`for` loop statements, and functions. Functions are first-class citizens, can be passed in and out, and support closures. For more detailed syntax, please refer to [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md)。
+The type system of ts is a functional programming language. Type gymnastics refers to using this programming language to play tricks. What we are going to play today is to use it to implement an interpreter for another language (I named this language[Toc](https://github.com/huanguolin/Toc)) (If you want to experience this interpreter, please go to[Toc](https://github.com/huanguolin/Toc)the repository, it's easy to find the entrance 😊).`Toc` The language is `C` style syntax, close to `js`. Dynamic typing, with basic types including numbers, booleans, strings, and `null`, supporting variables, expressions, block statements,`if-else` conditional statements,`for` loop statements, and functions. Functions are first-class citizens, can be passed in and out, and support closures. For more detailed syntax, please refer to [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md)。
 
 If you are not very familiar with the type system of TypeScript, that's okay. 😊 We are not going to jump straight into implementation; let's do some warm-up exercises first—let's take a look at what the TypeScript type system provides and what its limitations are. Therefore, this article is divided into two parts:
 
@@ -590,7 +590,7 @@ type test_add_2 = Add<999, 1000>; // Type instantiation is excessively deep and 
 
 > Click[here](https://www.typescriptlang.org/play?#code/C4TwDgpgBAggJnAPAOQIxQgD2BAdnAZylwFcBbAIwgCcAaKZAJg2z0OPKuoD4oBeKAG0AdKICSuAJbAY1agEMQKVN3qjhE6bIVKm3ALqCA5ABs8Ac2AALI-oDcAKFCQoOAsAD68hB-QD4SKj0AMzcdlAA9BFQACxO4NBunt5wHsz+CIgADPSoWWGR0XnxLklePsH8sJmoAJy5oeFRUMGMDiXQmjJyiogAMiw4+ESklDT0MINsRPK4IIL6VQu8fA5Q67DGZriWNotYQ+x9axunAPywJ6frAFxQXdq9ffQiojD0syD6YR2uEO4eSRSZI9EC+KoPUHZArNBa-MpA6ReUFpCHAx5KRqFISfD5zPFfdrORL-ZI+PzVJC1an0am1GFFakADnhpPKqXSlMQdNyWT5DKgABUElAge5ZsBJPJJQB7XCiohYADG-wIkgAbhATCAoHAIBAwFBZnAoGAZQQ1RRtaLcAAzRE4YQACkYAFYmbUAJRAA), experience online.
 
-If you want to experience the string version, you can go directly to the repository. [Toc](https://github.com/huanguolin/Toc) Click here to go to the interpreter. Input `type Result = Toc<'99999 + 99999;'>` to experience it. Because `Toc` the underlying implementation uses the string version. The code is in[here](https://github.com/huanguolin/Toc/tree/master/type-Toc/utils/math/fast)。
+If you want to experience the string version, you can go directly to the repository. [Toc](https://github.com/huanguolin/Toc) Click here to go to the interpreter. Input `type Result = Toc<'99999 + 99999;'>` to experience it. Because `Toc` the underlying implementation uses the string version. The code is in[here](https://github.com/huanguolin/Toc/tree/main/type-Toc/utils/math/fast)。
 
 Alright, now we should be ready to start implementing the interpreter.
 
@@ -598,18 +598,18 @@ Alright, now we should be ready to start implementing the interpreter.
 
 Our interpreter is mainly divided into three steps: lexical analysis, syntax analysis, and execution.
 
-![interpreter-3-steps](https://github.com/huanguolin/toc/blob/master/docs/imgs/interpreter-3-steps.png)
+![interpreter-3-steps](imgs/interpreter-3-steps.png)
 
 Additionally, for comparison and to accommodate those like me who are not from a formal computer science background, I will discuss two versions of the implementation (I personally feel that looking at an implementation in a familiar language is easier to accept):
 
-* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/Toc/tree/master/ts-Toc) the following.
-* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/Toc/tree/master/type-Toc) the following.
+* Implemented in TypeScript (you can think of it as using JavaScript), in [ts-Toc](https://github.com/huanguolin/Toc/tree/main/ts-Toc) the following.
+* Implemented using TypeScript's type system, in [type-Toc](https://github.com/huanguolin/Toc/tree/main/type-Toc) the following.
 
 when I discuss a feature, I will first explain the TypeScript version, and then the type version. When implementing the TypeScript version, I will not consider translating it into the type version, but will abandon the most natural method for it. The purpose of this approach is primarily for better understanding (especially for non-computer science students); The second is for comparison, to see how we 'navigate' in a 'poor' language context.
 
 #### 2.2.1 Syntax of Toc
 
-When implementing a language, one must first understand its syntax.`Toc` The syntax definition has already been established in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md)。However, for those without a foundation in compiler theory, the meaning of those symbols can still be quite confusing (like me 🤦). Here, we will use expressions as a starting point to provide a brief explanation.
+When implementing a language, one must first understand its syntax.`Toc` The syntax definition has already been established in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md)。However, for those without a foundation in compiler theory, the meaning of those symbols can still be quite confusing (like me 🤦). Here, we will use expressions as a starting point to provide a brief explanation.
 
 We often see expressions like the following, which are familiar to us and are `Toc` supported:
 
@@ -643,7 +643,7 @@ grouping       → "(" expression ")" ;
 
 Where,`NUMBER` and `STRING` represents any number or string. Those in quotes are terminal symbols. Of course, `literal` are also terminal symbols. What does terminal symbol mean? It means that it cannot be further expanded into more basic units. The above `expression`, `unary`, `binary`, `grouping` can all be further expanded, so they are non-terminal symbols. How to expand represents the corresponding grammar rules.
 
-You may have noticed that the syntax description above is not exactly the same as that in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) However, this is merely a difference in form; the syntactic meaning is the same. It is just that for simplicity, the information about precedence has not been included here. [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) The description in the other document not only includes precedence information but has also made some adjustments for ease of implementation. However, the syntactic rules being expressed are consistent. We will focus on the part about precedence in the syntax analysis section. Based on your current understanding, I believe you can already comprehend the vast majority of the rules in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md) You can start lexical analysis now 😺.
+You may have noticed that the syntax description above is not exactly the same as that in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md) However, this is merely a difference in form; the syntactic meaning is the same. It is just that for simplicity, the information about precedence has not been included here. [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md) The description in the other document not only includes precedence information but has also made some adjustments for ease of implementation. However, the syntactic rules being expressed are consistent. We will focus on the part about precedence in the syntax analysis section. Based on your current understanding, I believe you can already comprehend the vast majority of the rules in [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md) You can start lexical analysis now 😺.
 
 #### 2.2.2 Lexical Analysis
 
@@ -1420,7 +1420,7 @@ factor          → literal ( ( "/" | "*" ) literal )* ;
 literal         → NUMBER ;
 ```
 
-> Now let's take a look [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/master/docs/grammar.md), can you understand more now? 😂
+> Now let's take a look [Toc Grammar Spec](https://github.com/huanguolin/toc/blob/main/docs/grammar.md), can you understand more now? 😂
 
 ##### 2.2.3.2 Complete Expression Syntax Analysis (ts version)
 
